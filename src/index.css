@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Battambang', 'Noto Sans SC', sans-serif;
+  }
+
+  body {
+    font-family: 'Battambang', 'Noto Sans SC', sans-serif;
+    line-height: 1.65;
+  }
+}
+
+.font-khmer-moul {
+  font-family: 'Moul', 'Battambang', 'Noto Sans SC', sans-serif;
+  font-weight: normal;
+  line-height: 1.75;
+}
+
+.font-khmer-battambang {
+  font-family: 'Battambang', 'Noto Sans SC', sans-serif;
+  line-height: 1.65;
+}
+
+.font-mono {
+  font-family: 'Battambang', 'Noto Sans SC', sans-serif;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

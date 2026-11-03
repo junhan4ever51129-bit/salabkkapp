@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង - ០. ឯកសារបង្រៀនពេញលេញទាំងអស់ (全部完整教学文档汇总)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Moul&family=Noto+Sans+SC:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Battambang', 'Noto Sans SC', sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.55;
+    color: #000000;
+    background: #f1f5f9;
+    margin: 0;
+    padding: 20px 10px;
+  }
+  .a4-sheet {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 20px auto;
+    padding: 12mm;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    border: 1px solid #cbd5e1;
+  }
+  .moul {
+    font-family: 'Moul', 'Battambang', 'Noto Sans SC', serif;
+    font-weight: normal;
+  }
+  .a4-official-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    font-size: 10.5pt;
+    line-height: 1.6;
+  }
+  .a4-official-header .header-left {
+    text-align: left;
+  }
+  .a4-official-header .header-right {
+    text-align: center;
+  }
+  .a4-official-header .tacteing {
+    font-size: 11pt;
+    letter-spacing: 2px;
+    margin-top: 2px;
+  }
+  h1.a4-title {
+    font-family: 'Moul', 'Battambang', 'Noto Sans SC', serif;
+    font-weight: normal;
+    font-size: 12.5pt;
+    text-align: center;
+    margin: 8px 0 4px 0;
+  }
+  h2.a4-subtitle {
+    font-family: 'Moul', 'Battambang', 'Noto Sans SC', serif;
+    font-weight: normal;
+    font-size: 11pt;
+    text-align: center;
+    margin: 2px 0 10px 0;
+  }
+  h3 {
+    font-family: 'Moul', 'Battambang', 'Noto Sans SC', serif;
+    font-weight: normal;
+    font-size: 10.5pt;
+    margin: 12px 0 6px 0;
+  }
+  h4 {
+    font-family: 'Battambang', 'Noto Sans SC', sans-serif;
+    font-size: 10.5pt;
+    font-weight: 700;
+    margin: 8px 0 4px 0;
+  }
+  p {
+    margin: 4px 0;
+  }
+  ul.a4-meta-list {
+    list-style: none;
+    margin: 4px 0 8px 0;
+    padding: 0;
+  }
+  ul.a4-meta-list li {
+    margin: 2px 0;
+  }
+  ol.a4-ordered-list {
+    margin: 4px 0 8px 20px;
+    padding: 0;
+  }
+  table.a4-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 12px 0;
+    font-size: 9.5pt;
+  }
+  table.a4-table th,
+  table.a4-table td {
+    border: 1px solid #000000;
+    padding: 4px 6px;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.a4-table th {
+    font-weight: 700;
+    background-color: #f8fafc;
+    text-align: center;
+  }
+  .a4-official-signature {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: 16px;
+    page-break-inside: avoid;
+    font-size: 10.5pt;
+  }
+  .a4-official-signature .sig-left,
+  .a4-official-signature .sig-right {
+    text-align: center;
+    min-width: 44%;
+  }
+  .a4-official-signature .sig-bold {
+    font-weight: 700;
+  }
+  .a4-official-signature .sig-space {
+    height: 36px;
+  }
+  @media print {
+    body {
+      background: #ffffff;
+      padding: 0;
+      margin: 0;
+    }
+    .a4-sheet {
+      width: 100%;
+      min-height: auto;
+      margin: 0;
+      padding: 0;
+      box-shadow: none;
+      border: none;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="a4-sheet">
+<div class="a4-official-header">
+  <div class="header-left">
+    <div class="moul">មន្ទីរអប់រំ យុវជន និងកីឡារាជធានីភ្នំពេញ</div>
+    <div>ការិយាល័យអប់រំ យុវជន និងកីឡា នៃរដ្ឋបាលខណ្ឌបឹងកេងកង</div>
+    <div class="moul">វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង</div>
+  </div>
+  <div class="header-right">
+    <div class="moul">ព្រះរាជាណាចក្រកម្ពុជា</div>
+    <div class="moul">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+    <div class="tacteing">~~~•~~~</div>
+  </div>
+</div>
+<h1 class="a4-title">បញ្ជីឈ្មោះសិស្ស និងកាលវិភាគបង្រៀនភាសាចិន</h1>
+<h2 class="a4-subtitle">ឆ្នាំសិក្សា 2026-2027</h2>
+<ul class="a4-meta-list">
+<li><strong>គ្រូមុខវិជ្ជា ៖</strong> អ្នកគ្រូ <strong>លឹម ដាណេ</strong> (គ្រូបង្រៀនកិច្ចសន្យា (ភាសាចិន))</li>
+<li><strong>មុខវិជ្ជា ៖</strong> <strong>ភាសាចិន</strong> (汉语)</li>
+</ul>
+<h3>១. កាលវិភាគបង្រៀនមុខវិជ្ជាភាសាចិនទាំង ១ ថ្នាក់</h3>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ល.រ</th>
+<th>ថ្នាក់ទី</th>
+<th>កម្រិតថ្នាក់</th>
+<th>ថ្ងៃបង្រៀន</th>
+<th>ម៉ោងបង្រៀន</th>
+<th>ចំនួនម៉ោង/សប្តាហ៍</th>
+<th>សៀវភៅគោល</th>
+<th>សិស្សសរុប (ស្រី)</th>
+</tr>
+<tr>
+<td>១</td>
+<td><strong>ថ្នាក់ទី ១០C</strong></td>
+<td>ទី10</td>
+<td>ថ្ងៃពុធ</td>
+<td>15:00-16:30</td>
+<td>១ម៉ ៣០ន/ សប្តាហ៍</td>
+<td>快乐汉语 (第二册) ភាសាចិនរីករាយ (កំរិត២)</td>
+<td><strong>0 នាក់</strong> (ស្រី 0)</td>
+</tr>
+</table>
+<h3>២. បញ្ជីរាយនាមសិស្សថ្នាក់ទី ១០C (សរុប 0 នាក់, ស្រី 0 នាក់)</h3>
+<ul class="a4-meta-list">
+<li><strong>ថ្ងៃបង្រៀន ៖</strong> ថ្ងៃពុធ · <strong>ម៉ោង ៖</strong> 15:00-16:30 (១ម៉ ៣០ន/ សប្តាហ៍)</li>
+<li><strong>សៀវភៅគោល ៖</strong> 快乐汉语 (第二册) ភាសាចិនរីករាយ (កំរិត២)</li>
+</ul>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ល.រ</th>
+<th>អត្តលេខ</th>
+<th>គោត្តនាម-នាម</th>
+<th>ឈ្មោះចិន (姓名)</th>
+<th>ភេទ</th>
+<th>ថ្ងៃខែឆ្នាំកំណើត</th>
+<th>កំណត់សម្គាល់</th>
+</tr>
+</table>
+<div class="a4-official-signature">
+  <div class="sig-left">
+    <div class="sig-bold">បានឃើញ និងឯកភាព</div>
+    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">នុត ងួនលី</div>
+  </div>
+  <div class="sig-right">
+    <div>ថ្ងៃចន្ទ ៧រោច ខែអស្សុជ ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០</div>
+    <div>រាជធានីភ្នំពេញ, ថ្ងៃទី០២ ខែវិច្ឆិកា ឆ្នាំ២០២៦</div>
+    <div class="sig-bold">គ្រូមុខវិជ្ជា</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">លឹម ដាណេ</div>
+  </div>
+</div>
+</div>
+<div style="page-break-after:always;"></div>
+<div class="a4-sheet">
+<div class="a4-official-header">
+  <div class="header-left">
+    <div class="moul">មន្ទីរអប់រំ យុវជន និងកីឡារាជធានីភ្នំពេញ</div>
+    <div>ការិយាល័យអប់រំ យុវជន និងកីឡា នៃរដ្ឋបាលខណ្ឌបឹងកេងកង</div>
+    <div class="moul">វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង</div>
+  </div>
+  <div class="header-right">
+    <div class="moul">ព្រះរាជាណាចក្រកម្ពុជា</div>
+    <div class="moul">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+    <div class="tacteing">~~~•~~~</div>
+  </div>
+</div>
+<h1 class="a4-title">បញ្ជីស្រង់ពិន្ទុសិស្សថ្នាក់ទី ១០C</h1>
+<h2 class="a4-subtitle">ឆ្នាំសិក្សា 2026-2027</h2>
+<ul class="a4-meta-list">
+<li><strong>គ្រូមុខវិជ្ជា ៖</strong> អ្នកគ្រូ <strong>លឹម ដាណេ</strong> · <strong>មុខវិជ្ជា ៖</strong> <strong>ភាសាចិន</strong> (ពិន្ទុពេញ <strong>50</strong>)</li>
+<li><strong>សិស្សសរុប ៖</strong> <strong>0 នាក់</strong> (ស្រី <strong>0 នាក់</strong>)</li>
+<li><strong>សង្ខេបនិទ្ទេស ៖</strong> A: <strong>0</strong> · B: <strong>0</strong> · C: <strong>0</strong> · D: <strong>0</strong> · E: <strong>0</strong> · F: <strong>0</strong></li>
+</ul>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ល.រ</th>
+<th>គោត្តនាម-នាម</th>
+<th>ឈ្មោះចិន</th>
+<th>ភេទ</th>
+<th>ខែវិច្ឆិកា</th>
+<th>ខែធ្នូ</th>
+<th>ខែមករា</th>
+<th>ខែកុម្ភៈ</th>
+<th>ខែមីនា</th>
+<th>ឆមាសទី១</th>
+<th>ខែឧសភា</th>
+<th>ខែមិថុនា</th>
+<th>ខែកក្កដា</th>
+<th>ឆមាសទី២</th>
+<th>មធ្យមភាគ</th>
+<th>ចំ.ថ្នាក់</th>
+<th>និទ្ទេស</th>
+</tr>
+</table>
+<h3>ស្តង់ដាទី១៖ លទ្ធផលនៃការសិក្សា បំណិនសម្បទា និងចរិយាសម្បទា ថ្នាក់ទី ១០C (ខែកុម្ភៈ)</h3>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ល.រ</th>
+<th>អត្តលេខ</th>
+<th>គោត្តនាម និងនាម</th>
+<th>ឈ្មោះចិន</th>
+<th>ភេទ</th>
+<th>បំណិនសម្បទា (1-5)</th>
+<th>ចរិយាសម្បទា (1-5)</th>
+<th>ផ្សេងៗ</th>
+</tr>
+</table>
+<div class="a4-official-signature">
+  <div class="sig-left">
+    <div class="sig-bold">បានឃើញ និងឯកភាព</div>
+    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">នុត ងួនលី</div>
+  </div>
+  <div class="sig-right">
+    <div>ថ្ងៃចន្ទ ៧រោច ខែអស្សុជ ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០</div>
+    <div>រាជធានីភ្នំពេញ, ថ្ងៃទី០២ ខែវិច្ឆិកា ឆ្នាំ២០២៦</div>
+    <div class="sig-bold">គ្រូមុខវិជ្ជា</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">លឹម ដាណេ</div>
+  </div>
+</div>
+</div>
+<div style="page-break-after:always;"></div>
+<div class="a4-sheet">
+<div class="a4-official-header">
+  <div class="header-left">
+    <div class="moul">មន្ទីរអប់រំ យុវជន និងកីឡារាជធានីភ្នំពេញ</div>
+    <div>ការិយាល័យអប់រំ យុវជន និងកីឡា នៃរដ្ឋបាលខណ្ឌបឹងកេងកង</div>
+    <div class="moul">វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង</div>
+  </div>
+  <div class="header-right">
+    <div class="moul">ព្រះរាជាណាចក្រកម្ពុជា</div>
+    <div class="moul">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+    <div class="tacteing">~~~•~~~</div>
+  </div>
+</div>
+<h1 class="a4-title">បញ្ជីស្រង់វត្តមានសិស្សថ្នាក់ទី ១០C</h1>
+<h2 class="a4-subtitle">ឆ្នាំសិក្សា 2026-2027</h2>
+<ul class="a4-meta-list">
+<li><strong>គ្រូមុខវិជ្ជា ៖</strong> <strong>លឹម ដាណេ</strong> · <strong>មុខវិជ្ជា ៖</strong> <strong>ភាសាចិន</strong></li>
+<li><strong>ថ្ងៃបង្រៀន ៖</strong> <strong>ថ្ងៃពុធ</strong> · <strong>ម៉ោង ៖</strong> <strong>15:00-16:30</strong> (១ម៉ ៣០ន/ សប្តាហ៍)</li>
+<li><strong>សិស្សសរុប ៖</strong> <strong>0 នាក់</strong> (ស្រី <strong>0 នាក់</strong>)</li>
+</ul>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ល.រ</th>
+<th>គោត្តនាម-នាម</th>
+<th>ឈ្មោះចិន</th>
+<th>ភេទ</th>
+<th>កុម្ភៈ 04</th>
+<th>កុម្ភៈ 11</th>
+<th>កុម្ភៈ 18</th>
+<th>កុម្ភៈ 25</th>
+<th>មីនា 04</th>
+<th>មីនា 11</th>
+<th>មីនា 18</th>
+<th>មីនា 25</th>
+<th>កុម្ភៈ ទី9</th>
+<th>កុម្ភៈ ទី10</th>
+<th>ផ្សេងៗ</th>
+</tr>
+</table>
+<div class="a4-official-signature">
+  <div class="sig-left">
+    <div class="sig-bold">បានឃើញ និងឯកភាព</div>
+    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">នុត ងួនលី</div>
+  </div>
+  <div class="sig-right">
+    <div>ថ្ងៃចន្ទ ៧រោច ខែអស្សុជ ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០</div>
+    <div>រាជធានីភ្នំពេញ, ថ្ងៃទី០២ ខែវិច្ឆិកា ឆ្នាំ២០២៦</div>
+    <div class="sig-bold">គ្រូមុខវិជ្ជា</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">លឹម ដាណេ</div>
+  </div>
+</div>
+</div>
+<div style="page-break-after:always;"></div>
+<div class="a4-sheet">
+<div class="a4-official-header">
+  <div class="header-left">
+    <div class="moul">មន្ទីរអប់រំ យុវជន និងកីឡារាជធានីភ្នំពេញ</div>
+    <div>ការិយាល័យអប់រំ យុវជន និងកីឡា នៃរដ្ឋបាលខណ្ឌបឹងកេងកង</div>
+    <div class="moul">វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង</div>
+  </div>
+  <div class="header-right">
+    <div class="moul">ព្រះរាជាណាចក្រកម្ពុជា</div>
+    <div class="moul">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+    <div class="tacteing">~~~•~~~</div>
+  </div>
+</div>
+<h1 class="a4-title">កំណត់ត្រាកិច្ចការផ្ទះ និងកំណត់ត្រាមេរៀនប្រចាំថ្ងៃ</h1>
+<h2 class="a4-subtitle">ឆ្នាំសិក្សា 2026-2027</h2>
+<h3>១. ស្ថានភាពការដាក់កិច្ចការផ្ទះ និងកំណត់ត្រាមេរៀនតាមថ្នាក់ថ្ងៃនេះ (2026-11-01)</h3>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ល.រ</th>
+<th>ថ្នាក់ទី</th>
+<th>ថ្ងៃ និងម៉ោងសិក្សា</th>
+<th>ស្ថានភាពដាក់កិច្ចការ</th>
+<th>កំណត់ត្រាមេរៀន (ជំពូក និងមេរៀន)</th>
+<th>ខ្លឹមសារកិច្ចការផ្ទះ</th>
+<th>សិស្សប្រគល់ / សរុប</th>
+</tr>
+<tr>
+<td>១</td>
+<td><strong>ថ្នាក់ទី ១០C</strong></td>
+<td>ថ្ងៃពុធ (15:00-16:30)</td>
+<td><strong>បានដាក់កិច្ចការ ✓</strong></td>
+<td><strong>第八课 多少钱 · មេរៀនទី៨ ការសួរតម្លៃ និងការតថ្លៃ</strong><br/>1. 课文对话 អត្ថបទសន្ទនាទី២ ទំព័រទី ៤៤-៤៥ · 2. 语法 ការប្រើប្រាស់ឯកតារូបិយប័ណ្ណ និងទម្ងន់</td>
+<td><strong>មេរៀនទី៨៖ ការសួរតម្លៃ និងការតថ្លៃ (第八课：多少钱)</strong><br/>ចម្លងអត្ថបទសន្ទនាទី២ ចូលសៀវភៅកិច្ចការផ្ទះ និងបកប្រែជាភាសាខ្មែរ។</td>
+<td><strong>0/0 នាក់</strong></td>
+</tr>
+</table>
+<h3>២. កំណត់ត្រាមេរៀន និងកិច្ចការផ្ទះថ្នាក់ទី ១០C</h3>
+<ul class="a4-meta-list">
+<li><strong>ជំពូក / 单元 ៖</strong> <strong>第四单元 买东西 · ជំពូកទី៤ ការទិញទំនិញ</strong></li>
+<li><strong>ចំណងជើងមេរៀន / 课题 ៖</strong> <strong>第八课 多少钱 · មេរៀនទី៨ ការសួរតម្លៃ និងការតថ្លៃ</strong></li>
+<li><strong>ខ្លឹមសារមេរៀនលម្អិត (កំណត់ត្រាមេរៀន) ៖</strong> 1. 课文对话 អត្ថបទសន្ទនាទី២ ទំព័រទី ៤៤-៤៥ · 2. 语法 ការប្រើប្រាស់ឯកតារូបិយប័ណ្ណ និងទម្ងន់</li>
+<li><strong>ប្រធានបទកិច្ចការផ្ទះ ៖</strong> <strong>មេរៀនទី៨៖ ការសួរតម្លៃ និងការតថ្លៃ (第八课：多少钱)</strong></li>
+<li><strong>ខ្លឹមសារកិច្ចការផ្ទះ ៖</strong> ចម្លងអត្ថបទសន្ទនាទី២ ចូលសៀវភៅកិច្ចការផ្ទះ និងបកប្រែជាភាសាខ្មែរ។</li>
+<li><strong>ថ្ងៃកំណត់ប្រគល់ ៖</strong> សប្តាហ៍ក្រោយ (ថ្ងៃពុធ)</li>
+<li><strong>សិស្សបានប្រគល់កិច្ចការ ៖</strong> <strong>0 នាក់</strong> · <strong>មិនទាន់ប្រគល់ ៖</strong> <strong>0 នាក់</strong></li>
+</ul>
+<h4>តារាងរាយនាមសិស្សប្រគល់ និងមិនទាន់ប្រគល់កិច្ចការផ្ទះ ថ្នាក់ទី ១០C</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ល.រ</th>
+<th>គោត្តនាម-នាម</th>
+<th>ឈ្មោះចិន (姓名)</th>
+<th>ភេទ</th>
+<th>ស្ថានភាពប្រគល់កិច្ចការ</th>
+<th>កំណត់សម្គាល់</th>
+</tr>
+</table>
+<div class="a4-official-signature">
+  <div class="sig-left">
+    <div class="sig-bold">បានឃើញ និងឯកភាព</div>
+    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">នុត ងួនលី</div>
+  </div>
+  <div class="sig-right">
+    <div>ថ្ងៃចន្ទ ៧រោច ខែអស្សុជ ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០</div>
+    <div>រាជធានីភ្នំពេញ, ថ្ងៃទី០២ ខែវិច្ឆិកា ឆ្នាំ២០២៦</div>
+    <div class="sig-bold">គ្រូមុខវិជ្ជា</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">លឹម ដាណេ</div>
+  </div>
+</div>
+</div>
+<div style="page-break-after:always;"></div>
+<div class="a4-sheet">
+<div class="a4-official-header">
+  <div class="header-left">
+    <div class="moul">មន្ទីរអប់រំ យុវជន និងកីឡារាជធានីភ្នំពេញ</div>
+    <div>ការិយាល័យអប់រំ យុវជន និងកីឡា នៃរដ្ឋបាលខណ្ឌបឹងកេងកង</div>
+    <div class="moul">វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង</div>
+  </div>
+  <div class="header-right">
+    <div class="moul">ព្រះរាជាណាចក្រកម្ពុជា</div>
+    <div class="moul">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+    <div class="tacteing">~~~•~~~</div>
+  </div>
+</div>
+<h1 class="a4-title">កម្មវិធីសិក្សាភាសាចិន កំរិត២</h1>
+<h2 class="a4-subtitle">ឆ្នាំសិក្សា 2026-2027 (សរុប 36 ម៉ោង)</h2>
+<ul class="a4-meta-list">
+<li><strong>គ្រូមុខវិជ្ជា ៖</strong> <strong>លឹម ដាណេ</strong></li>
+<li><strong>សៀវភៅគោល ៖</strong> 快乐汉语（第二册） ភាសាចិនរីករាយ (កំរិត២)</li>
+</ul>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ល.រ</th>
+<th>ខែ</th>
+<th>សប្តាហ៍</th>
+<th>ខ្លឹមសារមេរៀន (教学内容)</th>
+<th>ទំព័រ</th>
+<th>ចំនួនម៉ោង</th>
+<th>ផ្សេងៗ</th>
+</tr>
+<tr>
+<td>១</td>
+<td><strong>វិច្ឆិកា</strong></td>
+<td>សប្តាហ៍ទី១</td>
+<td>汉语基础（复习）មូលដ្ឋានគ្រឹះភាសាចិន (រំលឹកមេរៀន)<br/>- 声母 ព្យញ្ជនៈ · 韵母 ស្រៈ · 声调与拼读 សូរសំឡេង និងការរៀនប្រកប ភីនអ៊ីន</td>
+<td>-</td>
+<td><strong>1.5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>២</td>
+<td><strong>វិច្ឆិកា</strong></td>
+<td>សប្តាហ៍ទី២</td>
+<td>第一单元 我和朋友 · 第一课 他是谁 (មេរៀនទី១ តើគាត់គឺជានរណា)<br/>1. 生词 ពាក្យថ្មី៖ 姓、名字、多、朋友、谁、欢迎、地方、国家、号码<br/>2. 句型 ទម្រង់ល្បះ៖ ①你姓什么？ ②叫什么名字？ ③我姓马，我叫马丽丽。 ④他是谁？</td>
+<td>សៀ.សិស្ស ៣</td>
+<td><strong>1.5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>៣</td>
+<td><strong>វិច្ឆិកា</strong></td>
+<td>សប្តាហ៍ទី៣</td>
+<td>第一单元 我和朋友 · 第一课 他是谁 (មេរៀនទី១ តើគាត់គឺជានរណា)<br/>3. 对话 សន្ទនា៖ A: 你好。 B: 你好。 A: 你姓什么？ B: 我姓马。</td>
+<td>សៀ.សិស្ស ៣</td>
+<td><strong>1.5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>៤</td>
+<td><strong>វិច្ឆិកា</strong></td>
+<td>សប្តាហ៍ទី៤</td>
+<td>第一课 他是谁 · 4. 汉字笔画 គំនូសអក្សរចិន៖ 姓、名、字、多、朋、友、谁、欢、迎、地、方、国、家、号、码<br/>5. 综合练习：课本和练习册</td>
+<td>សៀ.សិស្ស (៤-៥) / សៀ.លំ (១-៧)</td>
+<td><strong>1.5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>៥</td>
+<td><strong>ធ្នូ</strong></td>
+<td>សប្តាហ៍ទី១</td>
+<td>第二课 她比我高 (មេរៀនទី២ នាងខ្ពស់ជាងខ្ញុំ)<br/>1. 生词 ពាក្យថ្មី៖ 多、今年、她、比、说、英语、汉语、谢谢、网友、年龄、高、艺术<br/>2. 句型 ទម្រង់ល្បះ៖ ①你多大？ ②我今年十六岁。</td>
+<td>៨</td>
+<td><strong>1.5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>៦</td>
+<td><strong>ធ្នូ</strong></td>
+<td>សប្តាហ៍ទី២</td>
+<td>第二课 她比我高 · 3. 对话 សន្ទនា + 十二月月考 (ប្រឡងប្រចាំខែធ្នូ)</td>
+<td>៨</td>
+<td><strong>1.5</strong></td>
+<td>ប្រឡងប្រចាំខែធ្នូ</td>
+</tr>
+<tr>
+<td>៧</td>
+<td><strong>មករា</strong></td>
+<td>សប្តាហ៍ទី១-២</td>
+<td>第三课 我的一天 (មេរៀនទី៣ មួយថ្ងៃរបស់ខ្ញុំ)<br/>3. 情境应用 ការប្រើប្រាស់ក្នុងបរិបទ + 4. 汉字笔画 គំនូសអក្សរចិន + 一月月考 (ប្រឡងប្រចាំខែមករា)</td>
+<td>សៀ.សិស្ស (១៣-១៦) / សៀ.លំ (១៧-២៥)</td>
+<td><strong>3</strong></td>
+<td>ប្រឡងប្រចាំខែមករា</td>
+</tr>
+<tr>
+<td>៨</td>
+<td><strong>កុម្ភៈ</strong></td>
+<td>សប្តាហ៍ទី១-៤</td>
+<td>第二单元 我的家 · 第四课 我的房间 (មេរៀនទី៤ បន្ទប់របស់ខ្ញុំ) & 第五课 客厅在南边 (មេរៀនទី៥ បន្ទប់ទទួលភ្ញៀវនៅទិសខាងត្បូង) + 期中考试 (ប្រឡងឆមាសលើកទី១)</td>
+<td>២២-៣១</td>
+<td><strong>6</strong></td>
+<td>ប្រឡងឆមាសលើកទី១</td>
+</tr>
+<tr>
+<td>៩</td>
+<td><strong>មីនា - មេសា</strong></td>
+<td>សប្តាហ៍ទី១-៤</td>
+<td>第六课 你家的花园真漂亮 (មេរៀនទី៦ សួនច្បារផ្ទះរបស់អ្នកពិតជាស្អាតមែន) & 第三单元 购物 · 第七课 你买什么 (មេរៀនទី៧ តើអ្នកទិញអ្វី)</td>
+<td>៣៣-៤៧</td>
+<td><strong>6</strong></td>
+<td>ប្រឡងប្រចាំខែមីនា</td>
+</tr>
+<tr>
+<td>១០</td>
+<td><strong>ឧសភា - មិថុនា</strong></td>
+<td>សប្តាហ៍ទី១-៤</td>
+<td>第八课 苹果多少钱一斤 (មេរៀនទី៨ តើផ្លែប៉ោមកន្លះគីឡូតម្លៃប៉ុន្មាន) & 第九课 这件衣服比那件贵一点儿 (មេរៀនទី៩ សំលៀកបំពាក់នេះថ្លៃជាងសំលៀកបំពាក់នោះបន្តិច)</td>
+<td>៤៩-៦៥</td>
+<td><strong>6</strong></td>
+<td>ប្រឡងប្រចាំខែឧសភា & មិថុនា</td>
+</tr>
+<tr>
+<td>១១</td>
+<td><strong>កក្កដា - សីហា</strong></td>
+<td>សប្តាហ៍ទី១-៤</td>
+<td>第四单元 学校生活 · 第十课 你今天上了什么课, 第十一课 汉语不难 & 第十二课 来打乒乓球吧 + 期末考试 (ប្រឡងឆមាសទី២)</td>
+<td>៦៥-៩០</td>
+<td><strong>6</strong></td>
+<td>ប្រឡងឆមាសទី២ (សរុប ៥៧ ម៉ោង)</td>
+</tr>
+</table>
+<div class="a4-official-signature">
+  <div class="sig-left">
+    <div class="sig-bold">បានឃើញ និងឯកភាព</div>
+    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">នុត ងួនលី</div>
+  </div>
+  <div class="sig-right">
+    <div>ថ្ងៃចន្ទ ៧រោច ខែអស្សុជ ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០</div>
+    <div>រាជធានីភ្នំពេញ, ថ្ងៃទី០២ ខែវិច្ឆិកា ឆ្នាំ២០២៦</div>
+    <div class="sig-bold">គ្រូមុខវិជ្ជា</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">លឹម ដាណេ</div>
+  </div>
+</div>
+</div>
+<div style="page-break-after:always;"></div>
+<div class="a4-sheet">
+<div class="a4-official-header">
+  <div class="header-left">
+    <div class="moul">មន្ទីរអប់រំ យុវជន និងកីឡារាជធានីភ្នំពេញ</div>
+    <div>ការិយាល័យអប់រំ យុវជន និងកីឡា នៃរដ្ឋបាលខណ្ឌបឹងកេងកង</div>
+    <div class="moul">វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង</div>
+  </div>
+  <div class="header-right">
+    <div class="moul">ព្រះរាជាណាចក្រកម្ពុជា</div>
+    <div class="moul">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+    <div class="tacteing">~~~•~~~</div>
+  </div>
+</div>
+<h1 class="a4-title">សរមង់អត្ថបទប្រចាំសប្តាហ៍</h1>
+<h2 class="a4-subtitle">ឆ្នាំសិក្សា 2026-2027</h2>
+<ul class="a4-meta-list">
+<li><strong>គ្រូមុខវិជ្ជា ៖</strong> លឹម ដាណេ</li>
+<li><strong>ម៉ោងសិក្សា ៖</strong> ១ម៉ោង ៣០នាទី/សប្តាហ៍</li>
+<li><strong>សៀវភៅគោល ៖</strong> 快乐汉语（第一册 & 第二册）ភាសាចិនរីករាយ (កំរិត១ និង កំរិត២)</li>
+</ul>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>កាលបរិច្ឆេទ</th>
+<th>ម៉ោង</th>
+<th>ថ្នាក់</th>
+<th>ខ្លឹមសារមេរៀន</th>
+</tr>
+<tr>
+<td><strong>10/11/2025</strong> ថ្ងៃចន្ទ</td>
+<td>13:00-14:30</td>
+<td><strong>9A</strong></td>
+<td><strong>汉语基础（复习学前测试）</strong> — <strong>មូលដ្ឋានគ្រឹះភាសាចិន (រំលឹកមេរៀន)</strong><br/>- 声母 ព្យញ្ជនៈ<br/>- 韵母 ស្រៈ<br/>- 声调与拼读 សូរសំឡេង និងការរៀនប្រកប ភីនអ៊ីន</td>
+</tr>
+<tr>
+<td></td>
+<td>15:00-16:30</td>
+<td><strong>9C</strong></td>
+<td><strong>汉语基础（复习学前测试）</strong> — <strong>មូលដ្ឋានគ្រឹះភាសាចិន (រំលឹកមេរៀន)</strong><br/>- 声母 ព្យញ្ជនៈ<br/>- 韵母 ស្រៈ<br/>- 声调与拼读 សូរសំឡេង និងការរៀនប្រកប ភីនអ៊ីន</td>
+</tr>
+<tr>
+<td><strong>11/11/2025</strong> ថ្ងៃអង្គារ</td>
+<td>13:00-14:30</td>
+<td><strong>8C</strong></td>
+<td><strong>第一单元 你和我</strong> — <strong>第一课 你好 · មេរៀនទី១ សួស្តី</strong><br/>1. 生词 ពាក្យថ្មី៖ 你、好、吗、我、很<br/>2. 句型 ទម្រង់ល្បះ៖ ①你好！ ②你好吗？ ③我很好。</td>
+</tr>
+<tr>
+<td></td>
+<td>15:00-16:30</td>
+<td><strong>8A</strong></td>
+<td><strong>第一单元 你和我</strong> — <strong>第一课 你好 · មេរៀនទី១ សួស្តី</strong><br/>1. 生词 ពាក្យថ្មី៖ 你、好、吗、我、很<br/>2. 句型 ទម្រង់ល្បះ៖ ①你好！ ②你好吗？ ③我很好。</td>
+</tr>
+<tr>
+<td><strong>12/11/2025</strong> ថ្ងៃពុធ</td>
+<td>13:00-14:30</td>
+<td><strong>10A</strong></td>
+<td><strong>第一单元 我和朋友</strong> — <strong>第一课 他是谁 · មេរៀនទី១ តើគាត់គឺជានរណា</strong><br/>1. 生词 ពាក្យថ្មី៖ ①姓 ②名字 ③多 ④朋友 ⑤谁 ⑥欢迎 ⑦地方 ⑧国家 ⑨号码<br/>2. 句型 ទម្រង់ល្បះ៖ ①你姓什么？ ②叫什么名字？ ③我姓马，我叫马丽丽。 ④他是谁？</td>
+</tr>
+<tr>
+<td></td>
+<td>15:00-16:30</td>
+<td><strong>10C</strong></td>
+<td><strong>第一单元 我和朋友</strong> — <strong>第一课 他是谁 · មេរៀនទី១ តើគាត់គឺជានរណា</strong><br/>1. 生词 ពាក្យថ្មី៖ ①姓 ②名字 ③多 ④朋友 ⑤谁 ⑥欢迎 ⑦地方 ⑧国家 ⑨号码<br/>2. 句型 ទម្រង់ល្បះ៖ ①你姓什么？ ②叫什么名字？ ③我姓马，我叫马丽丽。 ④他是谁？</td>
+</tr>
+<tr>
+<td><strong>13/11/2025</strong> ថ្ងៃព្រហស្បតិ៍</td>
+<td>13:00-14:30</td>
+<td><strong>9B</strong></td>
+<td><strong>汉语基础（复习学前测试）</strong> — <strong>មូលដ្ឋានគ្រឹះភាសាចិន (រំលឹកមេរៀន)</strong><br/>- 声母 ព្យញ្ជនៈ<br/>- 韵母 ស្រៈ<br/>- 声调与拼读 សូរសំឡេង និងការរៀនប្រកប ភីនអ៊ីន</td>
+</tr>
+<tr>
+<td></td>
+<td>15:00-16:30</td>
+<td><strong>8B</strong></td>
+<td><strong>第一单元 你和我</strong> — <strong>第一课 你好 · មេរៀនទី១ សួស្តី</strong><br/>1. 生词 ពាក្យថ្មី៖ 你、好、吗、我、很<br/>2. 句型 ទម្រង់ល្បះ៖ ①你好！ ②你好吗？ ③我很好。</td>
+</tr>
+</table>
+<div class="a4-official-signature">
+  <div class="sig-left">
+    <div class="sig-bold">បានឃើញ និងឯកភាព</div>
+    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">នុត ងួនលី</div>
+  </div>
+  <div class="sig-right">
+    <div>ថ្ងៃសុក្រ ៩រោច ខែកត្តិក ឆ្នាំម្សាញ់ សប្តស័ក ព.ស.២៥៦៩</div>
+    <div>រាជធានីភ្នំពេញ, ថ្ងៃទី១៤ ខែវិច្ឆិកា ឆ្នាំ២០២៥</div>
+    <div class="sig-bold">គ្រូមុខវិជ្ជា</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">លឹម ដាណេ</div>
+  </div>
+</div>
+</div>
+<div style="page-break-after:always;"></div>
+<div class="a4-sheet">
+<div class="a4-official-header">
+  <div class="header-left">
+    <div class="moul">មន្ទីរអប់រំ យុវជន និងកីឡារាជធានីភ្នំពេញ</div>
+    <div>ការិយាល័យអប់រំ យុវជន និងកីឡា នៃរដ្ឋបាលខណ្ឌបឹងកេងកង</div>
+    <div class="moul">វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង</div>
+  </div>
+  <div class="header-right">
+    <div class="moul">ព្រះរាជាណាចក្រកម្ពុជា</div>
+    <div class="moul">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+    <div class="tacteing">~~~•~~~</div>
+  </div>
+</div>
+<h1 class="a4-title">កិច្ចតែងការបង្រៀនមុខវិជ្ជាភាសាចិន (៥ ជំហាន)</h1>
+<h2 class="a4-subtitle">ឆ្នាំសិក្សា 2026-2027</h2>
+<h3>មេរៀនទី 1៖ មេរៀនទី១ សួស្តី (第一课 你好)</h3>
+<ul class="a4-meta-list">
+<li><strong>ជំពូក ៖</strong> <strong>ជំពូកទី១ ខ្ញុំ និង អ្នក (第一单元 你和我)</strong></li>
+<li><strong>ចំណងជើងមេរៀន ៖</strong> <strong>មេរៀនទី១ សួស្តី (第一课 你好)</strong></li>
+<li><strong>រយៈពេល ៖</strong> ៤ ម៉ោងសិក្សា (១ម៉ោងសិក្សា មាន៩០នាទី) · <strong>ទំព័រ ៖</strong> ទំព័រទី១ ដល់ ទំព័រទី៣</li>
+<li><strong>ដកស្រង់ចេញពី ៖</strong> សៀវភៅសិក្សាគោល ភាសាចិនរីករាយ 快乐汉语 (第一册) KUAILE HANYU</li>
+</ul>
+<h4>១. វត្ថុបំណង (教学目标)</h4>
+<ul class="a4-meta-list">
+<li><strong>វិជ្ជាសម្បទា ៖</strong> សិស្សប្រើប្រាស់ត្រឹមត្រូវក្នុងការប្រាស្រ័យទាក់ទងគ្នាជាភាសាចិនដូចជា “你好! សួស្តី!”, “你好吗？ តើអ្នកសុខសប្បាយជាទេ?”, “我很好。 ខ្ញុំសុខសប្បាយជាទេ។” តាមរយៈការហ្វឹកហាត់ជាបុគ្គល និងដៃគូ។</li>
+<li><strong>បំណិនសម្បទា ៖</strong> សិស្សមានសមត្ថភាពក្នុងការប្រាស្រ័យទាក់ទងគ្នាជាភាសាចិន ហាត់សរសេរគំនូសអក្សរចិន 你 (7 画), 很 (9 画), 好 (6 画) និងស្រៈ សំឡេងទាំង៤របស់ភីនអ៊ីន (a, o, e)។</li>
+<li><strong>ចរិយាសម្បទា ៖</strong> សិស្សមានវិន័យល្អក្នុងការចូលរួម សហការណ៍ ក្នុងសកម្មភាពសិក្សា ដើម្បីជាផលប្រយោជន៍ក្នុងការប្រាស្រ័យទាក់ទងគ្នាក្នុងពេលអនាគត។</li>
+</ul>
+<h4>២. សម្ភារៈឧបទេស (教学材料)</h4>
+<ul class="a4-meta-list">
+<li><strong>ចំពោះគ្រូ ៖</strong> សៀវភៅសម្រាប់គ្រូ កិច្ចតែងការបង្រៀន ប័ណ្ណអក្សររូបភាព</li>
+<li><strong>ចំពោះសិស្ស ៖</strong> សៀវភៅគោលសម្រាប់សិស្ស សៀវភៅលំហាត់</li>
+</ul>
+<h4>ម៉ោងសិក្សាទី១ — ១. ទម្រង់ល្បះ (句型)</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ជំហាននៃការបង្រៀន</th>
+<th>សកម្មភាពគ្រូ</th>
+<th>ខ្លឹមសារមេរៀន</th>
+<th>សកម្មភាពសិស្ស</th>
+</tr>
+<tr>
+<td><strong>ជំហានទី១ លំនឹងថ្នាក់ (៥នាទី)</strong></td>
+<td>១. ត្រួតពិនិត្យអនាម័យ សំលៀកបំពាក់ និងវត្តមានសិស្ស</td>
+<td>ពង្រឹងវិន័យ សណ្តាប់ធ្នាប់ និងពិនិត្យអវត្តមានសិស្ស</td>
+<td>ស្លៀកពាក់ឯកសណ្ឋាន អង្គុយឱ្យត្រង់ ប្រធានថ្នាក់រាយការណ៍អវត្តមាន</td>
+</tr>
+<tr>
+<td><strong>ជំហានទី២ រំលឹកមេរៀនចាស់ (០នាទី)</strong></td>
+<td>គ្មាន (មេរៀនដំបូង)</td>
+<td>គ្មាន</td>
+<td>គ្មាន</td>
+</tr>
+<tr>
+<td><strong>ជំហានទី៣ ខ្លឹមសារមេរៀន (៧៥នាទី)</strong></td>
+<td>១. សរសេរចំណងជើងដាក់លើក្តារខៀន រួចអានឱ្យសិស្សស្តាប់<br/>២. បង្ហាញរូបទី១ និងទី២ ណែនាំល្បះ “你好!”, “你好吗？”, “我很好。”<br/>៣. ហៅសិស្សឡើងអានម្នាក់ម្ដងៗ និងចាប់គូហ្វឹកហាត់សន្ទនា</td>
+<td>第一单元 你和我 · 第一课 你好<br/>一. 句型 ទម្រង់ល្បះ៖<br/>1. 你好 (nǐhǎo)! សួស្តី!<br/>2. 你好吗 (nǐhǎoma)? តើអ្នកសុខសប្បាយជាទេ?<br/>3. 我很好 (wǒhěnhǎo)。 ខ្ញុំសុខសប្បាយជាទេ។</td>
+<td>សិស្សសង្កេត ស្តាប់គ្រូអាន អានតាមគ្រូ ចាប់គូឡើងសន្ទនា និងចម្លងមេរៀនចូលសៀវភៅ</td>
+</tr>
+<tr>
+<td><strong>ជំហានទី៤ ពង្រឹងពុទ្ធិ (៥នាទី)</strong></td>
+<td>គ្រូសួរជាភាសាខ្មែរ៖ “តើសួស្តី, តើអ្នកសុខសប្បាយជាទេ?, ខ្ញុំសុខសប្បាយជាទេ។ ជាភាសាចិននិយាយម៉េច?”</td>
+<td>你好！ / 你好吗？ / 我很好。</td>
+<td>សិស្សទាំងអស់គ្នាឆ្លើយសំណួររបស់គ្រូជាភាសាចិន</td>
+</tr>
+<tr>
+<td><strong>ជំហានទី៥ បណ្តាំផ្ញើ (៥នាទី)</strong></td>
+<td>ឱ្យសិស្សកត់ចំណងជើងកិច្ចការផ្ទះ និងរំលឹកមេរៀនពេលត្រលប់ទៅផ្ទះវិញ</td>
+<td>作业 កិច្ចការផ្ទះ៖ ចូរប្អូនសរសេរទម្រង់ល្បះ អក្សរចិន ភីនអ៊ីន ព្រមទាំងបកប្រែ ក្នុងមួយល្បះ ៥ដង។</td>
+<td>សិស្សចម្លងកិច្ចការផ្ទះ និងស្តាប់គ្រូដោយយកចិត្តទុកដាក់</td>
+</tr>
+</table>
+<h4>ម៉ោងសិក្សាទី២ & ទី៣ — ២. ពាក្យថ្មី (生词) & ៣. គំនូសអក្សរចិន (笔画笔顺)</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ជំហាននៃការបង្រៀន</th>
+<th>សកម្មភាពគ្រូ</th>
+<th>ខ្លឹមសារមេរៀន</th>
+<th>សកម្មភាពសិស្ស</th>
+</tr>
+<tr>
+<td><strong>ជំហានទី៣ ខ្លឹមសារមេរៀន (៦០នាទី)</strong></td>
+<td>ណែនាំពាក្យថ្មី 你, 好, 吗, 我, 很 និងបង្ហាញរបៀបសរសេរគំនូសអក្សរចិន 你 (7 画), 很 (9 画), 好 (6 画)</td>
+<td>二. 生词 ពាក្យថ្មី៖ 1.你 (អ្នក) 2.好 (ល្អ) 3.吗 (ឬទេ?) 4.我 (ខ្ញុំ) 5.很 (ណាស់)<br/>三. 笔画笔顺 គំនូស និងចំនួនគំនូសអក្សរចិន៖ 你 (7 画), 很 (9 画), 好 (6 画)</td>
+<td>សិស្សរាប់ចំនួនគំនូសតាមគ្រូ យកដៃចង្អុលគូសវាសតាមគំនូសអក្សរ និងហាត់សរសេរក្នុងសៀវភៅលំហាត់</td>
+</tr>
+</table>
+<h3>មេរៀនទី 2៖ មេរៀនទី២ តើអ្នកឈ្មោះអ្វី (第二课 你叫什么)</h3>
+<ul class="a4-meta-list">
+<li><strong>ជំពូក ៖</strong> <strong>ជំពូកទី១ ខ្ញុំ និង អ្នក (第一单元 你和我)</strong></li>
+<li><strong>ចំណងជើងមេរៀន ៖</strong> <strong>មេរៀនទី២ តើអ្នកឈ្មោះអ្វី (第二课 你叫什么)</strong></li>
+<li><strong>រយៈពេល ៖</strong> ៤ ម៉ោងសិក្សា (១ម៉ោងសិក្សា មាន៩០នាទី) · <strong>ទំព័រ ៖</strong> ទំព័រទី៤ ដល់ ទំព័រទី៧</li>
+<li><strong>ដកស្រង់ចេញពី ៖</strong> សៀវភៅសិក្សាគោល ភាសាចិនរីករាយ 快乐汉语 (第一册) KUAILE HANYU</li>
+</ul>
+<h4>១. វត្ថុបំណង (教学目标)</h4>
+<ul class="a4-meta-list">
+<li><strong>វិជ្ជាសម្បទា ៖</strong> សិស្សប្រើប្រាស់ត្រឹមត្រូវក្នុងការប្រាស្រ័យទាក់ទងគ្នាជាភាសាចិនដូចជា “你叫什么？ តើអ្នកឈ្មោះអ្វី?”, “我叫李小龙。 ខ្ញុំឈ្មោះលី សៀវឡុង។”, “你是哪国人？ តើអ្នកជាជនជាតិណា?”, “我是中国人。 ខ្ញុំជាជនជាតិចិន។”</li>
+<li><strong>បំណិនសម្បទា ៖</strong> សិស្សចេះអាន និងសរសេរពាក្យថ្មី 叫、什么、是、哪、国、人、中国、柬埔寨、法国 និងគំនូសអក្សរ 中 (4 画), 国 (8 画), 人 (2 画) ព្រមទាំងស្រៈ i, u, ü, y, w។</li>
+<li><strong>ចរិយាសម្បទា ៖</strong> សិស្សមានវិន័យល្អក្នុងការចូលរួម សហការណ៍ ក្នុងសកម្មភាពសិក្សា។</li>
+</ul>
+<h4>២. សម្ភារៈឧបទេស (教学材料)</h4>
+<ul class="a4-meta-list">
+<li><strong>ចំពោះគ្រូ ៖</strong> សៀវភៅសម្រាប់គ្រូ កិច្ចតែងការបង្រៀន ប័ណ្ណអក្សររូបភាព</li>
+<li><strong>ចំពោះសិស្ស ៖</strong> សៀវភៅគោលសម្រាប់សិស្ស សៀវភៅលំហាត់</li>
+</ul>
+<h4>ម៉ោងសិក្សាទី១ & ទី២ — ពាក្យថ្មី និងទម្រង់ល្បះ</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ជំហាននៃការបង្រៀន</th>
+<th>សកម្មភាពគ្រូ</th>
+<th>ខ្លឹមសារមេរៀន</th>
+<th>សកម្មភាពសិស្ស</th>
+</tr>
+<tr>
+<td><strong>ជំហានទី៣ ខ្លឹមសារមេរៀន (៦០នាទី)</strong></td>
+<td>បង្រៀនពាក្យថ្មី និងដាក់ឈ្មោះចិនឱ្យសិស្សម្នាក់ៗ រួចឱ្យសិស្សអនុវត្តសន្ទនាសួរឈ្មោះ និងសញ្ជាតិ</td>
+<td>一. 生词៖ 1.叫 2.什么 3.是 4.哪 5.国 6.人 7.中国 8.柬埔寨 9.法国<br/>二. 句型៖ 1.你叫什么？ 2.我叫李小龙。 3.你是哪国人？ 4.我是柬埔寨人。</td>
+<td>សិស្សរៀនអាន និងសរសេរឈ្មោះចិនរបស់ខ្លួន ព្រមទាំងអនុវត្តន៍សន្ទនាជាដៃគូ</td>
+</tr>
+</table>
+<h3>មេរៀនទី 3៖ មេរៀនទី៣ តើផ្ទះអ្នកនៅឯណា (第三课 你家在哪儿)</h3>
+<ul class="a4-meta-list">
+<li><strong>ជំពូក ៖</strong> <strong>ជំពូកទី២ គ្រួសាររបស់ខ្ញុំ (第二单元 我的家)</strong></li>
+<li><strong>ចំណងជើងមេរៀន ៖</strong> <strong>មេរៀនទី៣ តើផ្ទះអ្នកនៅឯណា (第三课 你家在哪儿)</strong></li>
+<li><strong>រយៈពេល ៖</strong> ៤ ម៉ោងសិក្សា (១ម៉ោងសិក្សា មាន៩០នាទី) · <strong>ទំព័រ ៖</strong> ទំព័រទី៨ ដល់ ទំព័រទី១១</li>
+<li><strong>ដកស្រង់ចេញពី ៖</strong> សៀវភៅសិក្សាគោល ភាសាចិនរីករាយ 快乐汉语 (第一册) KUAILE HANYU</li>
+</ul>
+<h4>១. វត្ថុបំណង (教学目标)</h4>
+<ul class="a4-meta-list">
+<li><strong>វិជ្ជាសម្បទា ៖</strong> សិស្សប្រើប្រាស់ត្រឹមត្រូវក្នុងការប្រាស្រ័យទាក់ទងគ្នាជាភាសាចិនដូចជា “你家在哪儿？ តើផ្ទះអ្នកនៅឯណា?”, “我家在北京。 ផ្ទះខ្ញុំនៅប៉េកាំង។”</li>
+<li><strong>បំណិនសម្បទា ៖</strong> សិស្សចេះពាក្យថ្មី 家、在、哪儿、北京、上海、香港、他、金边、西港、她、它 និងគំនូសអក្សរ 我 (7 画), 在 (6 画), 北 (5 画), 京 (8 画) ព្រមទាំងព្យញ្ជនៈ b, p, m, f។</li>
+<li><strong>ចរិយាសម្បទា ៖</strong> សិស្សមានវិន័យល្អក្នុងការចូលរួម សហការណ៍ ក្នុងសកម្មភាពសិក្សា។</li>
+</ul>
+<h4>២. សម្ភារៈឧបទេស (教学材料)</h4>
+<ul class="a4-meta-list">
+<li><strong>ចំពោះគ្រូ ៖</strong> សៀវភៅសម្រាប់គ្រូ កិច្ចតែងការបង្រៀន ប័ណ្ណអក្សររូបភាព</li>
+<li><strong>ចំពោះសិស្ស ៖</strong> សៀវភៅគោលសម្រាប់សិស្ស សៀវភៅលំហាត់</li>
+</ul>
+<h4>ម៉ោងសិក្សាទី១–៤ — ពាក្យថ្មី ទម្រង់ល្បះ គំនូសអក្សរ និងព្យញ្ជនៈ b p m f</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ជំហាននៃការបង្រៀន</th>
+<th>សកម្មភាពគ្រូ</th>
+<th>ខ្លឹមសារមេរៀន</th>
+<th>សកម្មភាពសិស្ស</th>
+</tr>
+<tr>
+<td><strong>ជំហានទី៣ ខ្លឹមសារមេរៀន (៦០នាទី)</strong></td>
+<td>បង្រៀនពាក្យទីកន្លែង (ភ្នំពេញ 金边, កំពង់សោម 西港, ប៉េកាំង 北京) និងការប្រកបព្យញ្ជនៈ b p m f ជាមួយស្រៈ a o i u</td>
+<td>一. 生词៖ 家、在、哪儿、北京、上海、香港、他、金边、西港、她、它<br/>二. 句型៖ 1.你家在哪儿？ 2.我家在金边。<br/>三. 笔画៖ 我 (7 画), 在 (6 画), 北 (5 画), 京 (8 画)</td>
+<td>សិស្សអានតាមគ្រូ ចាប់គូសន្ទនា និងហាត់សរសេរអក្សរចិន</td>
+</tr>
+</table>
+<h3>មេរៀនទី 4៖ មេរៀនទី៤ ប៉ា ម៉ាក់ (第四课 爸爸、妈妈)</h3>
+<ul class="a4-meta-list">
+<li><strong>ជំពូក ៖</strong> <strong>ជំពូកទី២ គ្រួសាររបស់ខ្ញុំ (第二单元 我的家)</strong></li>
+<li><strong>ចំណងជើងមេរៀន ៖</strong> <strong>មេរៀនទី៤ ប៉ា ម៉ាក់ (第四课 爸爸、妈妈)</strong></li>
+<li><strong>រយៈពេល ៖</strong> ៤ ម៉ោងសិក្សា (១ម៉ោងសិក្សា មាន៩០នាទី) · <strong>ទំព័រ ៖</strong> ទំព័រទី១៣ ដល់ ទំព័រទី១៧</li>
+<li><strong>ដកស្រង់ចេញពី ៖</strong> សៀវភៅសិក្សាគោល ភាសាចិនរីករាយ 快乐汉语 (第一册) KUAILE HANYU</li>
+</ul>
+<h4>១. វត្ថុបំណង (教学目标)</h4>
+<ul class="a4-meta-list">
+<li><strong>វិជ្ជាសម្បទា ៖</strong> សិស្សប្រើប្រាស់ត្រឹមត្រូវក្នុងការប្រាស្រ័យទាក់ទងគ្នាជាភាសាចិនដូចជា “这是我爸爸。 នេះគឺជាប៉ាខ្ញុំ។”, “那是我妈妈。 នោះគឺជាម៉ាក់ខ្ញុំ។”, “这是我。 នេះគឺជាខ្ញុំ។”</li>
+<li><strong>បំណិនសម្បទា ៖</strong> សិស្សចេះពាក្យសមាជិកគ្រួសារ 爸爸、妈妈、哥哥、姐姐、弟弟、妹妹、叔叔、阿姨、爷爷、奶奶、不។</li>
+<li><strong>ចរិយាសម្បទា ៖</strong> សិស្សមានវិន័យល្អ និងគោរពស្រឡាញ់សមាជិកគ្រួសារ។</li>
+</ul>
+<h4>២. សម្ភារៈឧបទេស (教学材料)</h4>
+<ul class="a4-meta-list">
+<li><strong>ចំពោះគ្រូ ៖</strong> សៀវភៅសម្រាប់គ្រូ កិច្ចតែងការបង្រៀន ប័ណ្ណអក្សររូបភាព</li>
+<li><strong>ចំពោះសិស្ស ៖</strong> សៀវភៅគោលសម្រាប់សិស្ស សៀវភៅលំហាត់</li>
+</ul>
+<h4>ម៉ោងសិក្សាទី១ & ទី២ — ពាក្យថ្មីសមាជិកគ្រួសារ និងទម្រង់ល្បះ</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ជំហាននៃការបង្រៀន</th>
+<th>សកម្មភាពគ្រូ</th>
+<th>ខ្លឹមសារមេរៀន</th>
+<th>សកម្មភាពសិស្ស</th>
+</tr>
+<tr>
+<td><strong>ជំហានទី៣ ខ្លឹមសារមេរៀន (៦០នាទី)</strong></td>
+<td>បង្ហាញរូបភាពសមាជិកគ្រួសារ និងណែនាំល្បះ 这是我爸爸 / 那是我妈妈</td>
+<td>一. 生词៖ 1.这 2.那 3.爸爸 4.妈妈 5.哥哥 6.姐姐 7.弟弟 8.妹妹 9.叔叔 10.阿姨 11.爷爷 12.奶奶 15.不<br/>二. 句型៖ 这是我爸爸。 / 那是我妈妈。</td>
+<td>សិស្សអានពាក្យថ្មី និងណែនាំសមាជិកគ្រួសារជាភាសាចិន</td>
+</tr>
+</table>
+<div class="a4-official-signature">
+  <div class="sig-left">
+    <div class="sig-bold">បានឃើញ និងឯកភាព</div>
+    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">នុត ងួនលី</div>
+  </div>
+  <div class="sig-right">
+    <div>ថ្ងៃចន្ទ ៧រោច ខែអស្សុជ ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០</div>
+    <div>រាជធានីភ្នំពេញ, ថ្ងៃទី០២ ខែវិច្ឆិកា ឆ្នាំ២០២៦</div>
+    <div class="sig-bold">គ្រូមុខវិជ្ជា</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">លឹម ដាណេ</div>
+  </div>
+</div>
+</div>
+<div style="page-break-after:always;"></div>
+<div class="a4-sheet">
+<div class="a4-official-header">
+  <div class="header-left">
+    <div class="moul">មន្ទីរអប់រំ យុវជន និងកីឡារាជធានីភ្នំពេញ</div>
+    <div>ការិយាល័យអប់រំ យុវជន និងកីឡា នៃរដ្ឋបាលខណ្ឌបឹងកេងកង</div>
+    <div class="moul">វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង</div>
+  </div>
+  <div class="header-right">
+    <div class="moul">ព្រះរាជាណាចក្រកម្ពុជា</div>
+    <div class="moul">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+    <div class="tacteing">~~~•~~~</div>
+  </div>
+</div>
+<h1 class="a4-title">វត្ថុបំណងបំពេញការងារ</h1>
+<h2 class="a4-subtitle">កិច្ចព្រមព្រៀងលទ្ធផល ប្រចាំឆ្នាំ២០២៥ របស់គ្រូបង្រៀន</h2>
+<h3>ប្រចាំឆ្នាំសិក្សា ២០២៥ - ២០២៦ ចាប់ពីខែ មករា ដល់ ខែ តុលា ឆ្នាំ២០២៦</h3>
+<ul class="a4-meta-list">
+<li>ការកំណត់វត្ថុបំណង និងលក្ខណៈវិនិច្ឆ័យបំពេញការងារ សម្រាប់ ការពិនិត្យឡើងវិញ ការអនុវត្តការងារមន្ត្រីឆ្នាំ ២០២៥-២០២៦</li>
+</ul>
+<h3>វត្ថុបំណងទី១៖ លទ្ធផលសិក្សារៀនសូត្ររបស់សិស្សមុខវិជ្ជា ( ភាសាចិន ) ថ្នាក់ទី ៨ ទី៩ និងទី១០</h3>
+<h4>០) សរុបរួមគ្រប់ថ្នាក់ (៨A ៨B ៨C ៩A ៩B ៩C ១០A ១០C) (សរុប 0 នាក់, ស្រី 0 នាក់)</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>និទ្ទេស</th>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+<th>E</th>
+<th>F</th>
+</tr>
+<tr>
+<td><strong>ដើមឆ្នាំ</strong></td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+</tr>
+<tr>
+<td><strong>គ្រោងចុងឆ្នាំ</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+</tr>
+<tr>
+<td><strong>សម្រេចចុងឆ្នាំ</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+</tr>
+</table>
+<ul class="a4-meta-list">
+<li><strong>កំណត់ត្រាស្ថានភាពសិក្សារបស់សិស្ស (学生学习情况记录) ៖</strong> សរុបរួមសិស្សទាំង ៨ ថ្នាក់ (ថ្នាក់ទី៨ ទី៩ និងទី១០) ចំនួន ២៣២នាក់ (ស្រី ១២៩នាក់) មានការរីកចម្រើនគួរឱ្យកត់សម្គាល់ទាំងផ្នែកវិជ្ជាសម្បទា បំណិនសម្បទា និងចរិយាសម្បទា ដោយអត្រាសិស្សទទួលបាននិទ្ទេស A, B, C កើនឡើងតាមផែនការគ្រោងទុក។</li>
+<li><strong>ការឆ្លុះបញ្ចាំងរបស់គ្រូបង្រៀន (教师教学反思) ៖</strong> ក្នុងនាមជាគ្រូបង្រៀនមុខវិជ្ជាភាសាចិន នាងខ្ញុំបានអនុវត្តយ៉ាងខ្ជាប់ខ្ជួននូវការដាក់កិច្ចការស្វ័យសិក្សាមុនម៉ោងរៀន ការកែកិច្ចការផ្ទះ និងការបំប៉នសិស្សខ្សោយ ដែលធ្វើឱ្យលទ្ធផលសិក្សារបស់សិស្សថ្នាក់ទី៨ ទី៩ និងទី១០ សម្រេចបានតាមស្តង់ដាសាលាគំរូ។</li>
+</ul>
+<h4>១) ថ្នាក់ទី៨ សរុប (៨A ៨B ៨C) (សរុប 0 នាក់, ស្រី 0 នាក់)</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>និទ្ទេស</th>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+<th>E</th>
+<th>F</th>
+</tr>
+<tr>
+<td><strong>ដើមឆ្នាំ</strong></td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+</tr>
+<tr>
+<td><strong>គ្រោងចុងឆ្នាំ</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+</tr>
+<tr>
+<td><strong>សម្រេចចុងឆ្នាំ</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+</tr>
+</table>
+<ul class="a4-meta-list">
+<li><strong>កំណត់ត្រាស្ថានភាពសិក្សារបស់សិស្ស (学生学习情况记录) ៖</strong> សរុបសិស្សថ្នាក់ទី៨ ទាំង ៣ ថ្នាក់ (៨A, ៨B, ៨C) ចំនួន ៩៥នាក់ (ស្រី ៥០នាក់) បានសម្រេចគោលដៅមូលដ្ឋាននៃសៀវភៅ ភាសាចិនរីករាយ ភាគ១ (快乐汉语 第一册) ដោយអត្រាជាប់មធ្យមភាគកើនឡើងដល់ ១០០%។</li>
+<li><strong>ការឆ្លុះបញ្ចាំងរបស់គ្រូបង្រៀន (教师教学反思) ៖</strong> ការបង្រៀនតាមវិធីសាស្ត្រសកម្ម និងការតាមដានកិច្ចការផ្ទះប្រចាំថ្ងៃបានជួយកាត់បន្ថយអត្រាសិស្សខ្សោយយ៉ាងមានប្រសិទ្ធភាព។</li>
+</ul>
+<h4>២) ថ្នាក់ទី ៨A (សរុប 31 នាក់, ស្រី 12 នាក់)</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>និទ្ទេស</th>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+<th>E</th>
+<th>F</th>
+</tr>
+<tr>
+<td><strong>ដើមឆ្នាំ</strong></td>
+<td>46% = 14នាក់</td>
+<td>17% = 5នាក់</td>
+<td>8% = 2នាក់</td>
+<td>4% = 1នាក់</td>
+<td>4% = 1នាក់</td>
+<td>21% = 7នាក់</td>
+</tr>
+<tr>
+<td><strong>គ្រោងចុងឆ្នាំ</strong></td>
+<td><strong>50% = 16នាក់</strong></td>
+<td><strong>25% = 8នាក់</strong></td>
+<td><strong>17% = 5នាក់</strong></td>
+<td><strong>8% = 2នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+</tr>
+<tr>
+<td><strong>សម្រេចចុងឆ្នាំ</strong></td>
+<td><strong>50% = 16នាក់</strong></td>
+<td><strong>25% = 8នាក់</strong></td>
+<td><strong>17% = 5នាក់</strong></td>
+<td><strong>8% = 2នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+</tr>
+</table>
+<ul class="a4-meta-list">
+<li><strong>កំណត់ត្រាស្ថានភាពសិក្សារបស់សិស្ស (学生学习情况记录) ៖</strong> សិស្សថ្នាក់ទី ៨A ចំនួន ៣០នាក់ (ស្រី ១៩នាក់) មានភាពសកម្មក្នុងការហាត់អានប្រកបភីនអ៊ីន (Pinyin) និងចងចាំពាក្យថ្មីមូលដ្ឋានបានល្អ។ សិស្សភាគច្រើនទទួលបាននិទ្ទេស B និង C ហើយគ្មានសិស្សធ្លាក់និទ្ទេស F នៅចុងឆ្នាំ។</li>
+<li><strong>ការឆ្លុះបញ្ចាំងរបស់គ្រូបង្រៀន (教师教学反思) ៖</strong> ត្រូវបន្តប្រើប្រាស់ប័ណ្ណពាក្យរូបភាព និងការសន្ទនាជាគូ ដើម្បីជួយសិស្សនិទ្ទេស D ឱ្យឡើងមកនិទ្ទេស C និង B ព្រមទាំងពង្រឹងការសរសេរលំដាប់គំនូសអក្សរចិន (汉字笔画)។</li>
+</ul>
+<h4>៣) ថ្នាក់ទី ៨B (សរុប 26 នាក់, ស្រី 9 នាក់)</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>និទ្ទេស</th>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+<th>E</th>
+<th>F</th>
+</tr>
+<tr>
+<td><strong>ដើមឆ្នាំ</strong></td>
+<td>35% = 9នាក់</td>
+<td>4% = 1នាក់</td>
+<td>15% = 4នាក់</td>
+<td>0% = 0នាក់</td>
+<td>12% = 3នាក់</td>
+<td>34% = 9នាក់</td>
+</tr>
+<tr>
+<td><strong>គ្រោងចុងឆ្នាំ</strong></td>
+<td><strong>42% = 11នាក់</strong></td>
+<td><strong>23% = 6នាក់</strong></td>
+<td><strong>15% = 4នាក់</strong></td>
+<td><strong>12% = 3នាក់</strong></td>
+<td><strong>8% = 2នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+</tr>
+<tr>
+<td><strong>សម្រេចចុងឆ្នាំ</strong></td>
+<td><strong>42% = 11នាក់</strong></td>
+<td><strong>23% = 6នាក់</strong></td>
+<td><strong>15% = 4នាក់</strong></td>
+<td><strong>12% = 3នាក់</strong></td>
+<td><strong>8% = 2នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+</tr>
+</table>
+<ul class="a4-meta-list">
+<li><strong>កំណត់ត្រាស្ថានភាពសិក្សារបស់សិស្ស (学生学习情况记录) ៖</strong> សិស្សថ្នាក់ទី ៨B ចំនួន ២៨នាក់ (ស្រី ១៥នាក់) គោរពវិន័យក្នុងថ្នាក់បានល្អ មានការរីកចម្រើនផ្នែកការស្តាប់ និងការឆ្លើយតបប្រយោគខ្លីៗជាភាសាចិន (日常交际用语)។</li>
+<li><strong>ការឆ្លុះបញ្ចាំងរបស់គ្រូបង្រៀន (教师教学反思) ៖</strong> បង្កើនការដាក់កិច្ចការស្វ័យសិក្សាមុនម៉ោងរៀន និងត្រួតពិនិត្យសៀវភៅលំហាត់ប្រចាំសប្តាហ៍ ដើម្បីជួយសិស្សដែលអានយឺតឱ្យអានអត្ថបទបានស្ទាត់។</li>
+</ul>
+<h4>៤) ថ្នាក់ទី ៨C (សរុប 26 នាក់, ស្រី 14 នាក់)</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>និទ្ទេស</th>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+<th>E</th>
+<th>F</th>
+</tr>
+<tr>
+<td><strong>ដើមឆ្នាំ</strong></td>
+<td>31% = 8នាក់</td>
+<td>6% = 2នាក់</td>
+<td>20% = 5នាក់</td>
+<td>6% = 2នាក់</td>
+<td>6% = 2នាក់</td>
+<td>31% = 8នាក់</td>
+</tr>
+<tr>
+<td><strong>គ្រោងចុងឆ្នាំ</strong></td>
+<td><strong>34% = 9នាក់</strong></td>
+<td><strong>26% = 7នាក់</strong></td>
+<td><strong>20% = 5នាក់</strong></td>
+<td><strong>11% = 3នាក់</strong></td>
+<td><strong>6% = 2នាក់</strong></td>
+<td><strong>3% = 1នាក់</strong></td>
+</tr>
+<tr>
+<td><strong>សម្រេចចុងឆ្នាំ</strong></td>
+<td><strong>34% = 9នាក់</strong></td>
+<td><strong>26% = 7នាក់</strong></td>
+<td><strong>20% = 5នាក់</strong></td>
+<td><strong>11% = 3នាក់</strong></td>
+<td><strong>6% = 2នាក់</strong></td>
+<td><strong>3% = 1នាក់</strong></td>
+</tr>
+</table>
+<ul class="a4-meta-list">
+<li><strong>កំណត់ត្រាស្ថានភាពសិក្សារបស់សិស្ស (学生学习情况记录) ៖</strong> សិស្សថ្នាក់ទី ៨C ចំនួន ៣៧នាក់ (ស្រី ១៦នាក់) មានចំនួនសិស្សច្រើន សិស្សឆ្នើមអាចសរសេរអក្សរចិន និងតែងប្រយោគបានត្រឹមត្រូវ ឯសិស្សមួយចំនួនតូចត្រូវការជំនួយបន្ថែមលើការបញ្ចេញសំឡេងស្នៀងទាំង៤ (四声声调)។</li>
+<li><strong>ការឆ្លុះបញ្ចាំងរបស់គ្រូបង្រៀន (教师教学反思) ៖</strong> រៀបចំក្រុមសិក្សាជួយគ្នា (សិស្សពូកែជួយសិស្សខ្សោយ) និងផ្តល់លំហាត់ហាត់សរសេរអក្សរចិនបន្ថែមនៅផ្ទះ។</li>
+</ul>
+<h4>៥) ថ្នាក់ទី៩ សរុប (៩A ៩B ៩C) (សរុប 0 នាក់, ស្រី 0 នាក់)</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>និទ្ទេស</th>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+<th>E</th>
+<th>F</th>
+</tr>
+<tr>
+<td><strong>ដើមឆ្នាំ</strong></td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+</tr>
+<tr>
+<td><strong>គ្រោងចុងឆ្នាំ</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+</tr>
+<tr>
+<td><strong>សម្រេចចុងឆ្នាំ</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+</tr>
+</table>
+<ul class="a4-meta-list">
+<li><strong>កំណត់ត្រាស្ថានភាពសិក្សារបស់សិស្ស (学生学习情况记录) ៖</strong> សរុបសិស្សថ្នាក់ទី៩ ទាំង ៣ ថ្នាក់ (៩A, ៩B, ៩C) ចំនួន ៨៩នាក់ (ស្រី ៥២នាក់) មានសមត្ថភាពអាន និងសរសេរប្រយោគភាសាចិនកម្រិតមធ្យមបានល្អប្រសើរ ស្របតាមស្តង់ដាសាលាគំរូ។</li>
+<li><strong>ការឆ្លុះបញ្ចាំងរបស់គ្រូបង្រៀន (教师教学反思) ៖</strong> ការរួមបញ្ចូលការវាយតម្លៃបំណិនសម្បទា និងចរិយាសម្បទាប្រចាំខែ បានជំរុញឱ្យសិស្សថ្នាក់ទី៩ មានទម្លាប់ស្វ័យសិក្សាល្អ។</li>
+</ul>
+<h4>៦) ថ្នាក់ទី ៩A (សរុប 26 នាក់, ស្រី 11 នាក់)</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>និទ្ទេស</th>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+<th>E</th>
+<th>F</th>
+</tr>
+<tr>
+<td><strong>ដើមឆ្នាំ</strong></td>
+<td>15% = 4នាក់</td>
+<td>4% = 1នាក់</td>
+<td>6% = 2នាក់</td>
+<td>3% = 1នាក់</td>
+<td>6% = 2នាក់</td>
+<td>66% = 17នាក់</td>
+</tr>
+<tr>
+<td><strong>គ្រោងចុងឆ្នាំ</strong></td>
+<td><strong>15% = 4នាក់</strong></td>
+<td><strong>15% = 4នាក់</strong></td>
+<td><strong>15% = 4នាក់</strong></td>
+<td><strong>14% = 4នាក់</strong></td>
+<td><strong>14% = 4នាក់</strong></td>
+<td><strong>27% = 7នាក់</strong></td>
+</tr>
+<tr>
+<td><strong>សម្រេចចុងឆ្នាំ</strong></td>
+<td><strong>15% = 4នាក់</strong></td>
+<td><strong>15% = 4នាក់</strong></td>
+<td><strong>15% = 4នាក់</strong></td>
+<td><strong>14% = 4នាក់</strong></td>
+<td><strong>14% = 4នាក់</strong></td>
+<td><strong>27% = 7នាក់</strong></td>
+</tr>
+</table>
+<ul class="a4-meta-list">
+<li><strong>កំណត់ត្រាស្ថានភាពសិក្សារបស់សិស្ស (学生学习情况记录) ៖</strong> សិស្សថ្នាក់ទី ៩A ចំនួន ២៩នាក់ (ស្រី ១៧នាក់) មានមូលដ្ឋានគ្រឹះភាសាចិនរឹងមាំ អាចអានអត្ថបទសន្ទនា និងបកប្រែពីភាសាចិនមកភាសាខ្មែរបានច្បាស់លាស់។</li>
+<li><strong>ការឆ្លុះបញ្ចាំងរបស់គ្រូបង្រៀន (教师教学反思) ៖</strong> បន្ថែមលំហាត់តែងល្បះ និងការសន្ទនាក្លែងធ្វើស្ថានភាពជាក់ស្តែង ដើម្បីបង្កើនចំនួនសិស្សទទួលបាននិទ្ទេស A និង B។</li>
+</ul>
+<h4>៧) ថ្នាក់ទី ៩B (សរុប 23 នាក់, ស្រី 5 នាក់)</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>និទ្ទេស</th>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+<th>E</th>
+<th>F</th>
+</tr>
+<tr>
+<td><strong>ដើមឆ្នាំ</strong></td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>5% = 1នាក់</td>
+<td>0% = 0នាក់</td>
+<td>95% = 22នាក់</td>
+</tr>
+<tr>
+<td><strong>គ្រោងចុងឆ្នាំ</strong></td>
+<td><strong>5% = 1នាក់</strong></td>
+<td><strong>11% = 3នាក់</strong></td>
+<td><strong>16% = 4នាក់</strong></td>
+<td><strong>21% = 5នាក់</strong></td>
+<td><strong>21% = 5នាក់</strong></td>
+<td><strong>26% = 6នាក់</strong></td>
+</tr>
+<tr>
+<td><strong>សម្រេចចុងឆ្នាំ</strong></td>
+<td><strong>5% = 1នាក់</strong></td>
+<td><strong>11% = 3នាក់</strong></td>
+<td><strong>16% = 4នាក់</strong></td>
+<td><strong>21% = 5នាក់</strong></td>
+<td><strong>21% = 5នាក់</strong></td>
+<td><strong>26% = 6នាក់</strong></td>
+</tr>
+</table>
+<ul class="a4-meta-list">
+<li><strong>កំណត់ត្រាស្ថានភាពសិក្សារបស់សិស្ស (学生学习情况记录) ៖</strong> សិស្សថ្នាក់ទី ៩B ចំនួន ២៧នាក់ (ស្រី ១៤នាក់) មានការចូលរួមឆ្លើយសំណួរក្នុងថ្នាក់បានល្អ និងប្រគល់កិច្ចការផ្ទះទៀងទាត់។</li>
+<li><strong>ការឆ្លុះបញ្ចាំងរបស់គ្រូបង្រៀន (教师教学反思) ៖</strong> បន្តលើកទឹកចិត្តសិស្សតាមរយៈការផ្តល់ពិន្ទុបន្ថែម និងប័ណ្ណសរសើរប្រចាំខែដល់សិស្សដែលខិតខំប្រឹងប្រែង។</li>
+</ul>
+<h4>៨) ថ្នាក់ទី ៩C (សរុប 19 នាក់, ស្រី 10 នាក់)</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>និទ្ទេស</th>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+<th>E</th>
+<th>F</th>
+</tr>
+<tr>
+<td><strong>ដើមឆ្នាំ</strong></td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>10% = 2នាក់</td>
+<td>90% = 17នាក់</td>
+</tr>
+<tr>
+<td><strong>គ្រោងចុងឆ្នាំ</strong></td>
+<td><strong>5% = 1នាក់</strong></td>
+<td><strong>20% = 4នាក់</strong></td>
+<td><strong>15% = 3នាក់</strong></td>
+<td><strong>15% = 3នាក់</strong></td>
+<td><strong>15% = 3នាក់</strong></td>
+<td><strong>30% = 6នាក់</strong></td>
+</tr>
+<tr>
+<td><strong>សម្រេចចុងឆ្នាំ</strong></td>
+<td><strong>5% = 1នាក់</strong></td>
+<td><strong>20% = 4នាក់</strong></td>
+<td><strong>15% = 3នាក់</strong></td>
+<td><strong>15% = 3នាក់</strong></td>
+<td><strong>15% = 3នាក់</strong></td>
+<td><strong>30% = 6នាក់</strong></td>
+</tr>
+</table>
+<ul class="a4-meta-list">
+<li><strong>កំណត់ត្រាស្ថានភាពសិក្សារបស់សិស្ស (学生学习情况记录) ៖</strong> សិស្សថ្នាក់ទី ៩C ចំនួន ៣៣នាក់ (ស្រី ២១នាក់) មានភាពរីកចម្រើនខ្លាំងលើការចងចាំពាក្យថ្មី និងការប្រើប្រាស់ឃ្លាវេយ្យាករណ៍មូលដ្ឋាន។</li>
+<li><strong>ការឆ្លុះបញ្ចាំងរបស់គ្រូបង្រៀន (教师教学反思) ៖</strong> យកចិត្តទុកដាក់បំប៉នបន្ថែមដល់សិស្សដែលឈប់សម្រាកច្រើនម៉ោង ដើម្បីឱ្យពួកគេតាមទាន់កម្មវិធីសិក្សា។</li>
+</ul>
+<h4>៩) ថ្នាក់ទី១០ សរុប (១០A ១០C) (សរុប 0 នាក់, ស្រី 0 នាក់)</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>និទ្ទេស</th>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+<th>E</th>
+<th>F</th>
+</tr>
+<tr>
+<td><strong>ដើមឆ្នាំ</strong></td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+</tr>
+<tr>
+<td><strong>គ្រោងចុងឆ្នាំ</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+</tr>
+<tr>
+<td><strong>សម្រេចចុងឆ្នាំ</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+</tr>
+</table>
+<ul class="a4-meta-list">
+<li><strong>កំណត់ត្រាស្ថានភាពសិក្សារបស់សិស្ស (学生学习情况记录) ៖</strong> សរុបសិស្សថ្នាក់ទី១០ ទាំង ២ ថ្នាក់ (១០A, ១០C) ចំនួន ៤៨នាក់ (ស្រី ២៧នាក់) មានសមត្ថភាពប្រើប្រាស់ភាសាចិនក្នុងការសន្ទនា និងការសរសេរកម្រិតខ្ពស់ជាងមុនយ៉ាងច្បាស់។</li>
+<li><strong>ការឆ្លុះបញ្ចាំងរបស់គ្រូបង្រៀន (教师教学反思) ៖</strong> ការអនុវត្តគម្រោងសិក្សាជាក្រុម និងការត្រួតពិនិត្យកិច្ចការផ្ទះទៀងទាត់ បានជួយឱ្យសិស្សថ្នាក់ទី១០ សម្រេចបានគោលដៅកិច្ចព្រមព្រៀងលទ្ធផលប្រចាំឆ្នាំ។</li>
+</ul>
+<h4>១០) ថ្នាក់ទី ១០A (សរុប 25 នាក់, ស្រី 10 នាក់)</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>និទ្ទេស</th>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+<th>E</th>
+<th>F</th>
+</tr>
+<tr>
+<td><strong>ដើមឆ្នាំ</strong></td>
+<td>12% = 3នាក់</td>
+<td>8% = 2នាក់</td>
+<td>4% = 1នាក់</td>
+<td>4% = 1នាក់</td>
+<td>64% = 16នាក់</td>
+<td>8% = 2នាក់</td>
+</tr>
+<tr>
+<td><strong>គ្រោងចុងឆ្នាំ</strong></td>
+<td><strong>28% = 7នាក់</strong></td>
+<td><strong>24% = 6នាក់</strong></td>
+<td><strong>24% = 6នាក់</strong></td>
+<td><strong>24% = 6នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+</tr>
+<tr>
+<td><strong>សម្រេចចុងឆ្នាំ</strong></td>
+<td><strong>28% = 7នាក់</strong></td>
+<td><strong>24% = 6នាក់</strong></td>
+<td><strong>24% = 6នាក់</strong></td>
+<td><strong>24% = 6នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+</tr>
+</table>
+<ul class="a4-meta-list">
+<li><strong>កំណត់ត្រាស្ថានភាពសិក្សារបស់សិស្ស (学生学习情况记录) ៖</strong> សិស្សថ្នាក់ទី ១០A ចំនួន ៣១នាក់ (ស្រី ២១នាក់) សិក្សាសៀវភៅ ភាសាចិនរីករាយ ភាគ២ (快乐汉语 第二册) អាចអានអត្ថបទវែង និងសរសេរអត្ថបទខ្លីៗបានល្អ។</li>
+<li><strong>ការឆ្លុះបញ្ចាំងរបស់គ្រូបង្រៀន (教师教学反思) ៖</strong> ពង្រឹងការហាត់ស្តាប់ និងការសរសេរអត្ថបទខ្លី ៥០-៨០ អក្សរចិន ដើម្បីត្រៀមប្រឡងឆមាសឱ្យទទួលបាននិទ្ទេសខ្ពស់។</li>
+</ul>
+<h4>១១) ថ្នាក់ទី ១០C (សរុប 0 នាក់, ស្រី 0 នាក់)</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>និទ្ទេស</th>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+<th>E</th>
+<th>F</th>
+</tr>
+<tr>
+<td><strong>ដើមឆ្នាំ</strong></td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+<td>0% = 0នាក់</td>
+</tr>
+<tr>
+<td><strong>គ្រោងចុងឆ្នាំ</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+</tr>
+<tr>
+<td><strong>សម្រេចចុងឆ្នាំ</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+<td><strong>0% = 0នាក់</strong></td>
+</tr>
+</table>
+<ul class="a4-meta-list">
+<li><strong>កំណត់ត្រាស្ថានភាពសិក្សារបស់សិស្ស (学生学习情况记录) ៖</strong> សិស្សថ្នាក់ទី ១០C ចំនួន ១៧នាក់ (ស្រី ៦នាក់) ថ្នាក់មានចំនួនសិស្សសមល្មម ធ្វើឱ្យគ្រូអាចណែនាំផ្ទាល់ដល់សិស្សម្នាក់ៗលើការបញ្ចេញសំឡេង និងការសរសេរអក្សរចិនបានយ៉ាងដិតដល់។</li>
+<li><strong>ការឆ្លុះបញ្ចាំងរបស់គ្រូបង្រៀន (教师教学反思) ៖</strong> បន្តតាមដានសិស្សដែលអវត្តមានញឹកញាប់ និងផ្តល់ឯកសារស្វ័យសិក្សាបន្ថែមដើម្បីធានាថាសិស្សគ្រប់រូបទទួលបាននិទ្ទេសល្អ។</li>
+</ul>
+<div class="a4-official-signature">
+  <div class="sig-left">
+    <div class="sig-bold">បានឃើញ និងឯកភាព</div>
+    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">នុត ងួនលី</div>
+  </div>
+  <div class="sig-right">
+    <div>ថ្ងៃចន្ទ ៧រោច ខែអស្សុជ ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០</div>
+    <div>រាជធានីភ្នំពេញ, ថ្ងៃទី០២ ខែវិច្ឆិកា ឆ្នាំ២០២៦</div>
+    <div class="sig-bold">គ្រូមុខវិជ្ជា</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">លឹម ដាណេ</div>
+  </div>
+</div>
+</div>
+<div style="page-break-after:always;"></div>
+<div class="a4-sheet">
+<div class="a4-official-header">
+  <div class="header-left">
+    <div class="moul">មន្ទីរអប់រំ យុវជន និងកីឡារាជធានីភ្នំពេញ</div>
+    <div>ការិយាល័យអប់រំ យុវជន និងកីឡា នៃរដ្ឋបាលខណ្ឌបឹងកេងកង</div>
+    <div class="moul">វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង</div>
+  </div>
+  <div class="header-right">
+    <div class="moul">ព្រះរាជាណាចក្រកម្ពុជា</div>
+    <div class="moul">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+    <div class="tacteing">~~~•~~~</div>
+  </div>
+</div>
+<h1 class="a4-title">ភារកិច្ចគ្រូបង្រៀន ស្តង់ដាសាលាគំរូ</h1>
+<h2 class="a4-subtitle">ថ្នាក់ទី ១០C · ខែកុម្ភៈ (2026-2027)</h2>
+<ul class="a4-meta-list">
+<li><strong>លោក - លោកស្រី ៖</strong> <strong>លឹម ដាណេ</strong></li>
+<li><strong>បង្រៀនមុខវិជ្ជា ៖</strong> <strong>ភាសាចិន</strong> · <strong>ថ្នាក់ទី ៖</strong> <strong>១០C</strong></li>
+<li><strong>សិស្សសរុប ៖</strong> <strong>0 នាក់</strong> / ស្រី <strong>0 នាក់</strong></li>
+</ul>
+<h3>I. គ្រូត្រូវធ្វើប្រចាំខែ កុម្ភៈ</h3>
+<ol class="a4-ordered-list">
+<li><strong>គ្រូបង្រៀនបានដាក់កិច្ចការឱ្យសិស្សស្វ័យសិក្សាមុនពេលមកជួបគ្រូចំនួន ៖</strong> <strong>2</strong> ដងក្នុង១ខែ</li>
+</ol>
+<ul class="a4-meta-list">
+<li>ក. មេរៀនទី៤ បន្ទប់របស់ខ្ញុំ (ពាក្យថ្មី ទំព័រ 21)</li>
+<li>ខ. មេរៀនទី៤ បន្ទប់របស់ខ្ញុំ (ទម្រង់ល្បះ ទំព័រ 21)</li>
+</ul>
+<ol class="a4-ordered-list">
+<li><strong>គ្រូដាក់កិច្ចការគម្រោង ឬប្រធានបទឱ្យសិស្សធ្វើចំនួន ៖</strong> <strong>1</strong> ដងក្នុង១ខែ</li>
+</ol>
+<ul class="a4-meta-list">
+<li>ក. សៀវភៅលំហាត់ (ទំព័រទី 26-34)</li>
+</ul>
+<ol class="a4-ordered-list">
+<li><strong>គ្រូដាក់កិច្ចការផ្ទះឱ្យសិស្សធ្វើចំនួន ៖</strong> <strong>1</strong> ដងក្នុង១ខែ</li>
+</ol>
+<ul class="a4-meta-list">
+<li>ក. សរសេរគំនូសអក្សរចិន និងទម្រង់ល្បះ មេរៀនទី៤</li>
+</ul>
+<ol class="a4-ordered-list">
+<li><strong>គ្រូកែកិច្ចការផ្ទះសិស្សបានចំនួន ៖</strong> <strong>1</strong> ដងក្នុង១ខែ</li>
+<li><strong>គ្រូដាក់ពិន្ទុបំណិនសម្បទា និងចរិយាសម្បទាសិស្សបានចំនួន ៖</strong> <strong>0</strong> នាក់ក្នុង១ខែ</li>
+</ol>
+<h3>II. សិស្សត្រូវធ្វើប្រចាំខែ</h3>
+<ul class="a4-meta-list">
+<li><strong>សិស្សបានស្វ័យសិក្សាមុនពេលមកជួបគ្រូបង្រៀនចំនួន ៖</strong> <strong>0</strong> នាក់ក្នុង១ខែ</li>
+<li><strong>សិស្សបានធ្វើកិច្ចការ ជាគម្រោង/ចំណោទ/លំហាត់ ស្រាវជ្រាវចំនួន ៖</strong> <strong>0</strong> នាក់ក្នុង១ខែ</li>
+<li><strong>សិស្សបានធ្វើកិច្ចការផ្ទះចំនួន ៖</strong> <strong>0</strong> នាក់ក្នុង១ខែ</li>
+<li><strong>សិស្សបានធ្វើផែនការសិក្សារៀនសូត្រចំនួន ៖</strong> <strong>0</strong> នាក់ (១ឆ្នាំ)</li>
+<li><strong>កំណត់សម្គាល់សិស្សជួបការលំបាក ៖</strong> សិស្សក្រីក្រ ជួបការលំបាក សិស្សរងហិង្សាឬមានវិបត្តិផ្លូវចិត្ត សិស្សឈប់ច្រើនម៉ោងខ្លួន សិស្សរៀនខ្សោយមុខវិជ្ជាខ្លួន</li>
+</ul>
+<div class="a4-official-signature">
+  <div class="sig-left">
+    <div class="sig-bold">បានឃើញ និងឯកភាព</div>
+    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">នុត ងួនលី</div>
+  </div>
+  <div class="sig-right">
+    <div>ថ្ងៃចន្ទ ៧រោច ខែអស្សុជ ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០</div>
+    <div>រាជធានីភ្នំពេញ, ថ្ងៃទី០២ ខែវិច្ឆិកា ឆ្នាំ២០២៦</div>
+    <div class="sig-bold">គ្រូមុខវិជ្ជា</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">លឹម ដាណេ</div>
+  </div>
+</div>
+</div>
+</body>
+</html>

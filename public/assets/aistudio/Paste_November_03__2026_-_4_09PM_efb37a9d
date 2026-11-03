@@ -1,0 +1,2558 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង - student_stats (10C)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Moul&family=Noto+Sans+SC:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Battambang', 'Noto Sans SC', sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.55;
+    color: #000000;
+    background: #f1f5f9;
+    margin: 0;
+    padding: 20px 10px;
+  }
+  .a4-sheet {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 20px auto;
+    padding: 12mm;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    border: 1px solid #cbd5e1;
+  }
+  .moul {
+    font-family: 'Moul', 'Battambang', 'Noto Sans SC', serif;
+    font-weight: normal;
+  }
+  .a4-official-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    font-size: 10.5pt;
+    line-height: 1.6;
+  }
+  .a4-official-header .header-left {
+    text-align: left;
+  }
+  .a4-official-header .header-right {
+    text-align: center;
+  }
+  .a4-official-header .tacteing {
+    font-size: 11pt;
+    letter-spacing: 2px;
+    margin-top: 2px;
+  }
+  h1.a4-title {
+    font-family: 'Moul', 'Battambang', 'Noto Sans SC', serif;
+    font-weight: normal;
+    font-size: 12.5pt;
+    text-align: center;
+    margin: 8px 0 4px 0;
+  }
+  h2.a4-subtitle {
+    font-family: 'Moul', 'Battambang', 'Noto Sans SC', serif;
+    font-weight: normal;
+    font-size: 11pt;
+    text-align: center;
+    margin: 2px 0 10px 0;
+  }
+  h3 {
+    font-family: 'Moul', 'Battambang', 'Noto Sans SC', serif;
+    font-weight: normal;
+    font-size: 10.5pt;
+    margin: 12px 0 6px 0;
+  }
+  h4 {
+    font-family: 'Battambang', 'Noto Sans SC', sans-serif;
+    font-size: 10.5pt;
+    font-weight: 700;
+    margin: 8px 0 4px 0;
+  }
+  p {
+    margin: 4px 0;
+  }
+  ul.a4-meta-list {
+    list-style: none;
+    margin: 4px 0 8px 0;
+    padding: 0;
+  }
+  ul.a4-meta-list li {
+    margin: 2px 0;
+  }
+  ol.a4-ordered-list {
+    margin: 4px 0 8px 20px;
+    padding: 0;
+  }
+  table.a4-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 12px 0;
+    font-size: 9.5pt;
+  }
+  table.a4-table th,
+  table.a4-table td {
+    border: 1px solid #000000;
+    padding: 4px 6px;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.a4-table th {
+    font-weight: 700;
+    background-color: #f8fafc;
+    text-align: center;
+  }
+  table.a4-nowrap-table th,
+  table.a4-nowrap-table td {
+    white-space: nowrap;
+    font-size: 9pt;
+    padding: 4px 5px;
+    text-align: center;
+  }
+  table.a4-weekly-table td:nth-child(1),
+  table.a4-weekly-table td:nth-child(2),
+  table.a4-weekly-table td:nth-child(3) {
+    white-space: nowrap;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .a4-official-signature {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: 16px;
+    page-break-inside: avoid;
+    font-size: 10.5pt;
+  }
+  .a4-official-signature .sig-left,
+  .a4-official-signature .sig-right {
+    text-align: center;
+    min-width: 44%;
+  }
+  .a4-official-signature .sig-bold {
+    font-weight: 700;
+  }
+  .a4-official-signature .sig-space {
+    height: 36px;
+  }
+  @media print {
+    body {
+      background: #ffffff;
+      padding: 0;
+      margin: 0;
+    }
+    .a4-sheet {
+      width: 100%;
+      min-height: auto;
+      margin: 0;
+      padding: 0;
+      box-shadow: none;
+      border: none;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="a4-sheet">
+<div class="a4-official-header">
+  <div class="header-left">
+    <div class="moul">មន្ទីរអប់រំ យុវជន និងកីឡារាជធានីភ្នំពេញ</div>
+    <div>ការិយាល័យអប់រំ យុវជន និងកីឡា នៃរដ្ឋបាលខណ្ឌបឹងកេងកង</div>
+    <div class="moul">វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង</div>
+  </div>
+  <div class="header-right">
+    <div class="moul">ព្រះរាជាណាចក្រកម្ពុជា</div>
+    <div class="moul">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+    <div class="tacteing">~~~•~~~</div>
+  </div>
+</div>
+<h1 class="a4-title">សូចនាករស្តង់ដាសាលាមធ្យមសិក្សាទុតិយភូមិ</h1>
+<h2 class="a4-subtitle">តារាងស្ថិតិសិស្សមកពីថ្នាក់ទី ៨A</h2>
+<h3>ឆ្នាំសិក្សា : ២០២៦ ~ ២០២៧ · ខែ វិច្ឆិកា មុខវិជ្ជា ភាសាចិន</h3>
+<h4>ការដាក់ពិន្ទុលើ បំណិនសម្បទា និង ចរិយាសម្បទា ( មួយមុខយកម្តង )</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ល.រ</th>
+<th>គោត្តនាម និង នាម</th>
+<th>ភេទ</th>
+<th>អាយុ</th>
+<th>រៀនខ្សោយ</th>
+<th>ឈប់ច្រើន</th>
+<th>បំណិនសម្បទា</th>
+<th>ចរិយាសម្បទា</th>
+<th>ផ្សេងៗ</th>
+</tr>
+<tr>
+<td>1</td>
+<td><strong>ខា សុខលីម</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>ខឿន រដ្ឋា</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>គា រតនៈ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>គឹម ច័ន្ទស្រីតុជ</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>ឃាង សុធានីន</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>ង៉ូវ សុវណ្ណសោភា</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>ចាន់ ពេជ្រមុន្នី</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>ចាន់ មុន្នីរិទ្ធ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>ចាន់ សូថាវី</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>ឆេង សត្យាបុត្រ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>ជិន ម៉ូនីកា</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>12</td>
+<td><strong>ដួង គង់លីន</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>13</td>
+<td><strong>ឌុម វាសនា</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>14</td>
+<td><strong>ថន សុវណ្ណាស័ក្ត</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>15</td>
+<td><strong>ថៃ ម៉ូលីតា</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>16</td>
+<td><strong>ទូច វឌ្ឍនា</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>17</td>
+<td><strong>ធួក សុខសាន្ត</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>18</td>
+<td><strong>នាង ស៊ីយី</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>19</td>
+<td><strong>នី សុវណ្ណនុច</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>20</td>
+<td><strong>នឿន ថមមី</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>21</td>
+<td><strong>នឿន ផានិត</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>22</td>
+<td><strong>បញ្ញា សោម៉ានីតា</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>23</td>
+<td><strong>ប៊ុន គីមហេង</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>24</td>
+<td><strong>ប៊ុន ស៊ីវលីង</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>25</td>
+<td><strong>បូរ ប៊ុន នីតា</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>26</td>
+<td><strong>ប៉ែន សុខសុគន្ធធានី</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>27</td>
+<td><strong>ផល សុខភាសាន</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>28</td>
+<td><strong>ផុន បរមី</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>29</td>
+<td><strong>ភិន ច័ន្ទរតនៈ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>30</td>
+<td><strong>អ៊ុន ទិត្យធីណាសត្យា</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+</table>
+<div class="a4-official-signature">
+  <div class="sig-left">
+    <div class="sig-bold">បានឃើញ និងឯកភាព</div>
+    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">នុត ងួនលី</div>
+  </div>
+  <div class="sig-right">
+    <div>ថ្ងៃ ចន្ទ ៧រោច ខែ អស្សុជ ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០</div>
+    <div>រាជធានីភ្នំពេញ ,ថ្ងៃទី ០២ ខែ វិច្ឆិកា ឆ្នាំ ២០២៦</div>
+    <div class="sig-bold">គ្រូមុខវិជ្ជា</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">លឹម ដាណេ</div>
+  </div>
+</div>
+</div>
+<div style="page-break-after:always;"></div>
+<div class="a4-sheet">
+<div class="a4-official-header">
+  <div class="header-left">
+    <div class="moul">មន្ទីរអប់រំ យុវជន និងកីឡារាជធានីភ្នំពេញ</div>
+    <div>ការិយាល័យអប់រំ យុវជន និងកីឡា នៃរដ្ឋបាលខណ្ឌបឹងកេងកង</div>
+    <div class="moul">វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង</div>
+  </div>
+  <div class="header-right">
+    <div class="moul">ព្រះរាជាណាចក្រកម្ពុជា</div>
+    <div class="moul">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+    <div class="tacteing">~~~•~~~</div>
+  </div>
+</div>
+<h1 class="a4-title">សូចនាករស្តង់ដាសាលាមធ្យមសិក្សាទុតិយភូមិ</h1>
+<h2 class="a4-subtitle">តារាងស្ថិតិសិស្សមកពីថ្នាក់ទី ៨B</h2>
+<h3>ឆ្នាំសិក្សា : ២០២៦ ~ ២០២៧ · ខែ វិច្ឆិកា មុខវិជ្ជា ភាសាចិន</h3>
+<h4>ការដាក់ពិន្ទុលើ បំណិនសម្បទា និង ចរិយាសម្បទា ( មួយមុខយកម្តង )</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ល.រ</th>
+<th>គោត្តនាម និង នាម</th>
+<th>ភេទ</th>
+<th>អាយុ</th>
+<th>រៀនខ្សោយ</th>
+<th>ឈប់ច្រើន</th>
+<th>បំណិនសម្បទា</th>
+<th>ចរិយាសម្បទា</th>
+<th>ផ្សេងៗ</th>
+</tr>
+<tr>
+<td>1</td>
+<td><strong>ឆេម ចិត្រា</strong></td>
+<td>ប</td>
+<td>1/7/2012</td>
+<td></td>
+<td></td>
+<td><strong>3</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>ជុំ រិទ្ធិរាជ</strong></td>
+<td>ប</td>
+<td>11/7/2011</td>
+<td><strong>✓</strong></td>
+<td>3</td>
+<td><strong>0</strong></td>
+<td><strong>0</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>ទេព ច័ន្ទរស្មីឧត្តម</strong></td>
+<td>ប</td>
+<td>12/21/2012</td>
+<td><strong>✓</strong></td>
+<td>3</td>
+<td><strong>0</strong></td>
+<td><strong>0</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>ប្រាប វឌ្ឍនា</strong></td>
+<td>ប</td>
+<td>10/23/2012</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>ពៅ ចាន់ចំរុង</strong></td>
+<td>ប</td>
+<td>6/29/2009</td>
+<td><strong>✓</strong></td>
+<td>3</td>
+<td><strong>0</strong></td>
+<td><strong>0</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>ភ័ណ្ឌ វណ្ណាពិសី</strong></td>
+<td>ស</td>
+<td>12/2/2012</td>
+<td><strong>✓</strong></td>
+<td>3</td>
+<td><strong>0</strong></td>
+<td><strong>0</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>ភ័ស្ត ផលលីម</strong></td>
+<td>ស</td>
+<td>5/10/2012</td>
+<td><strong>✓</strong></td>
+<td>3</td>
+<td><strong>0</strong></td>
+<td><strong>0</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>ម៉ាន់ សាន់ទ្រីយ៉ា</strong></td>
+<td>ប</td>
+<td>10/12/2011</td>
+<td><strong>✓</strong></td>
+<td>3</td>
+<td><strong>0</strong></td>
+<td><strong>0</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>មាស សុខវិជ្ជាឧត្តម</strong></td>
+<td>ប</td>
+<td>12/9/2009</td>
+<td></td>
+<td></td>
+<td><strong>2</strong></td>
+<td><strong>2</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>ម៉ឹង ពិសិដ្ឋមង្គល</strong></td>
+<td>ប</td>
+<td>12/25/2011</td>
+<td></td>
+<td></td>
+<td><strong>2</strong></td>
+<td><strong>3</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>មុំ ចាន់លីណា</strong></td>
+<td>ស</td>
+<td>9/21/2012</td>
+<td><strong>✓</strong></td>
+<td>3</td>
+<td><strong>0</strong></td>
+<td><strong>0</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>12</td>
+<td><strong>មុត សុខលាភ</strong></td>
+<td>ស</td>
+<td>1/30/2012</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>13</td>
+<td><strong>មួន ស៊ុនហេង</strong></td>
+<td>ប</td>
+<td>12/22/2012</td>
+<td></td>
+<td></td>
+<td><strong>1</strong></td>
+<td><strong>1</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>14</td>
+<td><strong>មឿន ស្រីការ</strong></td>
+<td>ស</td>
+<td>11/30/2011</td>
+<td></td>
+<td></td>
+<td><strong>1</strong></td>
+<td><strong>1</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>15</td>
+<td><strong>យិន ប៊ុនតុង</strong></td>
+<td>ប</td>
+<td>9/14/2009</td>
+<td></td>
+<td></td>
+<td><strong>3</strong></td>
+<td><strong>3</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>16</td>
+<td><strong>យិន រ៉ាយុទ្ធ</strong></td>
+<td>ប</td>
+<td>4/4/2011</td>
+<td></td>
+<td></td>
+<td><strong>3</strong></td>
+<td><strong>2</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>17</td>
+<td><strong>យឹម សូលីដូ</strong></td>
+<td>ប</td>
+<td>9/8/2011</td>
+<td></td>
+<td></td>
+<td><strong>2</strong></td>
+<td><strong>2</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>18</td>
+<td><strong>យ៉ុន ម៉ូនីកា</strong></td>
+<td>ស</td>
+<td>2/10/2012</td>
+<td></td>
+<td></td>
+<td><strong>2</strong></td>
+<td><strong>3</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>19</td>
+<td><strong>យឿន សុដានី</strong></td>
+<td>ប</td>
+<td>7/21/2012</td>
+<td></td>
+<td></td>
+<td><strong>2</strong></td>
+<td><strong>3</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>20</td>
+<td><strong>រត្ន សុវត្តិមា</strong></td>
+<td>ស</td>
+<td>2/7/2012</td>
+<td></td>
+<td></td>
+<td><strong>2</strong></td>
+<td><strong>3</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>21</td>
+<td><strong>រស់ សត្យា</strong></td>
+<td>ប</td>
+<td>10/12/2011</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>22</td>
+<td><strong>រ៉ា ដារ៉ាន់</strong></td>
+<td>ប</td>
+<td>5/7/2012</td>
+<td><strong>✓</strong></td>
+<td>3</td>
+<td><strong>1</strong></td>
+<td><strong>1</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>23</td>
+<td><strong>រ៉ា រិទ្ធ</strong></td>
+<td>ប</td>
+<td>10/6/2006</td>
+<td><strong>✓</strong></td>
+<td>3</td>
+<td><strong>0</strong></td>
+<td><strong>0</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>24</td>
+<td><strong>រ៉ាវុធ ពិសី</strong></td>
+<td>ស</td>
+<td>7/8/2012</td>
+<td></td>
+<td></td>
+<td><strong>-</strong></td>
+<td><strong>-</strong></td>
+<td>ឈប់រៀន</td>
+</tr>
+<tr>
+<td>25</td>
+<td><strong>រិទ្ធី មករា</strong></td>
+<td>ប</td>
+<td>1/7/2011</td>
+<td><strong>✓</strong></td>
+<td>3</td>
+<td><strong>0</strong></td>
+<td><strong>0</strong></td>
+<td></td>
+</tr>
+</table>
+<div class="a4-official-signature">
+  <div class="sig-left">
+    <div class="sig-bold">បានឃើញ និងឯកភាព</div>
+    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">នុត ងួនលី</div>
+  </div>
+  <div class="sig-right">
+    <div>ថ្ងៃ ចន្ទ ៧រោច ខែ អស្សុជ ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០</div>
+    <div>រាជធានីភ្នំពេញ ,ថ្ងៃទី ០២ ខែ វិច្ឆិកា ឆ្នាំ ២០២៦</div>
+    <div class="sig-bold">គ្រូមុខវិជ្ជា</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">លឹម ដាណេ</div>
+  </div>
+</div>
+</div>
+<div style="page-break-after:always;"></div>
+<div class="a4-sheet">
+<div class="a4-official-header">
+  <div class="header-left">
+    <div class="moul">មន្ទីរអប់រំ យុវជន និងកីឡារាជធានីភ្នំពេញ</div>
+    <div>ការិយាល័យអប់រំ យុវជន និងកីឡា នៃរដ្ឋបាលខណ្ឌបឹងកេងកង</div>
+    <div class="moul">វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង</div>
+  </div>
+  <div class="header-right">
+    <div class="moul">ព្រះរាជាណាចក្រកម្ពុជា</div>
+    <div class="moul">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+    <div class="tacteing">~~~•~~~</div>
+  </div>
+</div>
+<h1 class="a4-title">សូចនាករស្តង់ដាសាលាមធ្យមសិក្សាទុតិយភូមិ</h1>
+<h2 class="a4-subtitle">តារាងស្ថិតិសិស្សមកពីថ្នាក់ទី ៨C</h2>
+<h3>ឆ្នាំសិក្សា : ២០២៦ ~ ២០២៧ · ខែ វិច្ឆិកា មុខវិជ្ជា ភាសាចិន</h3>
+<h4>ការដាក់ពិន្ទុលើ បំណិនសម្បទា និង ចរិយាសម្បទា ( មួយមុខយកម្តង )</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ល.រ</th>
+<th>គោត្តនាម និង នាម</th>
+<th>ភេទ</th>
+<th>អាយុ</th>
+<th>រៀនខ្សោយ</th>
+<th>ឈប់ច្រើន</th>
+<th>បំណិនសម្បទា</th>
+<th>ចរិយាសម្បទា</th>
+<th>ផ្សេងៗ</th>
+</tr>
+<tr>
+<td>1</td>
+<td><strong>ឈិន វឌ្ឍនៈ</strong></td>
+<td>ប</td>
+<td>10/9/2012</td>
+<td><strong>✓</strong></td>
+<td>3</td>
+<td><strong>2</strong></td>
+<td><strong>3</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>ដួង ដាវង្ស</strong></td>
+<td>ប</td>
+<td>27/03/2012</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>2</strong></td>
+<td><strong>3</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>ណាត ណាវីណាត</strong></td>
+<td>ស</td>
+<td>3/29/2012</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>ណាត សៀវម៉ី</strong></td>
+<td>ស</td>
+<td>4/10/2012</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>លី ច័ន្ទអ៊ី</strong></td>
+<td>ស</td>
+<td>10/5/2012</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>លឹម ទេសឫទ្ធិ</strong></td>
+<td>ប</td>
+<td>10/5/2012</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>វ៉ាន់ សុខម៉េងឡុង</strong></td>
+<td>ប</td>
+<td>11/23/2012</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>2</strong></td>
+<td><strong>3</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>សា ពិសិដ្ឋ</strong></td>
+<td>ប</td>
+<td>8/25/2011</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>សាន សុឃីម</strong></td>
+<td>ស</td>
+<td>9/18/2012</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>សារិន រតនៈសម្បត្តិ</strong></td>
+<td>ប</td>
+<td>1/31/2012</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>2</strong></td>
+<td><strong>3</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>សារុន វិទូកញ្ចនា</strong></td>
+<td>ស</td>
+<td>6/17/2012</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>12</td>
+<td><strong>សិដ្ឋ សូលីដា</strong></td>
+<td>ស</td>
+<td>1/26/2013</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>13</td>
+<td><strong>សុត មុន្នីកា</strong></td>
+<td>ស</td>
+<td>9/9/2012</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>14</td>
+<td><strong>សឿន សុជាតិតា</strong></td>
+<td>ស</td>
+<td>4/6/2012</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>15</td>
+<td><strong>សោម សេរីវុទ្ធ</strong></td>
+<td>ប</td>
+<td>3/25/2012</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>16</td>
+<td><strong>សៅ ពេជ្ររតនៈ</strong></td>
+<td>ប</td>
+<td>11/22/2012</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>2</strong></td>
+<td><strong>3</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>17</td>
+<td><strong>សៅ វិបុលណាវី</strong></td>
+<td>ស</td>
+<td>4/21/2012</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>18</td>
+<td><strong>ស្រេង សុម៉ាវត្តី</strong></td>
+<td>ស</td>
+<td>11/15/2012</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>19</td>
+<td><strong>ហ៊ឹម រត្តិកា</strong></td>
+<td>ស</td>
+<td>11/21/2012</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>20</td>
+<td><strong>ហុង បញ្ញាពេជ្រ</strong></td>
+<td>ស</td>
+<td>12/2/2012</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>21</td>
+<td><strong>ហែម កញ្ចនា</strong></td>
+<td>ស</td>
+<td>1/2/2010</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>22</td>
+<td><strong>អាន ឌីម៉ានុត</strong></td>
+<td>ប</td>
+<td>12/15/2012</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>23</td>
+<td><strong>អ៊ុំ បញ្ញា</strong></td>
+<td>ប</td>
+<td>6/28/2012</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>24</td>
+<td><strong>អេត ស្រីលីន</strong></td>
+<td>ស</td>
+<td>5/26/2011</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+</table>
+<div class="a4-official-signature">
+  <div class="sig-left">
+    <div class="sig-bold">បានឃើញ និងឯកភាព</div>
+    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">នុត ងួនលី</div>
+  </div>
+  <div class="sig-right">
+    <div>ថ្ងៃ ចន្ទ ៧រោច ខែ អស្សុជ ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០</div>
+    <div>រាជធានីភ្នំពេញ ,ថ្ងៃទី ០២ ខែ វិច្ឆិកា ឆ្នាំ ២០២៦</div>
+    <div class="sig-bold">គ្រូមុខវិជ្ជា</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">លឹម ដាណេ</div>
+  </div>
+</div>
+</div>
+<div style="page-break-after:always;"></div>
+<div class="a4-sheet">
+<div class="a4-official-header">
+  <div class="header-left">
+    <div class="moul">មន្ទីរអប់រំ យុវជន និងកីឡារាជធានីភ្នំពេញ</div>
+    <div>ការិយាល័យអប់រំ យុវជន និងកីឡា នៃរដ្ឋបាលខណ្ឌបឹងកេងកង</div>
+    <div class="moul">វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង</div>
+  </div>
+  <div class="header-right">
+    <div class="moul">ព្រះរាជាណាចក្រកម្ពុជា</div>
+    <div class="moul">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+    <div class="tacteing">~~~•~~~</div>
+  </div>
+</div>
+<h1 class="a4-title">សូចនាករស្តង់ដាសាលាមធ្យមសិក្សាទុតិយភូមិ</h1>
+<h2 class="a4-subtitle">តារាងស្ថិតិសិស្សមកពីថ្នាក់ទី ៩A</h2>
+<h3>ឆ្នាំសិក្សា : ២០២៦ ~ ២០២៧ · ខែ វិច្ឆិកា មុខវិជ្ជា ភាសាចិន</h3>
+<h4>ការដាក់ពិន្ទុលើ បំណិនសម្បទា និង ចរិយាសម្បទា ( មួយមុខយកម្តង )</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ល.រ</th>
+<th>គោត្តនាម និង នាម</th>
+<th>ភេទ</th>
+<th>អាយុ</th>
+<th>រៀនខ្សោយ</th>
+<th>ឈប់ច្រើន</th>
+<th>បំណិនសម្បទា</th>
+<th>ចរិយាសម្បទា</th>
+<th>ផ្សេងៗ</th>
+</tr>
+<tr>
+<td>1</td>
+<td><strong>ខា សុខឡេង</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>គង់ សុម៉ាវត្តី</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>គឹម ខាវី</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>គឹម ស៊ីដារ៉ា</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>គូ វីរៈយុទ្ធ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>ឃុន សុវណ្ណគីរី</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>ង៉ែត លីយ៉ា</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>ចន្ថា សុបញ្ញា</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>ញិល ហិល</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>ញឹម គឹមឡាង</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>ឌី ច័ន្ទសំណាង</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>12</td>
+<td><strong>តាំង ស៊ីវឡុង</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>13</td>
+<td><strong>តុប អែនណា</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>14</td>
+<td><strong>ថន ស្រីកែវ</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>15</td>
+<td><strong>ធី សិដ្ឋ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>16</td>
+<td><strong>ប៊ុន ករុណា</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>17</td>
+<td><strong>ផល លឿនសិរីពរ</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>18</td>
+<td><strong>ពៅ សុខសាន្ត សុធនវឌ្ឍនៈបញ្ញា</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>19</td>
+<td><strong>ម៉ៅ ចំណូលថនិកា</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>20</td>
+<td><strong>សួន ភារម្យ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>21</td>
+<td><strong>ហ៊ន ស្រីនិត្យ</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+</table>
+<div class="a4-official-signature">
+  <div class="sig-left">
+    <div class="sig-bold">បានឃើញ និងឯកភាព</div>
+    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">នុត ងួនលី</div>
+  </div>
+  <div class="sig-right">
+    <div>ថ្ងៃ ចន្ទ ៧រោច ខែ អស្សុជ ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០</div>
+    <div>រាជធានីភ្នំពេញ ,ថ្ងៃទី ០២ ខែ វិច្ឆិកា ឆ្នាំ ២០២៦</div>
+    <div class="sig-bold">គ្រូមុខវិជ្ជា</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">លឹម ដាណេ</div>
+  </div>
+</div>
+</div>
+<div style="page-break-after:always;"></div>
+<div class="a4-sheet">
+<div class="a4-official-header">
+  <div class="header-left">
+    <div class="moul">មន្ទីរអប់រំ យុវជន និងកីឡារាជធានីភ្នំពេញ</div>
+    <div>ការិយាល័យអប់រំ យុវជន និងកីឡា នៃរដ្ឋបាលខណ្ឌបឹងកេងកង</div>
+    <div class="moul">វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង</div>
+  </div>
+  <div class="header-right">
+    <div class="moul">ព្រះរាជាណាចក្រកម្ពុជា</div>
+    <div class="moul">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+    <div class="tacteing">~~~•~~~</div>
+  </div>
+</div>
+<h1 class="a4-title">សូចនាករស្តង់ដាសាលាមធ្យមសិក្សាទុតិយភូមិ</h1>
+<h2 class="a4-subtitle">តារាងស្ថិតិសិស្សមកពីថ្នាក់ទី ៩B</h2>
+<h3>ឆ្នាំសិក្សា : ២០២៦ ~ ២០២៧ · ខែ វិច្ឆិកា មុខវិជ្ជា ភាសាចិន</h3>
+<h4>ការដាក់ពិន្ទុលើ បំណិនសម្បទា និង ចរិយាសម្បទា ( មួយមុខយកម្តង )</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ល.រ</th>
+<th>គោត្តនាម និង នាម</th>
+<th>ភេទ</th>
+<th>អាយុ</th>
+<th>រៀនខ្សោយ</th>
+<th>ឈប់ច្រើន</th>
+<th>បំណិនសម្បទា</th>
+<th>ចរិយាសម្បទា</th>
+<th>ផ្សេងៗ</th>
+</tr>
+<tr>
+<td>1</td>
+<td><strong>កេ ណារិទ្ធ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>ធូ អ៊ីងហ្គែន</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>នី ស៊ីស៊ីង</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>ប៉ាក់ សុភី</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>ប៉ាវ វីរៈយុទ្ធ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>ប៊ិន គីមហ័ង</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>ផាត យូប៊ីន</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>ភឿន ទីណា</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>មាស ចន្ទសុវណ្ណធិរាជ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>ម៉ៅ វណ្ណា</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>យាហាន ហាមីត</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>12</td>
+<td><strong>រស់ បញ្ញាលីដា</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>13</td>
+<td><strong>រិទ្ធី បញ្ញាស័ក្ត</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>14</td>
+<td><strong>រុន ម៉េងយ៉ាង</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>15</td>
+<td><strong>រុន ម៉េងយូរ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>16</td>
+<td><strong>រ៉ែន រាជសី</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>17</td>
+<td><strong>លី រក្សា</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>18</td>
+<td><strong>វុធ ដារ៉ា</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>19</td>
+<td><strong>ឡេង ប៊ុនលាភ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>20</td>
+<td><strong>អ៊ីម អានុពង្ស</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>21</td>
+<td><strong>អ៊ីម អានុរាជ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+</table>
+<div class="a4-official-signature">
+  <div class="sig-left">
+    <div class="sig-bold">បានឃើញ និងឯកភាព</div>
+    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">នុត ងួនលី</div>
+  </div>
+  <div class="sig-right">
+    <div>ថ្ងៃ ចន្ទ ៧រោច ខែ អស្សុជ ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០</div>
+    <div>រាជធានីភ្នំពេញ ,ថ្ងៃទី ០២ ខែ វិច្ឆិកា ឆ្នាំ ២០២៦</div>
+    <div class="sig-bold">គ្រូមុខវិជ្ជា</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">លឹម ដាណេ</div>
+  </div>
+</div>
+</div>
+<div style="page-break-after:always;"></div>
+<div class="a4-sheet">
+<div class="a4-official-header">
+  <div class="header-left">
+    <div class="moul">មន្ទីរអប់រំ យុវជន និងកីឡារាជធានីភ្នំពេញ</div>
+    <div>ការិយាល័យអប់រំ យុវជន និងកីឡា នៃរដ្ឋបាលខណ្ឌបឹងកេងកង</div>
+    <div class="moul">វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង</div>
+  </div>
+  <div class="header-right">
+    <div class="moul">ព្រះរាជាណាចក្រកម្ពុជា</div>
+    <div class="moul">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+    <div class="tacteing">~~~•~~~</div>
+  </div>
+</div>
+<h1 class="a4-title">សូចនាករស្តង់ដាសាលាមធ្យមសិក្សាទុតិយភូមិ</h1>
+<h2 class="a4-subtitle">តារាងស្ថិតិសិស្សមកពីថ្នាក់ទី ៩C</h2>
+<h3>ឆ្នាំសិក្សា : ២០២៦ ~ ២០២៧ · ខែ វិច្ឆិកា មុខវិជ្ជា ភាសាចិន</h3>
+<h4>ការដាក់ពិន្ទុលើ បំណិនសម្បទា និង ចរិយាសម្បទា ( មួយមុខយកម្តង )</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ល.រ</th>
+<th>គោត្តនាម និង នាម</th>
+<th>ភេទ</th>
+<th>អាយុ</th>
+<th>រៀនខ្សោយ</th>
+<th>ឈប់ច្រើន</th>
+<th>បំណិនសម្បទា</th>
+<th>ចរិយាសម្បទា</th>
+<th>ផ្សេងៗ</th>
+</tr>
+<tr>
+<td>1</td>
+<td><strong>រ៉ានីត ពន្លឺ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>វ៉ាត់ មុន្នីជោត</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>វ៉ាន់ដារី រម្យនា</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>វិចិត្រ សុវណ្ណនីកា</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>វិន នីកូ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>វ៉េត វីយ៉ាវីន</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>សាន សុខនីន</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>សាវឿន សុធានីម</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>ស៊ីវ៉ាន់ សិរីរាជតា</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>សុខ សម្បត្តិ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>សុខា ពិសី</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>12</td>
+<td><strong>សួន ចន្ទពិសិដ្ឋ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>13</td>
+<td><strong>សៅ សុច័ន្ទរ៉ានី</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>14</td>
+<td><strong>ស្រី រក្សា</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>15</td>
+<td><strong>ហន សុធាវណ្ណ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>16</td>
+<td><strong>ហេង វិទូ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>17</td>
+<td><strong>ឡុង ដារ៉ាវីត</strong></td>
+<td>ប</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>18</td>
+<td><strong>ឡុង ពេជ្រវិមាន</strong></td>
+<td>ស</td>
+<td>-</td>
+<td></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+</table>
+<div class="a4-official-signature">
+  <div class="sig-left">
+    <div class="sig-bold">បានឃើញ និងឯកភាព</div>
+    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">នុត ងួនលី</div>
+  </div>
+  <div class="sig-right">
+    <div>ថ្ងៃ ចន្ទ ៧រោច ខែ អស្សុជ ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០</div>
+    <div>រាជធានីភ្នំពេញ ,ថ្ងៃទី ០២ ខែ វិច្ឆិកា ឆ្នាំ ២០២៦</div>
+    <div class="sig-bold">គ្រូមុខវិជ្ជា</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">លឹម ដាណេ</div>
+  </div>
+</div>
+</div>
+<div style="page-break-after:always;"></div>
+<div class="a4-sheet">
+<div class="a4-official-header">
+  <div class="header-left">
+    <div class="moul">មន្ទីរអប់រំ យុវជន និងកីឡារាជធានីភ្នំពេញ</div>
+    <div>ការិយាល័យអប់រំ យុវជន និងកីឡា នៃរដ្ឋបាលខណ្ឌបឹងកេងកង</div>
+    <div class="moul">វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង</div>
+  </div>
+  <div class="header-right">
+    <div class="moul">ព្រះរាជាណាចក្រកម្ពុជា</div>
+    <div class="moul">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+    <div class="tacteing">~~~•~~~</div>
+  </div>
+</div>
+<h1 class="a4-title">សូចនាករស្តង់ដាសាលាមធ្យមសិក្សាទុតិយភូមិ</h1>
+<h2 class="a4-subtitle">តារាងស្ថិតិសិស្សមកពីថ្នាក់ទី ១០A</h2>
+<h3>ឆ្នាំសិក្សា : ២០២៦ ~ ២០២៧ · ខែ វិច្ឆិកា មុខវិជ្ជា ភាសាចិន</h3>
+<h4>ការដាក់ពិន្ទុលើ បំណិនសម្បទា និង ចរិយាសម្បទា ( មួយមុខយកម្តង )</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ល.រ</th>
+<th>គោត្តនាម និង នាម</th>
+<th>ភេទ</th>
+<th>អាយុ</th>
+<th>រៀនខ្សោយ</th>
+<th>ឈប់ច្រើន</th>
+<th>បំណិនសម្បទា</th>
+<th>ចរិយាសម្បទា</th>
+<th>ផ្សេងៗ</th>
+</tr>
+<tr>
+<td>1</td>
+<td><strong>កេ ណារ៉ាក់</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>ខៀវ បញ្ចពណ៌</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>គី ចរណៃ</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>គី ទីណា</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>ឃាង បញ្ញាវ័ន្ត</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>ចន នីម</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>ច័ន្ទ ម៉ូណាលីតា</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>ចាប រ៉ាវុធ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>ជា រតនា</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>ឈាត ម៉ារ៉ាទីន</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>ឈិត សេងលាភ</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>12</td>
+<td><strong>ណាន់ ភ័ក្ត្រា</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>13</td>
+<td><strong>ណុប ស្រីពីន</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>14</td>
+<td><strong>ថុល ឥន្ទ្រៈវេហាស៍</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>15</td>
+<td><strong>ធា បញ្ញា</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>16</td>
+<td><strong>ធីម លាងហេង</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>17</td>
+<td><strong>នឿន ផានុន</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>18</td>
+<td><strong>ផលទី សុគច័ន្ទ</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>19</td>
+<td><strong>ផា វិច្ឆិកា</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>20</td>
+<td><strong>សំណាង ជុតិវង្ស</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>21</td>
+<td><strong>សូ ជូលី</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>22</td>
+<td><strong>សឿន ម៉ាណែត</strong></td>
+<td>ប</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>23</td>
+<td><strong>ហួរ ជីងលៀង</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>24</td>
+<td><strong>ហេង ស៊ីនួន</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>25</td>
+<td><strong>ឡយ គីមមួយ</strong></td>
+<td>ស</td>
+<td>-</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>4</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+</table>
+<div class="a4-official-signature">
+  <div class="sig-left">
+    <div class="sig-bold">បានឃើញ និងឯកភាព</div>
+    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">នុត ងួនលី</div>
+  </div>
+  <div class="sig-right">
+    <div>ថ្ងៃ ចន្ទ ៧រោច ខែ អស្សុជ ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០</div>
+    <div>រាជធានីភ្នំពេញ ,ថ្ងៃទី ០២ ខែ វិច្ឆិកា ឆ្នាំ ២០២៦</div>
+    <div class="sig-bold">គ្រូមុខវិជ្ជា</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">លឹម ដាណេ</div>
+  </div>
+</div>
+</div>
+<div style="page-break-after:always;"></div>
+<div class="a4-sheet">
+<div class="a4-official-header">
+  <div class="header-left">
+    <div class="moul">មន្ទីរអប់រំ យុវជន និងកីឡារាជធានីភ្នំពេញ</div>
+    <div>ការិយាល័យអប់រំ យុវជន និងកីឡា នៃរដ្ឋបាលខណ្ឌបឹងកេងកង</div>
+    <div class="moul">វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង</div>
+  </div>
+  <div class="header-right">
+    <div class="moul">ព្រះរាជាណាចក្រកម្ពុជា</div>
+    <div class="moul">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+    <div class="tacteing">~~~•~~~</div>
+  </div>
+</div>
+<h1 class="a4-title">សូចនាករស្តង់ដាសាលាមធ្យមសិក្សាទុតិយភូមិ</h1>
+<h2 class="a4-subtitle">តារាងស្ថិតិសិស្សមកពីថ្នាក់ទី ១០C</h2>
+<h3>ឆ្នាំសិក្សា : ២០២៦ ~ ២០២៧ · ខែ វិច្ឆិកា មុខវិជ្ជា ភាសាចិន</h3>
+<h4>ការដាក់ពិន្ទុលើ បំណិនសម្បទា និង ចរិយាសម្បទា ( មួយមុខយកម្តង )</h4>
+<table class="a4-table" border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>ល.រ</th>
+<th>គោត្តនាម និង នាម</th>
+<th>ភេទ</th>
+<th>អាយុ</th>
+<th>រៀនខ្សោយ</th>
+<th>ឈប់ច្រើន</th>
+<th>បំណិនសម្បទា</th>
+<th>ចរិយាសម្បទា</th>
+<th>ផ្សេងៗ</th>
+</tr>
+<tr>
+<td>1</td>
+<td><strong>ណុប ដាវី</strong></td>
+<td>ប</td>
+<td>22/3/2009</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>3</strong></td>
+<td><strong>4</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>ថោង វីរៈបុត្រ</strong></td>
+<td>ប</td>
+<td>19/9/2009</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>2</strong></td>
+<td><strong>3</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>ភាព ស្រីកា</strong></td>
+<td>ស</td>
+<td>13/8/2009</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>3</strong></td>
+<td><strong>3</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>ម៉ៅ លីដា</strong></td>
+<td>ស</td>
+<td>7/3/2011</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>5</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>សំ ឌីណាយ៉ាដែន</strong></td>
+<td>ប</td>
+<td>12/4/2010</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>2</strong></td>
+<td><strong>2</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>សារឹម វិសាល</strong></td>
+<td>ប</td>
+<td>14/4/2010</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>3</strong></td>
+<td><strong>4</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>សិន ហ្គឺរីឡា</strong></td>
+<td>ប</td>
+<td>10/5/2010</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>-</strong></td>
+<td><strong>-</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>សុខ លីហ្សា</strong></td>
+<td>ស</td>
+<td>26/6/2010</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>3</strong></td>
+<td><strong>4</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>សុបិន្ត សុជាតា</strong></td>
+<td>ស</td>
+<td>18/3/2010</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>3</strong></td>
+<td><strong>3</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>សួន លក្ខិណា</strong></td>
+<td>ស</td>
+<td>10/9/2010</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>3</strong></td>
+<td><strong>4</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>សឿន ផុនា</strong></td>
+<td>ប</td>
+<td>3/7/2008</td>
+<td><strong>✓</strong></td>
+<td>4</td>
+<td><strong>-</strong></td>
+<td><strong>-</strong></td>
+<td>មិនដែលមករៀន</td>
+</tr>
+<tr>
+<td>12</td>
+<td><strong>សេន ម៉ារាជ</strong></td>
+<td>ប</td>
+<td>27/6/2010</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>-</strong></td>
+<td><strong>-</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>13</td>
+<td><strong>សែន ស៊ីណាតូ</strong></td>
+<td>ប</td>
+<td>5/7/2011</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>-</strong></td>
+<td><strong>-</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>14</td>
+<td><strong>ស្វាយ កត្តញ្ញូ</strong></td>
+<td>ប</td>
+<td>6/8/2009</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>2</strong></td>
+<td><strong>3</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>15</td>
+<td><strong>ហុង ស៊ីវហ្វុង</strong></td>
+<td>ប</td>
+<td>12/12/2010</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>5</strong></td>
+<td><strong>5</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>16</td>
+<td><strong>ហុន សុភ័ក្ត្រ</strong></td>
+<td>ប</td>
+<td>13/9/2009</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>2</strong></td>
+<td><strong>3</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>17</td>
+<td><strong>ហួយ ដាណេ</strong></td>
+<td>ស</td>
+<td>21/6/2010</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>2</strong></td>
+<td><strong>3</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>18</td>
+<td><strong>អ៊ុត សេដ្ឋវិទូ</strong></td>
+<td>ប</td>
+<td>5/2/2010</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>-</strong></td>
+<td><strong>-</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>19</td>
+<td><strong>អួន សុក្ររក្សា</strong></td>
+<td>ស</td>
+<td>24/4/2009</td>
+<td><strong>✓</strong></td>
+<td></td>
+<td><strong>2</strong></td>
+<td><strong>3</strong></td>
+<td>សុំមិនបង់ថវិកា</td>
+</tr>
+</table>
+<div class="a4-official-signature">
+  <div class="sig-left">
+    <div class="sig-bold">បានឃើញ និងឯកភាព</div>
+    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">នុត ងួនលី</div>
+  </div>
+  <div class="sig-right">
+    <div>ថ្ងៃ ចន្ទ ៧រោច ខែ អស្សុជ ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០</div>
+    <div>រាជធានីភ្នំពេញ ,ថ្ងៃទី ០២ ខែ វិច្ឆិកា ឆ្នាំ ២០២៦</div>
+    <div class="sig-bold">គ្រូមុខវិជ្ជា</div>
+    <div class="sig-space"></div>
+    <div class="sig-bold">លឹម ដាណេ</div>
+  </div>
+</div>
+</div>
+</body>
+</html>

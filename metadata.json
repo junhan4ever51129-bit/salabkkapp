@@ -1,0 +1,6 @@
+{
+  "name": "SalaGrade — ប្រព័ន្ធគ្រប់គ្រងពិន្ទុ និងវត្តមានសិស្ស",
+  "description": "Offline-first Cambodian school class grade, attendance, A4 report card, and GEIP teaching plan management system for teachers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
