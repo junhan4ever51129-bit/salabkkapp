@@ -36,11 +36,14 @@ export default function App() {
   const [state, setState] = useState<AppDatabaseState>(() => createInitialAppDatabaseState());
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [lang, setLang] = useState<Language>('km');
+  const [lang] = useState<Language>('km');
   const [activeModule, setActiveModule] = useState<ActiveModule>('scores');
   const [selectedClassId, setSelectedClassId] = useState<string>('10C');
-  const [selectedMonthId, setSelectedMonthId] = useState<string>('feb');
+  const [selectedMonthId, setSelectedMonthId] = useState<string>('nov');
   const [isDataModalOpen, setIsDataModalOpen] = useState(false);
+  const [quickClassCode, setQuickClassCode] = useState('');
+  const [quickClassDay, setQuickClassDay] = useState('ថ្ងៃចន្ទ');
+  const [quickClassTime, setQuickClassTime] = useState('15:00-16:30');
 
   // Load initial state from browser IndexedDB on mount
   useEffect(() => {
@@ -81,6 +84,122 @@ export default function App() {
   const handleUpdateState = (updater: (prev: AppDatabaseState) => AppDatabaseState) => {
     setState((prev) => updater(prev));
     setHasUnsavedChanges(true);
+  };
+
+  // Scope classes & students to the active academic term so a new academic year starts clean
+  const currentTermId = state.currentTermId || 'term-2026-2027';
+  const termScopedState = React.useMemo<AppDatabaseState>(() => {
+    const termClasses = state.classes.filter(
+      (c) => (c.termId || 'term-2025-2026') === currentTermId
+    );
+    const termClassIds = new Set(termClasses.map((c) => c.id));
+    const termStudents = state.students.filter((s) => termClassIds.has(s.classId));
+    return {
+      ...state,
+      classes: termClasses,
+      students: termStudents,
+    };
+  }, [state, currentTermId]);
+
+  // Keep selectedClassId valid within the current term
+  useEffect(() => {
+    if (termScopedState.classes.length > 0) {
+      const exists = termScopedState.classes.some((c) => c.id === selectedClassId);
+      if (!exists) {
+        setSelectedClassId(termScopedState.classes[0].id);
+      }
+    } else if (selectedClassId !== '') {
+      setSelectedClassId('');
+    }
+  }, [termScopedState.classes, selectedClassId]);
+
+  const handleScopedUpdateState = (
+    updater: (prev: AppDatabaseState) => AppDatabaseState
+  ) => {
+    setState((prev) => {
+      const prevTermId = prev.currentTermId || 'term-2026-2027';
+      const prevTermClasses = prev.classes.filter(
+        (c) => (c.termId || 'term-2025-2026') === prevTermId
+      );
+      const prevTermClassIds = new Set(prevTermClasses.map((c) => c.id));
+      const prevTermStudents = prev.students.filter((s) =>
+        prevTermClassIds.has(s.classId)
+      );
+
+      const scopedPrev: AppDatabaseState = {
+        ...prev,
+        classes: prevTermClasses,
+        students: prevTermStudents,
+      };
+
+      const nextScoped = updater(scopedPrev);
+      const nextTermId = nextScoped.currentTermId || prevTermId;
+
+      const otherClasses = prev.classes.filter(
+        (c) => (c.termId || 'term-2025-2026') !== prevTermId
+      );
+      const otherStudents = prev.students.filter(
+        (s) => !prevTermClassIds.has(s.classId)
+      );
+
+      const taggedNextClasses = nextScoped.classes.map((c) => ({
+        ...c,
+        termId: c.termId || nextTermId,
+      }));
+
+      return {
+        ...nextScoped,
+        classes: [...otherClasses, ...taggedNextClasses],
+        students: [...otherStudents, ...nextScoped.students],
+      };
+    });
+    setHasUnsavedChanges(true);
+  };
+
+  const handleQuickAddFirstClass = (e: React.FormEvent) => {
+    e.preventDefault();
+    const raw = quickClassCode.trim();
+    if (!raw) return;
+    const normCode = raw
+      .replace(/[០-៩]/g, (ch) => String('០១២៣៤៥៦៧៨៩'.indexOf(ch)))
+      .replace(/^ថ្នាក់ទី\s*/g, '')
+      .replace(/^ថ្នាក់\s*/g, '')
+      .replace(/\s+/g, '')
+      .toUpperCase();
+    if (!normCode) return;
+
+    const cleanName = raw
+      .replace(/^ថ្នាក់ទី\s*/g, '')
+      .replace(/^ថ្នាក់\s*/g, '')
+      .trim();
+    const matchGrade = normCode.match(/^(7|8|9|10|11|12)/);
+    const gradeLevel = matchGrade ? Number(matchGrade[1]) : 8;
+    const scopedId =
+      currentTermId === 'term-2025-2026'
+        ? normCode
+        : `${currentTermId}__${normCode}`;
+
+    handleUpdateState((prev) => ({
+      ...prev,
+      classes: [
+        ...prev.classes,
+        {
+          id: scopedId,
+          name: cleanName || normCode,
+          gradeLevel,
+          scheduleDayKh: quickClassDay.trim() || 'ថ្ងៃចន្ទ',
+          scheduleTime: quickClassTime.trim() || '15:00-16:30',
+          weeklyHoursLabel: '១ម៉ ៣០ន/ សប្តាហ៍',
+          textbookName:
+            gradeLevel >= 10
+              ? '快乐汉语 (第二册) ភាសាចិនរីករាយ (កំរិត២)'
+              : '快乐汉语 (第一册) ភាសាចិនរីករាយ (កំរិត១)',
+          termId: currentTermId,
+        },
+      ],
+    }));
+    setSelectedClassId(scopedId);
+    setQuickClassCode('');
   };
 
   const handleManualSave = async () => {
@@ -146,6 +265,14 @@ export default function App() {
     },
   ];
 
+  const hasClassesInCurrentTerm = termScopedState.classes.length > 0;
+  const requiresClassSelection =
+    activeModule === 'scores' ||
+    activeModule === 'attendance' ||
+    activeModule === 'homework' ||
+    activeModule === 'reports' ||
+    activeModule === 'markdown_docs';
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-khmer-battambang">
       {/* Clean Top Header Bar */}
@@ -204,7 +331,7 @@ export default function App() {
 
             <button
               type="button"
-              onClick={() => void downloadOfficialCambodiaWorkbook(state)}
+              onClick={() => void downloadOfficialCambodiaWorkbook(termScopedState)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-700 text-white hover:bg-emerald-800 font-semibold transition-colors cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
@@ -270,83 +397,160 @@ export default function App() {
 
       {/* Main Content Viewport */}
       <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-6">
-        {activeModule === 'markdown_docs' && (
-          <MarkdownDocumentView
-            state={state}
-            selectedClassId={selectedClassId}
-            selectedMonthId={selectedMonthId}
-            onSelectClassId={setSelectedClassId}
-            onSelectMonthId={setSelectedMonthId}
-            onUpdateState={handleUpdateState}
-          />
-        )}
+        {!hasClassesInCurrentTerm && requiresClassSelection ? (
+          <div className="bg-white border border-slate-200 rounded-xl p-6 max-w-2xl mx-auto space-y-4 shadow-2xs">
+            <div className="space-y-1">
+              <h2 className="text-base font-bold text-slate-900">
+                ឆ្នាំសិក្សាថ្មី៖ {state.schoolInfo.academicYear} (ចាប់ផ្តើមពីខែវិច្ឆិកា ដល់ ខែសីហា/កញ្ញា)
+              </h2>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                ឆ្នាំសិក្សាថ្មីមិនរក្សាទុកឈ្មោះសិស្ស និងថ្នាក់រៀនពីឆ្នាំចាស់ទេ។ សូមបន្ថែមថ្នាក់រៀនថ្មីរបស់អ្នកនៅខាងក្រោម ឬចុចប៊ូតុង{' '}
+                <strong>«+ បន្ថែមថ្នាក់»</strong> នៅរបារខាងលើ (新学期不保留去年的班级和学生姓名，请手动添加本学期班级)。
+              </p>
+            </div>
 
-        {activeModule === 'settings' && (
-          <BasicSettingsModule
-            state={state}
-            lang={lang}
-            selectedClassId={selectedClassId}
-            onSelectClassId={setSelectedClassId}
-            onUpdateState={handleUpdateState}
-          />
-        )}
+            <form
+              onSubmit={handleQuickAddFirstClass}
+              className="p-4 bg-slate-50 border border-slate-200 rounded-lg flex flex-wrap items-end gap-3 text-xs"
+            >
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  ឈ្មោះថ្នាក់ (班级名称, ឧ. 8A, 9B, 10C)
+                </label>
+                <input
+                  type="text"
+                  value={quickClassCode}
+                  onChange={(e) => setQuickClassCode(e.target.value)}
+                  placeholder="ឧ. 10C ឬ 8A"
+                  className="w-36 px-3 py-1.5 bg-white border border-slate-300 rounded-md font-semibold text-slate-900 focus:outline-none focus:border-slate-900"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  ថ្ងៃបង្រៀន (上课日)
+                </label>
+                <input
+                  type="text"
+                  value={quickClassDay}
+                  onChange={(e) => setQuickClassDay(e.target.value)}
+                  placeholder="ថ្ងៃចន្ទ"
+                  className="w-28 px-3 py-1.5 bg-white border border-slate-300 rounded-md text-slate-800"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  ម៉ោងសិក្សា (时间)
+                </label>
+                <input
+                  type="text"
+                  value={quickClassTime}
+                  onChange={(e) => setQuickClassTime(e.target.value)}
+                  placeholder="15:00-16:30"
+                  className="w-32 px-3 py-1.5 bg-white border border-slate-300 rounded-md text-slate-800"
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-4 py-1.5 bg-slate-900 text-white font-semibold rounded-md hover:bg-slate-800 cursor-pointer"
+              >
+                + បង្កើតថ្នាក់រៀន (创建班级)
+              </button>
+            </form>
 
-        {activeModule === 'scores' && (
-          <MonthlyScoreModule
-            state={state}
-            lang={lang}
-            selectedClassId={selectedClassId}
-            onSelectClassId={setSelectedClassId}
-            selectedMonthId={selectedMonthId}
-            onSelectMonthId={setSelectedMonthId}
-            onUpdateState={handleUpdateState}
-          />
-        )}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs text-slate-500">
+              <span>
+                បន្ទាប់ពីបង្កើតថ្នាក់រៀនរួច អ្នកអាចបញ្ចូលឈ្មោះសិស្សនៅក្នុងផ្នែក «៦. បញ្ជីឈ្មោះ & ការកំណត់» ឬ «២. វត្តមានសិស្ស»។
+              </span>
+              <button
+                type="button"
+                onClick={() => setActiveModule('settings')}
+                className="text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer"
+              >
+                ទៅកាន់បញ្ជីឈ្មោះ & ការកំណត់ →
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {activeModule === 'markdown_docs' && (
+              <MarkdownDocumentView
+                state={termScopedState}
+                selectedClassId={selectedClassId}
+                selectedMonthId={selectedMonthId}
+                onSelectClassId={setSelectedClassId}
+                onSelectMonthId={setSelectedMonthId}
+                onUpdateState={handleScopedUpdateState}
+              />
+            )}
 
-        {activeModule === 'attendance' && (
-          <AttendanceModule
-            state={state}
-            lang={lang}
-            selectedClassId={selectedClassId}
-            onSelectClassId={setSelectedClassId}
-            selectedMonthId={selectedMonthId}
-            onSelectMonthId={setSelectedMonthId}
-            onUpdateState={handleUpdateState}
-          />
-        )}
+            {activeModule === 'settings' && (
+              <BasicSettingsModule
+                state={termScopedState}
+                lang={lang}
+                selectedClassId={selectedClassId}
+                onSelectClassId={setSelectedClassId}
+                onUpdateState={handleScopedUpdateState}
+              />
+            )}
 
-        {activeModule === 'homework' && (
-          <HomeworkTrackerModule
-            state={state}
-            lang={lang}
-            selectedClassId={selectedClassId}
-            onSelectClass={setSelectedClassId}
-            onUpdateState={handleUpdateState}
-          />
-        )}
+            {activeModule === 'scores' && (
+              <MonthlyScoreModule
+                state={termScopedState}
+                lang={lang}
+                selectedClassId={selectedClassId}
+                onSelectClassId={setSelectedClassId}
+                selectedMonthId={selectedMonthId}
+                onSelectMonthId={setSelectedMonthId}
+                onUpdateState={handleScopedUpdateState}
+              />
+            )}
 
-        {activeModule === 'curriculum' && (
-          <GeipPlanModule
-            state={state}
-            lang={lang}
-            selectedClassId={selectedClassId}
-            onSelectClassId={setSelectedClassId}
-            selectedMonthId={selectedMonthId}
-            onSelectMonthId={setSelectedMonthId}
-            onUpdateState={handleUpdateState}
-          />
-        )}
+            {activeModule === 'attendance' && (
+              <AttendanceModule
+                state={termScopedState}
+                lang={lang}
+                selectedClassId={selectedClassId}
+                onSelectClassId={setSelectedClassId}
+                selectedMonthId={selectedMonthId}
+                onSelectMonthId={setSelectedMonthId}
+                onUpdateState={handleScopedUpdateState}
+              />
+            )}
 
-        {activeModule === 'reports' && (
-          <ReportsModule
-            state={state}
-            lang={lang}
-            selectedClassId={selectedClassId}
-            onSelectClassId={setSelectedClassId}
-            selectedMonthId={selectedMonthId}
-            onSelectMonthId={setSelectedMonthId}
-            onUpdateState={handleUpdateState}
-          />
+            {activeModule === 'homework' && (
+              <HomeworkTrackerModule
+                state={termScopedState}
+                lang={lang}
+                selectedClassId={selectedClassId}
+                onSelectClass={setSelectedClassId}
+                onUpdateState={handleScopedUpdateState}
+              />
+            )}
+
+            {activeModule === 'curriculum' && (
+              <GeipPlanModule
+                state={termScopedState}
+                lang={lang}
+                selectedClassId={selectedClassId}
+                onSelectClassId={setSelectedClassId}
+                selectedMonthId={selectedMonthId}
+                onSelectMonthId={setSelectedMonthId}
+                onUpdateState={handleScopedUpdateState}
+              />
+            )}
+
+            {activeModule === 'reports' && (
+              <ReportsModule
+                state={termScopedState}
+                lang={lang}
+                selectedClassId={selectedClassId}
+                onSelectClassId={setSelectedClassId}
+                selectedMonthId={selectedMonthId}
+                onSelectMonthId={setSelectedMonthId}
+                onUpdateState={handleScopedUpdateState}
+              />
+            )}
+          </>
         )}
       </main>
 

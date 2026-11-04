@@ -28,6 +28,7 @@ import {
   sortStudentsByKhmerName,
 } from '../utils/calculations';
 import { MarkdownCopyBar } from './MarkdownDocumentView';
+import { MonthSelectorBar, formatMonthButtonLabel } from './MonthSelectorBar';
 import { SignatureDateEditor } from './SignatureDateEditor';
 import {
   BarChart3,
@@ -84,7 +85,7 @@ export const MonthlyScoreModule: React.FC<Props> = ({
   onUpdateState,
 }) => {
   const [subMode, setSubMode] = useState<ScoreSubMode>('monthly_breakdown');
-  const [semesterFilter, setSemesterFilter] = useState<SemesterFilter>('sem2');
+  const [semesterFilter, setSemesterFilter] = useState<SemesterFilter>('all');
   const [showAllClassesAnnualPlan, setShowAllClassesAnnualPlan] = useState<boolean>(true);
   const [organizedFeedback, setOrganizedFeedback] = useState<string>('');
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -115,7 +116,7 @@ export const MonthlyScoreModule: React.FC<Props> = ({
   );
 
   const activeMonth =
-    enabledMonths.find((m) => m.id === selectedMonthId && !m.isSemesterExam) ||
+    enabledMonths.find((m) => m.id === selectedMonthId) ||
     enabledMonths.find((m) => m.id === 'nov') ||
     enabledMonths[0] ||
     state.months[0];
@@ -628,7 +629,8 @@ export const MonthlyScoreModule: React.FC<Props> = ({
       const auto = generateAutoSessionDatesForMonth(
         activeClass,
         activeMonth,
-        resolvedCfg.sessionCount
+        resolvedCfg.sessionCount,
+        activeAcademicYear
       );
       const nextCfg: MonthlyScoreSheetConfig = {
         ...resolvedCfg,
@@ -991,75 +993,70 @@ export const MonthlyScoreModule: React.FC<Props> = ({
 
         {/* Context Filter Bar */}
         {subMode === 'chinese_scores' ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500 font-medium">ជ្រើសរើសឆមាស៖</span>
-              <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-md">
-                {(
-                  [
-                    { id: 'sem1', label: 'ឆមាសទី១ (វិច្ឆិកា–មីនា)' },
-                    { id: 'sem2', label: 'ឆមាសទី២ (ឧសភា–កក្កដា)' },
-                    { id: 'all', label: 'គ្រប់ខែទាំងអស់' },
-                  ] as const
-                ).map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setSemesterFilter(s.id)}
-                    className={`px-2.5 py-1 rounded font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                      semesterFilter === s.id
-                        ? 'bg-white text-slate-900 shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    {s.label}
-                  </button>
-                ))}
+          <div className="space-y-2 text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-500 font-medium">ជ្រើសរើសឆមាស៖</span>
+                <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-md">
+                  {(
+                    [
+                      { id: 'sem1', label: 'ឆមាសទី១ (វិច្ឆិកា–មីនា)' },
+                      { id: 'sem2', label: 'ឆមាសទី២ (ឧសភា–កញ្ញា)' },
+                      { id: 'all', label: 'គ្រប់ខែទាំងអស់' },
+                    ] as const
+                  ).map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setSemesterFilter(s.id)}
+                      className={`px-2.5 py-1 rounded font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                        semesterFilter === s.id
+                          ? 'bg-white text-slate-900 shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 font-mono tabular-nums text-slate-600">
+                <span>
+                  សិស្សសរុប៖{' '}
+                  <strong>
+                    {formatNumeral(gradeDist.totalActive, state.useKhmerNumerals)}
+                  </strong>{' '}
+                  (ស្រី{' '}
+                  <strong>
+                    {formatNumeral(gradeDist.femaleActive, state.useKhmerNumerals)}
+                  </strong>
+                  )
+                </span>
+                <MarkdownCopyBar
+                  state={state}
+                  section={activeCopySection}
+                  selectedClassId={activeClass?.id || '8A'}
+                  selectedMonthId={activeMonth?.id || 'nov'}
+                />
               </div>
             </div>
-
-            <div className="flex flex-wrap items-center gap-3 font-mono tabular-nums text-slate-600">
-              <span>
-                សិស្សសរុប៖{' '}
-                <strong>
-                  {formatNumeral(gradeDist.totalActive, state.useKhmerNumerals)}
-                </strong>{' '}
-                (ស្រី{' '}
-                <strong>
-                  {formatNumeral(gradeDist.femaleActive, state.useKhmerNumerals)}
-                </strong>
-                )
-              </span>
-              <MarkdownCopyBar
-                state={state}
-                section={activeCopySection}
-                selectedClassId={activeClass?.id || '8A'}
-                selectedMonthId={activeMonth?.id || 'nov'}
-              />
-            </div>
+            <MonthSelectorBar
+              state={state}
+              activeMonthId={activeMonth?.id || 'nov'}
+              onSelectMonthId={onSelectMonthId}
+              onUpdateState={onUpdateState}
+            />
           </div>
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
             {subMode !== 'annual_classroom_plan' ? (
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-slate-500 font-medium mr-1">ជ្រើសរើសខែ៖</span>
-                {enabledMonths
-                  .filter((m) => !m.isSemesterExam)
-                  .map((m) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => onSelectMonthId(m.id)}
-                      className={`px-2.5 py-1 rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                        activeMonth?.id === m.id
-                          ? 'bg-slate-900 text-white font-semibold'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      }`}
-                    >
-                      ខែ{m.nameKh}
-                    </button>
-                  ))}
-              </div>
+              <MonthSelectorBar
+                state={state}
+                activeMonthId={activeMonth?.id || 'nov'}
+                onSelectMonthId={onSelectMonthId}
+                onUpdateState={onUpdateState}
+              />
             ) : (
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-slate-600 font-medium">ការបង្ហាញ៖</span>
@@ -1207,7 +1204,8 @@ export const MonthlyScoreModule: React.FC<Props> = ({
                           const auto = generateAutoSessionDatesForMonth(
                             activeClass,
                             activeMonth,
-                            cnt
+                            cnt,
+                            activeAcademicYear
                           );
                           return {
                             ...c,
@@ -1297,7 +1295,8 @@ export const MonthlyScoreModule: React.FC<Props> = ({
                 តារាងពិន្ទុប្រចាំខែលម្អិត និង តាមដានសកម្មភាពសិស្សក្នុងថ្នាក់រៀន
               </h2>
               <div className="font-khmer-moul text-xs sm:text-sm">
-                ថ្នាក់ទី {activeClass?.name} · ខែ {activeMonth?.nameKh} · ឆ្នាំសិក្សា :{' '}
+                ថ្នាក់ទី {activeClass?.name} ·{' '}
+                {activeMonth ? formatMonthButtonLabel(activeMonth) : ''} · ឆ្នាំសិក្សា :{' '}
                 {formatNumeral(activeAcademicYear, state.useKhmerNumerals)}
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold pt-1">

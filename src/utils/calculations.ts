@@ -155,8 +155,10 @@ export function getClassMaxScore(
 ): number {
   if (!cls) return 50;
   if (typeof cls.gradeLevel === 'number' && cls.gradeLevel >= 10) return 100;
-  const raw = String(cls.id || cls.name || '')
+  const raw = String(cls.name || cls.id || '')
+    .replace(/^.*__/, '')
     .replace(/^ថ្នាក់ទី\s*/, '')
+    .replace(/^ថ្នាក់\s*/, '')
     .trim();
   if (/^(10|១០)/.test(raw)) return 100;
   return 50;
@@ -1621,6 +1623,75 @@ export function convertIsoDateToKhmerSignature(iso: string): {
 }
 
 /**
+ * Parse an academic year label like "២០២៦ ~ ២០២៧" or "2026-2027" into { startYear, endYear }.
+ * School year starts in November of startYear (e.g. Nov 2026) and ends in Aug/Sep of endYear (e.g. Aug/Sep 2027).
+ */
+export function parseAcademicYearRange(
+  academicYearText?: string
+): { startYear: number; endYear: number } {
+  const normalized = (academicYearText || '')
+    .replace(/[០-៩]/g, (ch) => String('០១២៣៤៥៦៧៨៩'.indexOf(ch)));
+  const matches = normalized.match(/\b(20\d{2})\b/g);
+  if (matches && matches.length >= 2) {
+    const y1 = parseInt(matches[0], 10);
+    const y2 = parseInt(matches[1], 10);
+    if (!Number.isNaN(y1) && !Number.isNaN(y2) && y2 >= y1) {
+      return { startYear: y1, endYear: y2 };
+    }
+  }
+  if (matches && matches.length === 1) {
+    const y1 = parseInt(matches[0], 10);
+    if (!Number.isNaN(y1)) {
+      return { startYear: y1, endYear: y1 + 1 };
+    }
+  }
+  return { startYear: 2026, endYear: 2027 };
+}
+
+/**
+ * Given a 0-indexed month (0=Jan .. 10=Nov, 11=Dec) and an academic year string (e.g. "២០២៦ ~ ២០២៧"),
+ * return the calendar year for that month:
+ * - Oct, Nov, Dec (monthIndex >= 9) -> startYear (e.g. 2026)
+ * - Jan .. Sep (monthIndex <= 8) -> endYear (e.g. 2027)
+ */
+export function getCalendarYearForMonthInAcademicTerm(
+  monthIndex: number,
+  academicYearText?: string
+): number {
+  const { startYear, endYear } = parseAcademicYearRange(academicYearText);
+  return monthIndex >= 9 ? startYear : endYear;
+}
+
+/**
+ * Sync all MonthConfig entries so their year, daysInMonth, lunarDate, and gregorianDate
+ * match the given academic year (e.g. 2026 ~ 2027 -> Nov–Dec 2026, Jan–Sep 2027).
+ */
+export function syncMonthsWithAcademicYear(
+  months: MonthConfig[],
+  academicYearText?: string
+): MonthConfig[] {
+  return months.map((m) => {
+    const mIdx = typeof m.monthIndex === 'number' ? m.monthIndex : 10;
+    const targetYear = getCalendarYearForMonthInAcademicTerm(mIdx, academicYearText);
+    const daysInMonth = new Date(targetYear, mIdx + 1, 0).getDate();
+    if (m.year === targetYear && m.daysInMonth === daysInMonth) {
+      return m;
+    }
+    const isoEnd = `${targetYear}-${String(mIdx + 1).padStart(2, '0')}-${String(
+      daysInMonth
+    ).padStart(2, '0')}`;
+    const sig = convertIsoDateToKhmerSignature(isoEnd);
+    return {
+      ...m,
+      year: targetYear,
+      daysInMonth,
+      lunarDate: sig.fullLunarString,
+      gregorianDate: sig.fullGregorianString,
+    };
+  });
+}
+
+/**
  * Determine weekday index (0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat) from Khmer scheduleDayKh
  */
 export function getWeekdayIndexFromKhmerDay(scheduleDayKh?: string): number {
@@ -1642,10 +1713,13 @@ export function getWeekdayIndexFromKhmerDay(scheduleDayKh?: string): number {
 export function generateAutoSessionDatesForMonth(
   cls?: ClassGroup | null,
   monthConfig?: MonthConfig | null,
-  sessionCount = 4
+  sessionCount = 4,
+  academicYearText?: string
 ): { sessionDates: Record<number, string>; scoringEndDate: string } {
-  const year = monthConfig?.year || 2026;
   const monthIdx = monthConfig?.monthIndex ?? 10; // 0-indexed (10 = Nov)
+  const year = academicYearText
+    ? getCalendarYearForMonthInAcademicTerm(monthIdx, academicYearText)
+    : monthConfig?.year || getCalendarYearForMonthInAcademicTerm(monthIdx, '២០២៦ ~ ២០២៧');
   const targetWeekday = getWeekdayIndexFromKhmerDay(cls?.scheduleDayKh);
   const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
 
@@ -1706,14 +1780,28 @@ export function getResolvedMonthlyScoreConfig(
   const maxScore = getClassMaxScore(cls);
   const is50Scale = maxScore === 50;
 
+  const activeAcademicYear =
+    state.academicTerms?.find((t) => t.id === state.currentTermId)?.nameKh ||
+    state.schoolInfo.academicYear ||
+    '២០២៦ ~ ២០២៧';
+  const expectedYearPrefix = String(
+    getCalendarYearForMonthInAcademicTerm(monthCfg?.monthIndex ?? 10, activeAcademicYear)
+  );
+
   const sessionCount = existing?.sessionCount ?? 4;
-  const autoDates = generateAutoSessionDatesForMonth(cls, monthCfg, sessionCount);
+  const autoDates = generateAutoSessionDatesForMonth(
+    cls,
+    monthCfg,
+    sessionCount,
+    activeAcademicYear
+  );
 
   const mergedSessionDates: Record<number, string> = { ...autoDates.sessionDates };
   if (existing?.sessionDates) {
     for (let i = 1; i <= sessionCount; i++) {
-      if (existing.sessionDates[i]) {
-        mergedSessionDates[i] = existing.sessionDates[i];
+      const savedIso = existing.sessionDates[i];
+      if (savedIso && savedIso.startsWith(expectedYearPrefix)) {
+        mergedSessionDates[i] = savedIso;
       }
     }
   }
@@ -1726,6 +1814,11 @@ export function getResolvedMonthlyScoreConfig(
     existing.performanceMax === 10 &&
     existing.homeworkMax === 10;
 
+  const savedScoringEnd =
+    existing?.scoringEndDate && existing.scoringEndDate.startsWith(expectedYearPrefix)
+      ? existing.scoringEndDate
+      : '';
+
   return {
     examMax: isLegacy50On100Class ? 50 : existing?.examMax ?? (is50Scale ? 25 : 50),
     attendanceMax: isLegacy50On100Class ? 10 : existing?.attendanceMax ?? (is50Scale ? 5 : 10),
@@ -1733,7 +1826,7 @@ export function getResolvedMonthlyScoreConfig(
     homeworkMax: isLegacy50On100Class ? 20 : existing?.homeworkMax ?? (is50Scale ? 10 : 20),
     sessionCount,
     sessionDates: mergedSessionDates,
-    scoringEndDate: existing?.scoringEndDate || mergedSessionDates[sessionCount] || autoDates.scoringEndDate,
+    scoringEndDate: savedScoringEnd || mergedSessionDates[sessionCount] || autoDates.scoringEndDate,
     isScoringFinished: existing?.isScoringFinished ?? false,
   };
 }

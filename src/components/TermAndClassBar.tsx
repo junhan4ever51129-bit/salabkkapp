@@ -12,7 +12,10 @@ import {
   Edit3,
 } from 'lucide-react';
 import { AcademicTerm, AppDatabaseState, ClassGroup } from '../types';
-import { formatNumeral as formatNum } from '../utils/calculations';
+import {
+  formatNumeral as formatNum,
+  syncMonthsWithAcademicYear,
+} from '../utils/calculations';
 import { DEFAULT_ACADEMIC_TERMS } from '../data/defaultData';
 
 interface Props {
@@ -41,13 +44,6 @@ export const TermAndClassBar: React.FC<Props> = ({
   const [newClassTime, setNewClassTime] = useState('15:00-16:30');
 
   const [showEditClassModal, setShowEditClassModal] = useState(false);
-  const currentClass = state.classes.find((c) => c.id === selectedClassId) || state.classes[0];
-  const [editClassName, setEditClassName] = useState(currentClass?.name || '');
-  const [editClassDay, setEditClassDay] = useState(currentClass?.scheduleDayKh || '');
-  const [editClassTime, setEditClassTime] = useState(currentClass?.scheduleTime || '');
-  const [editClassTermId, setEditClassTermId] = useState(
-    currentClass?.termId || state.currentTermId || 'term-2026-2027'
-  );
 
   const terms: AcademicTerm[] =
     state.academicTerms && state.academicTerms.length > 0
@@ -57,15 +53,23 @@ export const TermAndClassBar: React.FC<Props> = ({
   const currentTermId = state.currentTermId || terms[0]?.id || 'term-2026-2027';
   const currentTerm = terms.find((t) => t.id === currentTermId) || terms[0];
 
-  // Always display ALL added classes so no class is ever hidden by termId filtering
-  const displayedClasses = state.classes;
+  // Display only classes belonging to the current academic term
+  const displayedClasses = state.classes.filter(
+    (c) => (c.termId || 'term-2025-2026') === currentTermId
+  );
 
-  const totalTermStudents = state.students.filter((s) =>
-    displayedClasses.some((c) => c.id === s.classId)
-  ).length;
+  const currentClass =
+    displayedClasses.find((c) => c.id === selectedClassId) || displayedClasses[0];
+  const [editClassName, setEditClassName] = useState(currentClass?.name || '');
+  const [editClassDay, setEditClassDay] = useState(currentClass?.scheduleDayKh || '');
+  const [editClassTime, setEditClassTime] = useState(currentClass?.scheduleTime || '');
+  const [editClassTermId, setEditClassTermId] = useState(
+    currentClass?.termId || currentTermId
+  );
 
   const normalizeClassId = (raw: string): string => {
     return raw
+      .replace(/^.*__/, '')
       .replace(/[០-៩]/g, (ch) => String('០១២៣៤៥៦៧៨៩'.indexOf(ch)))
       .replace(/^ថ្នាក់ទី\s*/g, '')
       .replace(/^ថ្នាក់\s*/g, '')
@@ -79,18 +83,27 @@ export const TermAndClassBar: React.FC<Props> = ({
   };
 
   const handleSelectTerm = (term: AcademicTerm) => {
-    onUpdateState((prev) => ({
-      ...prev,
-      currentTermId: term.id,
-      schoolInfo: {
-        ...prev.schoolInfo,
-        academicYear: term.nameKh,
-      },
-      academicTerms: (prev.academicTerms || DEFAULT_ACADEMIC_TERMS).map((t) => ({
-        ...t,
-        isCurrent: t.id === term.id,
-      })),
-    }));
+    onUpdateState((prev) => {
+      const nextTermClasses = prev.classes.filter(
+        (c) => (c.termId || 'term-2025-2026') === term.id
+      );
+      if (nextTermClasses[0]) {
+        onSelectClass(nextTermClasses[0].id);
+      }
+      return {
+        ...prev,
+        currentTermId: term.id,
+        months: syncMonthsWithAcademicYear(prev.months, term.nameKh),
+        schoolInfo: {
+          ...prev.schoolInfo,
+          academicYear: term.nameKh,
+        },
+        academicTerms: (prev.academicTerms || DEFAULT_ACADEMIC_TERMS).map((t) => ({
+          ...t,
+          isCurrent: t.id === term.id,
+        })),
+      };
+    });
     setShowTermMenu(false);
   };
 
@@ -107,6 +120,7 @@ export const TermAndClassBar: React.FC<Props> = ({
     onUpdateState((prev) => ({
       ...prev,
       currentTermId: newId,
+      months: syncMonthsWithAcademicYear(prev.months, trimmed),
       schoolInfo: {
         ...prev.schoolInfo,
         academicYear: trimmed,
@@ -121,6 +135,7 @@ export const TermAndClassBar: React.FC<Props> = ({
     }));
     setNewTermKh('');
     setShowTermMenu(false);
+    setShowAddClassModal(true);
   };
 
   const handleSaveTermRename = (termId: string) => {
@@ -128,6 +143,10 @@ export const TermAndClassBar: React.FC<Props> = ({
     if (!trimmed) return;
     onUpdateState((prev) => ({
       ...prev,
+      months:
+        prev.currentTermId === termId
+          ? syncMonthsWithAcademicYear(prev.months, trimmed)
+          : prev.months,
       schoolInfo:
         prev.currentTermId === termId
           ? { ...prev.schoolInfo, academicYear: trimmed }
@@ -146,6 +165,7 @@ export const TermAndClassBar: React.FC<Props> = ({
     onUpdateState((prev) => ({
       ...prev,
       currentTermId: nextTerm.id,
+      months: syncMonthsWithAcademicYear(prev.months, nextTerm.nameKh),
       schoolInfo: {
         ...prev.schoolInfo,
         academicYear: nextTerm.nameKh,
@@ -172,44 +192,39 @@ export const TermAndClassBar: React.FC<Props> = ({
     let lastAddedId = selectedClassId;
 
     onUpdateState((prev) => {
-      // First heal any existing class whose id doesn't match its name
-      const nextClasses = prev.classes.map((c) => {
-        const nId = normalizeClassId(c.id);
-        const nName = normalizeClassId(c.name);
-        if (nId && nName && nId !== nName && !prev.classes.some((o) => o !== c && normalizeClassId(o.id) === nName)) {
-          return {
-            ...c,
-            id: nName,
-            gradeLevel: inferGradeFromCode(nName, c.gradeLevel),
-          };
-        }
-        return c;
-      });
+      const nextClasses = [...prev.classes];
 
       tokens.forEach((token, idx) => {
-        const classId = normalizeClassId(token);
-        if (!classId) return;
+        const classCode = normalizeClassId(token);
+        if (!classCode) return;
         const customName =
           tokens.length === 1 && newClassName.trim()
             ? newClassName.trim().replace(/^ថ្នាក់ទី\s*/g, '').replace(/^ថ្នាក់\s*/g, '').trim()
             : token.replace(/^ថ្នាក់ទី\s*/g, '').replace(/^ថ្នាក់\s*/g, '').trim();
-        const displayKh = customName || classId;
-        const gradeLevel = inferGradeFromCode(classId, Number(newClassGrade) || 8);
+        const displayKh = customName || classCode;
+        const gradeLevel = inferGradeFromCode(classCode, Number(newClassGrade) || 8);
 
-        const existingIdx = nextClasses.findIndex(
+        // Check if this class already exists in the current term
+        const existingInCurrentTerm = nextClasses.find(
           (c) =>
-            normalizeClassId(c.id) === classId &&
-            normalizeClassId(c.name) === normalizeClassId(displayKh)
+            (c.termId || 'term-2025-2026') === currentTermId &&
+            (normalizeClassId(c.id) === classCode ||
+              normalizeClassId(c.name) === normalizeClassId(displayKh))
         );
 
-        if (existingIdx >= 0) {
-          lastAddedId = nextClasses[existingIdx].id;
+        if (existingInCurrentTerm) {
+          lastAddedId = existingInCurrentTerm.id;
           return;
         }
 
-        const uniqueId = nextClasses.some((c) => c.id === classId)
-          ? `${classId}_${Date.now()}_${idx}`
-          : classId;
+        // Scope ID to currentTermId so new term classes never inherit last year's students or scores
+        const baseScopedId =
+          currentTermId === 'term-2025-2026'
+            ? classCode
+            : `${currentTermId}__${classCode}`;
+        const uniqueId = nextClasses.some((c) => c.id === baseScopedId)
+          ? `${baseScopedId}_${Date.now()}_${idx}`
+          : baseScopedId;
 
         const created: ClassGroup = {
           id: uniqueId,
@@ -256,15 +271,10 @@ export const TermAndClassBar: React.FC<Props> = ({
       .replace(/^ថ្នាក់ទី\s*/g, '')
       .replace(/^ថ្នាក់\s*/g, '')
       .trim();
-    const newNormId = normalizeClassId(cleanName || currentClass.id);
+    const newNormCode = normalizeClassId(cleanName || currentClass.name || currentClass.id);
     const oldId = currentClass.id;
-    const canRenameId =
-      newNormId &&
-      newNormId !== oldId &&
-      !state.classes.some((c) => c.id === newNormId && c.id !== oldId);
-    const targetId = canRenameId ? newNormId : oldId;
     const inferredGrade = inferGradeFromCode(
-      newNormId,
+      newNormCode,
       currentClass.gradeLevel
     );
 
@@ -274,7 +284,6 @@ export const TermAndClassBar: React.FC<Props> = ({
         c.id === oldId
           ? {
               ...c,
-              id: targetId,
               name: cleanName || c.name,
               gradeLevel: inferredGrade,
               scheduleDayKh: editClassDay.trim() || c.scheduleDayKh,
@@ -283,28 +292,30 @@ export const TermAndClassBar: React.FC<Props> = ({
             }
           : c
       ),
-      students: canRenameId
-        ? prev.students.map((s) =>
-            s.classId === oldId ? { ...s, classId: targetId } : s
-          )
-        : prev.students,
     }));
-    if (canRenameId) {
-      onSelectClass(targetId);
+    setShowEditClassModal(false);
+  };
+
+  const handleDeleteClassById = (classIdToDelete: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const nextClasses = state.classes.filter((c) => c.id !== classIdToDelete);
+    const nextDisplayed = nextClasses.filter(
+      (c) => (c.termId || 'term-2025-2026') === currentTermId
+    );
+    onUpdateState((prev) => ({
+      ...prev,
+      classes: nextClasses,
+      students: prev.students.filter((s) => s.classId !== classIdToDelete),
+    }));
+    if (selectedClassId === classIdToDelete) {
+      onSelectClass(nextDisplayed[0]?.id || '');
     }
     setShowEditClassModal(false);
   };
 
   const handleDeleteSelectedClass = () => {
-    if (!currentClass || state.classes.length <= 1) return;
-    const nextClasses = state.classes.filter((c) => c.id !== currentClass.id);
-    onUpdateState((prev) => ({
-      ...prev,
-      classes: nextClasses,
-      students: prev.students.filter((s) => s.classId !== currentClass.id),
-    }));
-    onSelectClass(nextClasses[0].id);
-    setShowEditClassModal(false);
+    if (!currentClass) return;
+    handleDeleteClassById(currentClass.id);
   };
 
   return (
@@ -317,49 +328,68 @@ export const TermAndClassBar: React.FC<Props> = ({
               ជ្រើសរើសថ្នាក់ (选择班级):
             </span>
 
-            {displayedClasses.map((cls) => {
-              const count = state.students.filter((s) => s.classId === cls.id).length;
-              const isSelected = cls.id === selectedClassId;
-              return (
-                <button
-                  key={cls.id}
-                  type="button"
-                  onClick={() => onSelectClass(cls.id)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                    isSelected
-                      ? 'bg-indigo-600 text-white shadow-2xs'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900'
-                  }`}
-                >
-                  <span>ថ្នាក់ {cls.name}</span>
-                  <span
-                    className={`text-[11px] font-mono ${
-                      isSelected ? 'text-indigo-200' : 'text-slate-400'
+            {displayedClasses.length === 0 ? (
+              <span className="text-xs text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg font-medium">
+                ឆ្នាំសិក្សាថ្មី ({currentTerm?.nameKh}) មិនទាន់មានថ្នាក់រៀនទេ — សូមចុច «+ បន្ថែមថ្នាក់» ដើម្បីបង្កើតថ្នាក់ថ្មី
+              </span>
+            ) : (
+              displayedClasses.map((cls) => {
+                const count = state.students.filter((s) => s.classId === cls.id).length;
+                const isSelected = cls.id === currentClass?.id;
+                return (
+                  <div
+                    key={cls.id}
+                    onClick={() => onSelectClass(cls.id)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                      isSelected
+                        ? 'bg-indigo-600 text-white shadow-2xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900'
                     }`}
                   >
-                    ({formatNum(count, state.useKhmerNumerals)})
-                  </span>
-                </button>
-              );
-            })}
+                    <span>ថ្នាក់ {cls.name}</span>
+                    <span
+                      className={`text-[11px] font-mono ${
+                        isSelected ? 'text-indigo-200' : 'text-slate-400'
+                      }`}
+                    >
+                      ({formatNum(count, state.useKhmerNumerals)})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteClassById(cls.id, e)}
+                      title={`លុបថ្នាក់ ${cls.name}`}
+                      className={`ml-0.5 rounded-full p-0.5 transition-colors cursor-pointer ${
+                        isSelected
+                          ? 'text-indigo-200 hover:text-white hover:bg-indigo-500'
+                          : 'text-slate-400 hover:text-rose-600 hover:bg-rose-100'
+                      }`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                );
+              })
+            )}
 
             <button
               type="button"
-              onClick={() => setShowAddClassModal(true)}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+              onClick={() => setShowAddClassModal((v) => !v)}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-bold transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 text-indigo-600" />
-              <span>បន្ថែមថ្នាក់</span>
+              <span>+ បន្ថែមថ្នាក់ (添加班级)</span>
             </button>
 
-            <button
-              type="button"
-              onClick={openEditClassModal}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 text-xs font-medium transition-colors cursor-pointer"
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
-              <span>កែប្រែថ្នាក់</span>
-            </button>
+            {currentClass && (
+              <button
+                type="button"
+                onClick={openEditClassModal}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 text-xs font-medium transition-colors cursor-pointer"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
+                <span>កែប្រែថ្នាក់</span>
+              </button>
+            )}
           </div>
 
           {/* Right: Compact Academic Year Selector */}
@@ -652,8 +682,7 @@ export const TermAndClassBar: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={handleDeleteSelectedClass}
-                disabled={state.classes.length <= 1}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold disabled:opacity-40 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>លុបថ្នាក់ {currentClass.name} នេះ</span>

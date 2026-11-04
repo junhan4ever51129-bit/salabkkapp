@@ -297,38 +297,29 @@ export const BasicSettingsModule: React.FC<Props> = ({
       .trim();
     const matchGrade = normCode.match(/^(7|8|9|10|11|12)/);
     const gradeLevel = matchGrade ? Number(matchGrade[1]) : Number(newClassGrade) || 8;
+    const currentTermId = state.currentTermId || 'term-2026-2027';
 
     let targetId = normCode;
     onUpdateState((prev) => {
-      const healed = prev.classes.map((c) => {
-        const cId = c.id
-          .replace(/[០-៩]/g, (ch) => String('០១២៣៤៥៦៧៨៩'.indexOf(ch)))
-          .toUpperCase();
-        const cName = c.name
-          .replace(/[០-៩]/g, (ch) => String('០១២៣៤៥៦៧៨៩'.indexOf(ch)))
-          .replace(/^ថ្នាក់ទី\s*/g, '')
-          .replace(/^ថ្នាក់\s*/g, '')
-          .replace(/\s+/g, '')
-          .toUpperCase();
-        if (cId && cName && cId !== cName && !prev.classes.some((o) => o !== c && o.id === cName)) {
-          return { ...c, id: cName };
-        }
-        return c;
-      });
-
-      const existing = healed.find(
+      const existingInTerm = prev.classes.find(
         (c) =>
-          c.id.toUpperCase() === normCode &&
-          c.name.replace(/\s+/g, '').toUpperCase() === cleanName.replace(/\s+/g, '').toUpperCase()
+          (c.termId || 'term-2025-2026') === currentTermId &&
+          (c.id.toUpperCase() === normCode ||
+            c.name.replace(/\s+/g, '').toUpperCase() ===
+              cleanName.replace(/\s+/g, '').toUpperCase())
       );
-      if (existing) {
-        targetId = existing.id;
-        return { ...prev, classes: healed };
+      if (existingInTerm) {
+        targetId = existingInTerm.id;
+        return prev;
       }
 
-      const uniqueId = healed.some((c) => c.id === normCode)
-        ? `${normCode}_${Date.now()}`
-        : normCode;
+      const scopedBaseId =
+        currentTermId === 'term-2025-2026'
+          ? normCode
+          : `${currentTermId}__${normCode}`;
+      const uniqueId = prev.classes.some((c) => c.id === scopedBaseId)
+        ? `${scopedBaseId}_${Date.now()}`
+        : scopedBaseId;
       targetId = uniqueId;
 
       const created: ClassGroup = {
@@ -342,11 +333,11 @@ export const BasicSettingsModule: React.FC<Props> = ({
           gradeLevel >= 10
             ? '快乐汉语 (第二册) ភាសាចិនរីករាយ (កំរិត២)'
             : '快乐汉语 (第一册) ភាសាចិនរីករាយ (កំរិត១)',
-        termId: state.currentTermId || 'term-2026-2027',
+        termId: currentTermId,
       };
       return {
         ...prev,
-        classes: [...healed, created],
+        classes: [...prev.classes, created],
       };
     });
     onSelectClassId(targetId);
@@ -356,7 +347,6 @@ export const BasicSettingsModule: React.FC<Props> = ({
   };
 
   const handleDeleteClass = (classId: string) => {
-    if (state.classes.length <= 1) return;
     const remaining = state.classes.filter((c) => c.id !== classId);
     onUpdateState((prev) => ({
       ...prev,
@@ -364,7 +354,7 @@ export const BasicSettingsModule: React.FC<Props> = ({
       students: prev.students.filter((s) => s.classId !== classId),
     }));
     if (selectedClassId === classId) {
-      onSelectClassId(remaining[0].id);
+      onSelectClassId(remaining[0]?.id || '');
     }
   };
 
@@ -494,19 +484,25 @@ export const BasicSettingsModule: React.FC<Props> = ({
 
           {/* Concise Class Summary Bar */}
           <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 no-print">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-700">
-              <span className="font-bold text-slate-900 text-sm">
-                ថ្នាក់ទី {activeClass?.name}
-              </span>
-              <span className="text-slate-300">|</span>
-              <span>
-                សិស្សសរុប <strong>{formatNumeral(classStudents.length, state.useKhmerNumerals)}</strong> នាក់ (ស្រី <strong>{formatNumeral(classFemaleCount, state.useKhmerNumerals)}</strong> នាក់)
-              </span>
-              <span className="text-slate-300">|</span>
-              <span className="text-slate-500">
-                {activeClass?.scheduleDayKh} · {activeClass?.scheduleTime}
-              </span>
-            </div>
+            {activeClass ? (
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-700">
+                <span className="font-bold text-slate-900 text-sm">
+                  ថ្នាក់ទី {activeClass?.name}
+                </span>
+                <span className="text-slate-300">|</span>
+                <span>
+                  សិស្សសរុប <strong>{formatNumeral(classStudents.length, state.useKhmerNumerals)}</strong> នាក់ (ស្រី <strong>{formatNumeral(classFemaleCount, state.useKhmerNumerals)}</strong> នាក់)
+                </span>
+                <span className="text-slate-300">|</span>
+                <span className="text-slate-500">
+                  {activeClass?.scheduleDayKh} · {activeClass?.scheduleTime}
+                </span>
+              </div>
+            ) : (
+              <div className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-md">
+                មិនទាន់មានថ្នាក់រៀនសម្រាប់ឆ្នាំសិក្សាថ្មីនេះទេ — សូមចុច «+ បន្ថែមថ្នាក់ថ្មី» ដើម្បីបង្កើតថ្នាក់រៀនរបស់អ្នក (请先添加新学期的班级)
+              </div>
+            )}
 
             <div className="flex items-center gap-2">
               <button
@@ -517,7 +513,7 @@ export const BasicSettingsModule: React.FC<Props> = ({
                 <Plus className="w-3.5 h-3.5" />
                 <span>បន្ថែមថ្នាក់ថ្មី</span>
               </button>
-              {state.classes.length > 1 && activeClass && (
+              {activeClass && (
                 <button
                   type="button"
                   onClick={() => handleDeleteClass(activeClass.id)}
@@ -529,7 +525,7 @@ export const BasicSettingsModule: React.FC<Props> = ({
             </div>
           </div>
 
-          {showAddClassRow && (
+          {(showAddClassRow || !activeClass) && (
             <div className="p-3 bg-blue-50/60 border border-blue-200 rounded-xl flex flex-wrap items-end gap-2.5 text-xs no-print">
               <div>
                 <label className="block font-semibold text-slate-600 mb-1">កូដថ្នាក់ (ឧ. 8D)</label>

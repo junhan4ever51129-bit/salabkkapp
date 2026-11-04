@@ -9,6 +9,7 @@ import {
 } from '../utils/calculations';
 import { AiGeneratorBar } from './AiGeneratorBar';
 import { MarkdownCopyBar } from './MarkdownDocumentView';
+import { MonthSelectorBar } from './MonthSelectorBar';
 import { SignatureDateEditor } from './SignatureDateEditor';
 import {
   Calendar,
@@ -43,12 +44,15 @@ export const AttendanceModule: React.FC<Props> = ({
     state.classes.find((c) => c.id === selectedClassId) || state.classes[0];
 
   const enabledMonths = useMemo(
-    () => state.months.filter((m) => m.enabled && !m.isSemesterExam),
+    () => state.months.filter((m) => m.enabled),
     [state.months]
   );
 
   const activeMonth =
-    enabledMonths.find((m) => m.id === selectedMonthId) || enabledMonths[0] || state.months[0];
+    enabledMonths.find((m) => m.id === selectedMonthId) ||
+    enabledMonths.find((m) => m.id === 'nov') ||
+    enabledMonths[0] ||
+    state.months[0];
 
   const sheetConfig = useMemo(() => {
     return (
@@ -435,29 +439,19 @@ export const AttendanceModule: React.FC<Props> = ({
       {/* Top Controls Bar (Hidden when printing) */}
       <div className="bg-white border border-slate-200 rounded-lg p-3.5 space-y-2.5 no-print">
         <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-slate-500 font-medium mr-1">សន្លឹកវត្តមាន៖</span>
-            {enabledMonths.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => onSelectMonthId(m.id)}
-                className={`px-2.5 py-1 rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                  activeMonth?.id === m.id
-                    ? 'bg-slate-900 text-white font-semibold'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                ខែ{m.nameKh}
-              </button>
-            ))}
-          </div>
+          <MonthSelectorBar
+            state={state}
+            activeMonthId={activeMonth?.id || 'nov'}
+            onSelectMonthId={onSelectMonthId}
+            onUpdateState={onUpdateState}
+            labelKh="សន្លឹកវត្តមាន៖"
+          />
 
           <MarkdownCopyBar
             state={state}
             section="attendance"
             selectedClassId={activeClass?.id || '8A'}
-            selectedMonthId={activeMonth?.id || 'feb'}
+            selectedMonthId={activeMonth?.id || 'nov'}
           />
         </div>
 

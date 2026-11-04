@@ -7,6 +7,7 @@ import {
   parseSignatureGregorianToIso,
   sortAllStudentsInDatabase,
   sortStudentsByKhmerName,
+  syncMonthsWithAcademicYear,
 } from './calculations';
 import { downloadOfficialCambodiaWorkbook } from './excelWorkbookBuilder';
 
@@ -56,6 +57,17 @@ function toKhmerClassDisplay(code: string): string {
   return code.replace(/[0-9]/g, (d) => '០១២៣៤៥៦៧៨៩'[Number(d)]);
 }
 
+const DEFAULT_2025_CLASS_IDS = new Set([
+  '8A',
+  '8B',
+  '8C',
+  '9A',
+  '9B',
+  '9C',
+  '10A',
+  '10C',
+]);
+
 function mergeWithValidDefaultScores(
   defaults: AppDatabaseState,
   loaded: AppDatabaseState
@@ -68,7 +80,7 @@ function mergeWithValidDefaultScores(
     const cls = healedClasses[i];
     const normId = normalizeClassCode(cls.id || '');
     const normName = normalizeClassCode(cls.name || '');
-    if (normId && normName && normId !== normName) {
+    if (normId && normName && normId !== normName && !cls.id.includes('__')) {
       // Update this class's id to match its new name (e.g. '10B')
       const mGrade = normName.match(/^(7|8|9|10|11|12)/);
       const inferredGrade = mGrade ? Number(mGrade[1]) : cls.gradeLevel;
@@ -92,13 +104,23 @@ function mergeWithValidDefaultScores(
             ...cls,
             id: normId,
             name: toKhmerClassDisplay(normId),
+            termId: 'term-2025-2026',
           }
         );
       }
     }
   }
 
-  const finalClasses = [...extraRestoredClasses, ...healedClasses];
+  const allStudentsSource = loaded.students || defaults.students;
+  const finalClasses = [...extraRestoredClasses, ...healedClasses].map((cls) => {
+    const hasDefault2025Students =
+      DEFAULT_2025_CLASS_IDS.has(cls.id) &&
+      allStudentsSource.some((s) => s.classId === cls.id && s.id === `stu-${cls.id}-1`);
+    if (hasDefault2025Students) {
+      return { ...cls, termId: 'term-2025-2026' };
+    }
+    return cls;
+  });
 
   const mergedScores = { ...defaults.scores, ...(loaded.scores || {}) };
   for (const cls of finalClasses) {
@@ -223,9 +245,31 @@ function mergeWithValidDefaultScores(
     }
   }
 
+  const activeAcademicYear =
+    (loaded.academicTerms || defaults.academicTerms)?.find(
+      (t) => t.id === (loaded.currentTermId || defaults.currentTermId)
+    )?.nameKh ||
+    loaded.schoolInfo?.academicYear ||
+    defaults.schoolInfo.academicYear;
+
+  let mergedMonths = loaded.months && loaded.months.length > 0 ? [...loaded.months] : [...defaults.months];
+  if (!mergedMonths.some((m) => m.id === 'aug')) {
+    const augDefault = defaults.months.find((m) => m.id === 'aug');
+    if (augDefault) {
+      const sem2Idx = mergedMonths.findIndex((m) => m.id === 'sem2');
+      if (sem2Idx >= 0) {
+        mergedMonths.splice(sem2Idx, 0, augDefault);
+      } else {
+        mergedMonths.push(augDefault);
+      }
+    }
+  }
+  mergedMonths = syncMonthsWithAcademicYear(mergedMonths, activeAcademicYear);
+
   return {
     ...defaults,
     ...loaded,
+    months: mergedMonths,
     classes: finalClasses,
     students: sortedStudents,
     scores: mergedScores,
