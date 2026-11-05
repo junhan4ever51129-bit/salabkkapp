@@ -29,3 +29,54 @@
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+.print-container,
+.a4-sheet {
+  box-sizing: border-box;
+  max-width: 210mm;
+}
+
+.print-container table,
+.a4-sheet table {
+  width: 99.6%;
+  max-width: 99.6%;
+  margin-left: auto;
+  margin-right: auto;
+  border-collapse: collapse;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
+}
+
+.print-container table.a4-singleline-table th,
+.print-container table.a4-singleline-table td,
+.a4-sheet table.a4-singleline-table th,
+.a4-sheet table.a4-singleline-table td,
+table.a4-singleline-table th,
+table.a4-singleline-table td {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  word-wrap: normal !important;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-container,
+  .a4-sheet {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 1mm !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+  }
+}
+

@@ -112,7 +112,7 @@ function mergeWithValidDefaultScores(
   }
 
   const allStudentsSource = loaded.students || defaults.students;
-  const finalClasses = [...extraRestoredClasses, ...healedClasses].map((cls) => {
+  let finalClasses = [...extraRestoredClasses, ...healedClasses].map((cls) => {
     const hasDefault2025Students =
       DEFAULT_2025_CLASS_IDS.has(cls.id) &&
       allStudentsSource.some((s) => s.classId === cls.id && s.id === `stu-${cls.id}-1`);
@@ -121,6 +121,19 @@ function mergeWithValidDefaultScores(
     }
     return cls;
   });
+
+  // Ensure default 10C exists for term-2026-2027 if user hasn't added any other class yet
+  const has2026Class = finalClasses.some(
+    (c) => (c.termId || 'term-2025-2026') === 'term-2026-2027'
+  );
+  if (!has2026Class) {
+    const default10C = defaults.classes.find(
+      (c) => c.termId === 'term-2026-2027'
+    );
+    if (default10C) {
+      finalClasses.push(default10C);
+    }
+  }
 
   const mergedScores = { ...defaults.scores, ...(loaded.scores || {}) };
   for (const cls of finalClasses) {
@@ -281,6 +294,10 @@ function mergeWithValidDefaultScores(
     schoolInfo: {
       ...loaded.schoolInfo,
       schoolNameZh: '',
+      principalName:
+        loaded.schoolInfo?.principalName === 'នុត ងួនលី'
+          ? ''
+          : loaded.schoolInfo?.principalName || '',
     },
   };
 }
@@ -346,6 +363,46 @@ export async function saveStateToIndexedDB(state: AppDatabaseState): Promise<voi
     });
   } catch {
     // fallback already written
+  }
+
+  // Also silently sync to server cloud endpoint in background so deployed URL can fetch it
+  try {
+    fetch('/api/cloud-sync/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ state: payload }),
+    }).catch(() => {
+      // offline or standalone
+    });
+  } catch {
+    // ignore
+  }
+}
+
+export async function syncStateToCloud(state: AppDatabaseState): Promise<boolean> {
+  try {
+    const res = await fetch('/api/cloud-sync/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ state }),
+    });
+    const json = (await res.json()) as { ok: boolean };
+    return Boolean(json.ok);
+  } catch {
+    return false;
+  }
+}
+
+export async function loadStateFromCloud(): Promise<AppDatabaseState | null> {
+  try {
+    const res = await fetch('/api/cloud-sync/load');
+    const json = (await res.json()) as { ok: boolean; data: AppDatabaseState | null };
+    if (json.ok && json.data) {
+      return json.data;
+    }
+    return null;
+  } catch {
+    return null;
   }
 }
 

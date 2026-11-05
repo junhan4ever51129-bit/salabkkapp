@@ -176,11 +176,18 @@ export interface CurriculumPlanItem {
   pageNumber: string; // e.g. 'សៀ.សិស្ស ៣'
   hours: number; // 1.5
   note: string;
+  linkedLessonPlanId?: string;
 }
 
 // Detailed Chinese Lesson Plan (កិច្ចតែងការបង្រៀន - PDF 4)
 export interface ChineseLessonPlan {
   id: string;
+  linkedCurriculumId?: string;
+  dateWeekday?: string;
+  dateDay?: string;
+  dateMonth?: string;
+  dateYear?: string;
+  isoDate?: string;
   chapterTitle: string; // e.g. 'ជំពូកទី១ ខ្ញុំ និង អ្នក (第一单元 你和我)'
   lessonTitle: string; // e.g. 'មេរៀនទី១ សួស្តី (第一课 你好)'
   durationLabel: string; // '៤ ម៉ោងសិក្សា (១ម៉ោងសិក្សា មាន៩០នាទី)'

@@ -198,7 +198,6 @@ export const SignatureDateEditor: React.FC<Props> = ({
             <div className="font-bold">បានឃើញ និងឯកភាព</div>
             <div className="font-bold">ជ.នាយកវិទ្យាល័យ</div>
             <div className="h-10" />
-            <div className="font-bold">{state.schoolInfo.principalName}</div>
           </div>
         )}
 

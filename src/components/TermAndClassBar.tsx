@@ -44,6 +44,12 @@ export const TermAndClassBar: React.FC<Props> = ({
   const [newClassTime, setNewClassTime] = useState('15:00-16:30');
 
   const [showEditClassModal, setShowEditClassModal] = useState(false);
+  const [pendingDeleteClass, setPendingDeleteClass] = useState<ClassGroup | null>(
+    null
+  );
+  const [pendingDeleteTerm, setPendingDeleteTerm] = useState<AcademicTerm | null>(
+    null
+  );
 
   const terms: AcademicTerm[] =
     state.academicTerms && state.academicTerms.length > 0
@@ -158,9 +164,18 @@ export const TermAndClassBar: React.FC<Props> = ({
     setEditingTermId(null);
   };
 
-  const handleDeleteCurrentTerm = () => {
-    if (terms.length <= 1) return;
-    const remaining = terms.filter((t) => t.id !== currentTermId);
+  const requestDeleteCurrentTerm = () => {
+    if (terms.length <= 1 || !currentTerm) return;
+    setPendingDeleteTerm(currentTerm);
+  };
+
+  const confirmDeleteTerm = () => {
+    if (!pendingDeleteTerm || terms.length <= 1) {
+      setPendingDeleteTerm(null);
+      return;
+    }
+    const termIdToDelete = pendingDeleteTerm.id;
+    const remaining = terms.filter((t) => t.id !== termIdToDelete);
     const nextTerm = remaining[0];
     onUpdateState((prev) => ({
       ...prev,
@@ -175,6 +190,8 @@ export const TermAndClassBar: React.FC<Props> = ({
         isCurrent: idx === 0,
       })),
     }));
+    setPendingDeleteTerm(null);
+    setShowTermMenu(false);
   };
 
   const handleAddClass = () => {
@@ -296,8 +313,14 @@ export const TermAndClassBar: React.FC<Props> = ({
     setShowEditClassModal(false);
   };
 
-  const handleDeleteClassById = (classIdToDelete: string, e?: React.MouseEvent) => {
+  const requestDeleteClass = (cls: ClassGroup, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    setPendingDeleteClass(cls);
+  };
+
+  const confirmDeleteClass = () => {
+    if (!pendingDeleteClass) return;
+    const classIdToDelete = pendingDeleteClass.id;
     const nextClasses = state.classes.filter((c) => c.id !== classIdToDelete);
     const nextDisplayed = nextClasses.filter(
       (c) => (c.termId || 'term-2025-2026') === currentTermId
@@ -310,26 +333,27 @@ export const TermAndClassBar: React.FC<Props> = ({
     if (selectedClassId === classIdToDelete) {
       onSelectClass(nextDisplayed[0]?.id || '');
     }
+    setPendingDeleteClass(null);
     setShowEditClassModal(false);
   };
 
   const handleDeleteSelectedClass = () => {
     if (!currentClass) return;
-    handleDeleteClassById(currentClass.id);
+    setPendingDeleteClass(currentClass);
   };
 
   return (
-    <div className="bg-white border-b border-slate-200 no-print font-khmer-battambang">
+    <div className="bg-gradient-to-r from-white via-sky-50/50 to-indigo-50/40 border-b border-indigo-100 no-print font-khmer-battambang">
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-2.5 space-y-2.5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           {/* Left: Class Selector */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs font-bold text-slate-500 mr-1">
+            <span className="text-xs font-bold text-indigo-900 mr-1">
               ជ្រើសរើសថ្នាក់ (选择班级):
             </span>
 
             {displayedClasses.length === 0 ? (
-              <span className="text-xs text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg font-medium">
+              <span className="text-xs text-amber-900 bg-amber-100/80 border border-amber-300 px-3 py-1 rounded-lg font-semibold">
                 ឆ្នាំសិក្សាថ្មី ({currentTerm?.nameKh}) មិនទាន់មានថ្នាក់រៀនទេ — សូមចុច «+ បន្ថែមថ្នាក់» ដើម្បីបង្កើតថ្នាក់ថ្មី
               </span>
             ) : (
@@ -340,28 +364,28 @@ export const TermAndClassBar: React.FC<Props> = ({
                   <div
                     key={cls.id}
                     onClick={() => onSelectClass(cls.id)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-indigo-600 text-white shadow-2xs'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs ring-2 ring-blue-200'
+                        : 'bg-sky-50/90 text-indigo-950 border border-sky-200/80 hover:bg-sky-100 hover:border-sky-300'
                     }`}
                   >
                     <span>ថ្នាក់ {cls.name}</span>
                     <span
                       className={`text-[11px] font-mono ${
-                        isSelected ? 'text-indigo-200' : 'text-slate-400'
+                        isSelected ? 'text-sky-100' : 'text-indigo-500'
                       }`}
                     >
                       ({formatNum(count, state.useKhmerNumerals)})
                     </span>
                     <button
                       type="button"
-                      onClick={(e) => handleDeleteClassById(cls.id, e)}
+                      onClick={(e) => requestDeleteClass(cls, e)}
                       title={`លុបថ្នាក់ ${cls.name}`}
                       className={`ml-0.5 rounded-full p-0.5 transition-colors cursor-pointer ${
                         isSelected
-                          ? 'text-indigo-200 hover:text-white hover:bg-indigo-500'
-                          : 'text-slate-400 hover:text-rose-600 hover:bg-rose-100'
+                          ? 'text-sky-100 hover:text-white hover:bg-white/20'
+                          : 'text-indigo-400 hover:text-rose-600 hover:bg-rose-100'
                       }`}
                     >
                       <X className="w-3 h-3" />
@@ -374,9 +398,9 @@ export const TermAndClassBar: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => setShowAddClassModal((v) => !v)}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-bold transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold transition-colors cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 text-indigo-600" />
+              <Plus className="w-3.5 h-3.5 text-emerald-600" />
               <span>+ បន្ថែមថ្នាក់ (添加班级)</span>
             </button>
 
@@ -384,9 +408,9 @@ export const TermAndClassBar: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={openEditClassModal}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 text-xs font-medium transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white hover:bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold transition-colors cursor-pointer"
               >
-                <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
+                <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-500" />
                 <span>កែប្រែថ្នាក់</span>
               </button>
             )}
@@ -394,16 +418,16 @@ export const TermAndClassBar: React.FC<Props> = ({
 
           {/* Right: Compact Academic Year Selector */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-slate-500">ឆ្នាំសិក្សា៖</span>
+            <span className="text-indigo-900 font-semibold">ឆ្នាំសិក្សា៖</span>
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setShowTermMenu((v) => !v)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-950 font-bold transition-colors cursor-pointer"
               >
-                <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+                <Calendar className="w-3.5 h-3.5 text-amber-600" />
                 <span>{currentTerm?.nameKh || state.schoolInfo.academicYear}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                <ChevronDown className="w-3.5 h-3.5 text-amber-700" />
               </button>
 
               {showTermMenu && (
@@ -475,7 +499,7 @@ export const TermAndClassBar: React.FC<Props> = ({
                                 {terms.length > 1 && isActive && (
                                   <button
                                     type="button"
-                                    onClick={handleDeleteCurrentTerm}
+                                    onClick={requestDeleteCurrentTerm}
                                     className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer"
                                     title="លុបឆ្នាំសិក្សានេះ"
                                   >
@@ -707,6 +731,100 @@ export const TermAndClassBar: React.FC<Props> = ({
           </div>
         )}
       </div>
+
+      {/* Confirmation Modal: Delete Class */}
+      {pendingDeleteClass && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] p-4 no-print"
+          onClick={() => setPendingDeleteClass(null)}
+        >
+          <div
+            className="bg-white border border-slate-200 rounded-xl shadow-xl max-w-md w-full p-5 space-y-4 font-khmer-battambang text-slate-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="space-y-1.5">
+              <h3 className="text-sm font-bold text-slate-900">
+                បញ្ជាក់ការលុបថ្នាក់រៀន (确认删除班级)
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                តើអ្នកពិតជាចង់លុប{' '}
+                <strong className="text-rose-600 font-bold">
+                  «ថ្នាក់ទី {pendingDeleteClass.name}»
+                </strong>{' '}
+                មែនទេ?
+                <br />
+                <span className="text-slate-500">
+                  (确定要删除班级「{pendingDeleteClass.name}」吗？)
+                </span>
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 text-xs">
+              <button
+                type="button"
+                onClick={() => setPendingDeleteClass(null)}
+                className="px-3.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold cursor-pointer"
+              >
+                បោះបង់ (取消)
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteClass}
+                className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold cursor-pointer"
+              >
+                យល់ព្រមលុប (确定删除)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal: Delete Academic Term */}
+      {pendingDeleteTerm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] p-4 no-print"
+          onClick={() => setPendingDeleteTerm(null)}
+        >
+          <div
+            className="bg-white border border-slate-200 rounded-xl shadow-xl max-w-md w-full p-5 space-y-4 font-khmer-battambang text-slate-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="space-y-1.5">
+              <h3 className="text-sm font-bold text-slate-900">
+                បញ្ជាក់ការលុបឆ្នាំសិក្សា (确认删除学年)
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                តើអ្នកពិតជាចង់លុបឆ្នាំសិក្សា{' '}
+                <strong className="text-rose-600 font-bold">
+                  «{pendingDeleteTerm.nameKh}»
+                </strong>{' '}
+                មែនទេ?
+                <br />
+                <span className="text-slate-500">
+                  (确定要删除学年「{pendingDeleteTerm.nameKh}」吗？)
+                </span>
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 text-xs">
+              <button
+                type="button"
+                onClick={() => setPendingDeleteTerm(null)}
+                className="px-3.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold cursor-pointer"
+              >
+                បោះបង់ (取消)
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteTerm}
+                className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold cursor-pointer"
+              >
+                យល់ព្រមលុប (确定删除)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

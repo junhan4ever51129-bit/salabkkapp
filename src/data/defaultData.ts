@@ -37,7 +37,7 @@ export const DEFAULT_SCHOOL_INFO: SchoolInfo = {
   schoolNameKh: 'វិទ្យាល័យ ជា ស៊ីម បឹងកេងកង',
   schoolNameZh: '',
   schoolNameEn: 'Chea Sim Boeung Keng Kang High School',
-  principalName: 'នុត ងួនលី',
+  principalName: '',
   teacherName: 'លឹម ដាណេ',
   teacherPositionKh: 'គ្រូបង្រៀនកិច្ចសន្យា (ភាសាចិន)',
   subjectNameKh: 'ភាសាចិន',
@@ -902,47 +902,62 @@ function generateDefaultTeacherTaskReports(): AllTeacherTaskReports {
   const reports: AllTeacherTaskReports = {};
   DEFAULT_CLASSES.forEach((cls) => {
     reports[cls.id] = {
-      jan: {
-        monthTitleKh: 'មករា',
-        preStudyAssignedCount: 2,
+      nov: {
+        monthTitleKh: 'វិច្ឆិកា',
+        preStudyAssignedCount: 1,
         preStudyDetails: [
-          'ក. មេរៀនទី៣ មួយថ្ងៃរបស់ខ្ញុំ (ពាក្យថ្មី ទំព័រ 13)',
-          'ខ. មេរៀនទី៣ មួយថ្ងៃរបស់ខ្ញុំ (ល្បះ ទំព័រ 13)',
+          'ក. មេរៀនទី៦ ថ្ងៃនេះជាថ្ងៃទីប៉ុន្មាន? — ស្វ័យសិក្សាពាក្យថ្មី (ពាក្យថ្មី, ល្បះ)',
         ],
         projectAssignedCount: 1,
-        projectDetails: ['ក. សៀវភៅលំហាត់ (ទំព័រទី 14-15) លំហាត់ 1-6'],
+        projectDetails: [
+          'ក. លំហាត់សន្ទនា និងសៀវភៅលំហាត់៖ មេរៀនទី៦ ថ្ងៃនេះជាថ្ងៃទីប៉ុន្មាន?',
+        ],
         homeworkAssignedCount: 1,
-        homeworkDetails: ['ក. សៀវភៅលំហាត់ (ទំព័រទី 15-16) លំហាត់ 7 និង 9'],
+        homeworkDetails: [
+          'ក. លំហាត់សន្ទនា និងសៀវភៅលំហាត់៖ មេរៀនទី៦ ថ្ងៃនេះជាថ្ងៃទីប៉ុន្មាន?',
+        ],
+        homeworkGradedCount: 1,
+        vulnerableStudentsNote:
+          'សិស្សក្រីក្រ ជួបការលំបាក សិស្សរងហិង្សាឬមានវិបត្តិផ្លូវចិត្ត សិស្សឈប់ច្រើនម៉ោងខ្លួន សិស្សរៀនខ្សោយមុខវិជ្ជាខ្លួន',
+      },
+      jan: {
+        monthTitleKh: 'មករា',
+        preStudyAssignedCount: 1,
+        preStudyDetails: [
+          'ក. មេរៀនទី៣ មួយថ្ងៃរបស់ខ្ញុំ — ស្វ័យសិក្សាពាក្យថ្មី (ពាក្យថ្មី, ល្បះ)',
+        ],
+        projectAssignedCount: 1,
+        projectDetails: ['ក. លំហាត់សន្ទនា និងសៀវភៅលំហាត់៖ មេរៀនទី៣ មួយថ្ងៃរបស់ខ្ញុំ'],
+        homeworkAssignedCount: 1,
+        homeworkDetails: ['ក. លំហាត់សន្ទនា និងសៀវភៅលំហាត់៖ មេរៀនទី៣ មួយថ្ងៃរបស់ខ្ញុំ'],
         homeworkGradedCount: 1,
         vulnerableStudentsNote:
           'សិស្សក្រីក្រ ជួបការលំបាក សិស្សរងហិង្សាឬមានវិបត្តិផ្លូវចិត្ត សិស្សឈប់ច្រើនម៉ោងខ្លួន សិស្សរៀនខ្សោយមុខវិជ្ជាខ្លួន',
       },
       feb: {
         monthTitleKh: 'កុម្ភៈ',
-        preStudyAssignedCount: 2,
+        preStudyAssignedCount: 1,
         preStudyDetails: [
-          'ក. មេរៀនទី៤ បន្ទប់របស់ខ្ញុំ (ពាក្យថ្មី ទំព័រ 21)',
-          'ខ. មេរៀនទី៤ បន្ទប់របស់ខ្ញុំ (ទម្រង់ល្បះ ទំព័រ 21)',
+          'ក. មេរៀនទី៤ បន្ទប់របស់ខ្ញុំ — ស្វ័យសិក្សាពាក្យថ្មី (ពាក្យថ្មី, ល្បះ)',
         ],
         projectAssignedCount: 1,
-        projectDetails: ['ក. សៀវភៅលំហាត់ (ទំព័រទី 26-34)'],
+        projectDetails: ['ក. លំហាត់សន្ទនា និងសៀវភៅលំហាត់៖ មេរៀនទី៤ បន្ទប់របស់ខ្ញុំ'],
         homeworkAssignedCount: 1,
-        homeworkDetails: ['ក. សរសេរគំនូសអក្សរចិន និងទម្រង់ល្បះ មេរៀនទី៤'],
+        homeworkDetails: ['ក. លំហាត់សន្ទនា និងសៀវភៅលំហាត់៖ មេរៀនទី៤ បន្ទប់របស់ខ្ញុំ'],
         homeworkGradedCount: 1,
         vulnerableStudentsNote:
           'សិស្សក្រីក្រ ជួបការលំបាក សិស្សរងហិង្សាឬមានវិបត្តិផ្លូវចិត្ត សិស្សឈប់ច្រើនម៉ោងខ្លួន សិស្សរៀនខ្សោយមុខវិជ្ជាខ្លួន',
       },
       jul: {
         monthTitleKh: 'កក្កដា',
-        preStudyAssignedCount: 2,
+        preStudyAssignedCount: 1,
         preStudyDetails: [
-          'ក. មេរៀនទី៣ មួយថ្ងៃរបស់ខ្ញុំ (ពាក្យថ្មី ទំព័រ 13)',
-          'ខ. មេរៀនទី៣ មួយថ្ងៃរបស់ខ្ញុំ (ល្បះ ទំព័រ 13)',
+          'ក. មេរៀនទី៦ ថ្ងៃនេះជាថ្ងៃទីប៉ុន្មាន? — ស្វ័យសិក្សាពាក្យថ្មី (ពាក្យថ្មី, ល្បះ)',
         ],
         projectAssignedCount: 1,
-        projectDetails: ['ក. សៀវភៅលំហាត់ (ទំព័រទី 14-15) លំហាត់ 1-6'],
+        projectDetails: ['ក. លំហាត់សន្ទនា និងសៀវភៅលំហាត់៖ មេរៀនទី៦ ថ្ងៃនេះជាថ្ងៃទីប៉ុន្មាន?'],
         homeworkAssignedCount: 1,
-        homeworkDetails: ['ក. សៀវភៅលំហាត់ (ទំព័រទី 15-16) លំហាត់ 7 និង 9'],
+        homeworkDetails: ['ក. លំហាត់សន្ទនា និងសៀវភៅលំហាត់៖ មេរៀនទី៦ ថ្ងៃនេះជាថ្ងៃទីប៉ុន្មាន?'],
         homeworkGradedCount: 1,
         scoredSkillAttitudeCountOverride: null,
         studentPreStudyCountOverride: 0,
@@ -2120,10 +2135,22 @@ export const DEFAULT_PERFORMANCE_AGREEMENT_META: PerformanceAgreementMeta = {
 };
 
 export function createInitialAppDatabaseState(): AppDatabaseState {
-  const classesWithTerm = DEFAULT_CLASSES.map((c) => ({
-    ...c,
-    termId: c.termId || 'term-2025-2026',
-  }));
+  const classesWithTerm = [
+    ...DEFAULT_CLASSES.map((c) => ({
+      ...c,
+      termId: c.termId || 'term-2025-2026',
+    })),
+    {
+      id: 'term-2026-2027__10C',
+      name: '១០C',
+      gradeLevel: 10,
+      scheduleDayKh: 'ថ្ងៃពុធ',
+      scheduleTime: '15:00-16:30',
+      weeklyHoursLabel: '១ម៉ ៣០ន/ សប្តាហ៍',
+      textbookName: '快乐汉语 (第二册) ភាសាចិនរីករាយ (កំរិត២)',
+      termId: 'term-2026-2027',
+    },
+  ];
   return {
     version: '2.3.2-chinese-subject',
     updatedAt: new Date().toISOString(),

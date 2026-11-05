@@ -5,6 +5,8 @@ import {
   exportToJsonFile,
   importFromExcelWorkbook,
   importFromJsonFile,
+  loadStateFromCloud,
+  syncStateToCloud,
 } from '../utils/storage';
 import { createInitialAppDatabaseState } from '../data/defaultData';
 import { runAllCalculationUnitTests } from '../utils/calculations.test';
@@ -175,6 +177,56 @@ export const DataManagementModal: React.FC<Props> = ({
                     ? 'ទិន្នន័យសិស្ស និងពិន្ទុទាំងអស់ត្រូវបានរក្សាទុកក្នុងកុំព្យូទ័រ ឬទូរស័ព្ទរបស់អ្នកផ្ទាល់ (IndexedDB) ដោយមិនបង្ហោះទៅកាន់ម៉ាស៊ីនមេខាងក្រៅឡើយ។ សូមទាញយកឯកសារបម្រុងទុក (JSON ឬ Excel) ជាប្រចាំ។'
                     : 'All student records, grades, and attendance stay strictly inside your browser IndexedDB and never leave your device. Export JSON or Excel backups regularly.'}
                 </p>
+              </div>
+
+              {/* One-Click Cloud Sync between Preview & Deployed URLs */}
+              <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="font-bold text-indigo-950 flex items-center gap-1.5">
+                    <span>🔄 សមកាលកម្មពពកផ្ទាល់ (一键同步到部署网址 / Cloud Sync)</span>
+                  </div>
+                  <div className="text-slate-600 text-[11px] mt-0.5">
+                    ចុចប៊ូតុងនេះដើម្បីផ្ញើទិន្នន័យពីកន្លែងនេះ ទៅកាន់គេហទំព័រដែលបានដាក់ពង្រាយ (部署出来的网址) ភ្លាមៗ ដោយមិនចាំបាច់ផ្ទេរឯកសារដោយដៃ។
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const ok = await syncStateToCloud(state);
+                      setMessage({
+                        type: ok ? 'success' : 'error',
+                        text: ok
+                          ? '✅ បានបង្ហោះទិន្នន័យទៅកាន់ពពកជោគជ័យ! សូមបើកគេហទំព័រដាក់ពង្រាយ (部署网址) ហើយចុច "ទាញយកពីពពក (从云端拉取)"។'
+                          : 'មិនអាចសមកាលកម្មទិន្នន័យទៅពពកបានទេ។',
+                      });
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs cursor-pointer transition-colors"
+                  >
+                    <span>⬆️ ផ្ញើទិន្នន័យទៅពពក (推送当前数据到云端)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const cloud = await loadStateFromCloud();
+                      if (cloud) {
+                        onRestoreState(cloud);
+                        setMessage({
+                          type: 'success',
+                          text: '✅ បានទាញយកទិន្នន័យចុងក្រោយពីពពកដោយជោគជ័យ!',
+                        });
+                      } else {
+                        setMessage({
+                          type: 'error',
+                          text: 'មិនទាន់មានទិន្នន័យរក្សាទុកនៅលើពពកនៅឡើយទេ។',
+                        });
+                      }
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 font-bold text-indigo-900 bg-white hover:bg-slate-100 border border-indigo-200 rounded-lg shadow-xs cursor-pointer transition-colors"
+                  >
+                    <span>⬇️ ទាញយកពីពពក (从云端拉取同步)</span>
+                  </button>
+                </div>
               </div>
 
               {/* JSON Backup & Restore */}

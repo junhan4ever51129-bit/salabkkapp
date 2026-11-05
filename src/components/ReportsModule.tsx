@@ -1292,9 +1292,7 @@ export const ReportsModule: React.FC<Props> = ({
                       {activeMonth.gregorianDate}
                     </div>
                     <div className="font-semibold">ជ.នាយកវិទ្យាល័យ</div>
-                    <div className="mt-10 font-semibold text-slate-900">
-                      {state.schoolInfo.principalName}
-                    </div>
+                    <div className="mt-10 font-semibold text-slate-900" />
                   </div>
                 </div>
               </div>

@@ -10,18 +10,21 @@ import {
   AlertCircle,
   RefreshCw,
   Trash2,
+  Copy,
+  ClipboardPaste,
+  Share2,
 } from 'lucide-react';
 import {
   AppDatabaseState,
   DailyHomeworkRecord,
   HomeworkSubmissionStatus,
   Language,
-  WeeklyLessonLogItem,
 } from '../types';
 import {
   ddMmYyyyToIso,
   formatNumeral as formatNum,
   sortStudentsByKhmerName,
+  syncWeeklyLogsFromDailyHomework,
 } from '../utils/calculations';
 import { AiGeneratorBar } from './AiGeneratorBar';
 import { generateDefaultDailyHomeworkRecords } from '../data/defaultData';
@@ -34,6 +37,16 @@ interface Props {
   selectedClassId: string;
   onSelectClass: (id: string) => void;
   onUpdateState: (updater: (prev: AppDatabaseState) => AppDatabaseState) => void;
+}
+
+interface CopiedLessonHomeworkClip {
+  sourceClassName: string;
+  lessonUnitTitle: string;
+  lessonTitle: string;
+  lessonContentDetails: string;
+  homeworkTitle: string;
+  homeworkDetail: string;
+  dueDate: string;
 }
 
 function isoToDdMmYyyy(iso: string): string {
@@ -54,6 +67,7 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
   const [selectedDate, setSelectedDate] = useState<string>(todayIso);
   const [filterMode, setFilterMode] = useState<'all' | 'submitted' | 'missing'>('all');
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [copiedClip, setCopiedClip] = useState<CopiedLessonHomeworkClip | null>(null);
 
   const currentClass =
     state.classes.find((c) => c.id === selectedClassId) || state.classes[0];
@@ -137,49 +151,6 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
     [state.classes, dateRecordsByClass]
   );
 
-  // Helper to sync a DailyHomeworkRecord (with កំណត់ត្រាមេរៀន + កំណត់ត្រាកិច្ចការផ្ទះ) into state.weeklyLogs (សម្រង់អត្ថបទប្រចាំសប្តាហ៍)
-  const buildUpdatedWeeklyLogs = (
-    prevLogs: WeeklyLessonLogItem[],
-    clsGroup: typeof currentClass,
-    rec: DailyHomeworkRecord
-  ): WeeklyLessonLogItem[] => {
-    if (!clsGroup) return prevLogs;
-    const weekdayShort = clsGroup.scheduleDayKh.replace(/^ថ្ងៃ/, '');
-    const combinedContent = [
-      rec.lessonContentDetails || '',
-      rec.assigned && rec.homeworkDetail
-        ? `កិច្ចការផ្ទះ (作业)៖ ${rec.homeworkTitle} — ${rec.homeworkDetail}`
-        : '',
-    ]
-      .filter(Boolean)
-      .join('\n');
-
-    const nextLogs = [...prevLogs];
-    // Find existing log for this classId
-    const existingIdx = nextLogs.findIndex((w) => w.classId === clsGroup.id);
-    const updatedItem: WeeklyLessonLogItem = {
-      id: existingIdx >= 0 ? nextLogs[existingIdx].id : `wlog-${clsGroup.id}-${Date.now()}`,
-      weekLabel:
-        existingIdx >= 0
-          ? nextLogs[existingIdx].weekLabel
-          : `សប្តាហ៍ (${isoToDdMmYyyy(rec.date)})`,
-      dateStr: isoToDdMmYyyy(rec.date),
-      weekdayKh: weekdayShort,
-      timeRange: clsGroup.scheduleTime,
-      classId: clsGroup.id,
-      unitTitle: rec.lessonUnitTitle || '第一单元 · ជំពូកទី១',
-      lessonTitle: rec.lessonTitle || rec.homeworkTitle,
-      contentDetails: combinedContent || rec.homeworkDetail,
-    };
-
-    if (existingIdx >= 0) {
-      nextLogs[existingIdx] = updatedItem;
-    } else {
-      nextLogs.push(updatedItem);
-    }
-    return nextLogs;
-  };
-
   const upsertRecord = (
     classId: string,
     updater: (prevRecord: DailyHomeworkRecord) => DailyHomeworkRecord,
@@ -190,6 +161,16 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
         prev.dailyHomeworkRecords && prev.dailyHomeworkRecords.length > 0
           ? [...prev.dailyHomeworkRecords]
           : generateDefaultDailyHomeworkRecords(prev.classes, prev.students);
+
+      // Ensure all classes have a record for selectedDate so sequential weekly logs stay connected
+      for (const cls of prev.classes) {
+        if (!baseList.some((r) => r.classId === cls.id && r.date === selectedDate)) {
+          const existingForCls = dateRecordsByClass[cls.id];
+          if (existingForCls) {
+            baseList.push({ ...existingForCls, date: selectedDate });
+          }
+        }
+      }
 
       const idx = baseList.findIndex(
         (r) => r.classId === classId && r.date === selectedDate
@@ -211,8 +192,9 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
           notes: {},
         };
 
+      const prevRec = idx >= 0 ? baseList[idx] : fallback;
       const updated = {
-        ...updater(idx >= 0 ? baseList[idx] : fallback),
+        ...updater(prevRec),
         syncedToWeeklyLog: true,
       };
       if (idx >= 0) {
@@ -221,11 +203,46 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
         baseList.push(updated);
       }
 
-      const targetClass = prev.classes.find((c) => c.id === classId);
-      const nextWeeklyLogs =
-        autoSyncWeeklyLog && targetClass
-          ? buildUpdatedWeeklyLogs(prev.weeklyLogs, targetClass, updated)
-          : prev.weeklyLogs;
+      // Check if lesson/homework content changed; if so, propagate sequentially to subsequent classes
+      const contentChanged =
+        updated.lessonUnitTitle !== prevRec.lessonUnitTitle ||
+        updated.lessonTitle !== prevRec.lessonTitle ||
+        updated.lessonContentDetails !== prevRec.lessonContentDetails ||
+        updated.homeworkTitle !== prevRec.homeworkTitle ||
+        updated.homeworkDetail !== prevRec.homeworkDetail;
+
+      if (contentChanged && autoSyncWeeklyLog) {
+        const editedClsIdx = prev.classes.findIndex((c) => c.id === classId);
+        if (editedClsIdx >= 0) {
+          for (let cIdx = editedClsIdx + 1; cIdx < prev.classes.length; cIdx++) {
+            const subCls = prev.classes[cIdx];
+            const subRecIdx = baseList.findIndex(
+              (r) => r.classId === subCls.id && r.date === selectedDate
+            );
+            if (subRecIdx >= 0) {
+              baseList[subRecIdx] = {
+                ...baseList[subRecIdx],
+                lessonUnitTitle: updated.lessonUnitTitle,
+                lessonTitle: updated.lessonTitle,
+                lessonContentDetails: updated.lessonContentDetails,
+                homeworkTitle: updated.homeworkTitle,
+                homeworkDetail: updated.homeworkDetail,
+                syncedToWeeklyLog: true,
+              };
+            }
+          }
+        }
+      }
+
+      const nextWeeklyLogs = autoSyncWeeklyLog
+        ? syncWeeklyLogsFromDailyHomework(
+            prev.classes,
+            baseList,
+            prev.weeklyLogs,
+            selectedDate,
+            contentChanged ? classId : undefined
+          )
+        : prev.weeklyLogs;
 
       return {
         ...prev,
@@ -235,22 +252,202 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
     });
   };
 
-  const handleSyncAllClassesToWeeklyLog = () => {
+  const handleUpdateClassSchedule = (
+    classId: string,
+    patch: { scheduleDayKh?: string; scheduleTime?: string }
+  ) => {
     onUpdateState((prev) => {
-      let nextLogs = [...prev.weeklyLogs];
-      for (const cls of prev.classes) {
-        const rec = dateRecordsByClass[cls.id];
-        if (rec) {
-          nextLogs = buildUpdatedWeeklyLogs(nextLogs, cls, rec);
-        }
-      }
+      const nextClasses = prev.classes.map((c) =>
+        c.id === classId ? { ...c, ...patch } : c
+      );
+      const nextWeeklyLogs = syncWeeklyLogsFromDailyHomework(
+        nextClasses,
+        prev.dailyHomeworkRecords || [],
+        prev.weeklyLogs,
+        selectedDate,
+        classId
+      );
       return {
         ...prev,
+        classes: nextClasses,
+        weeklyLogs: nextWeeklyLogs,
+      };
+    });
+  };
+
+  // --- Copy & Paste Handlers for កំណត់ត្រាមេរៀន និងកំណត់ត្រាកិច្ចការផ្ទះ ---
+  const handleCopyFromClass = (classId: string) => {
+    const rec = dateRecordsByClass[classId];
+    const cls = state.classes.find((c) => c.id === classId);
+    if (!rec) return;
+    const clip: CopiedLessonHomeworkClip = {
+      sourceClassName: cls?.name || classId,
+      lessonUnitTitle: rec.lessonUnitTitle || '',
+      lessonTitle: rec.lessonTitle || '',
+      lessonContentDetails: rec.lessonContentDetails || '',
+      homeworkTitle: rec.homeworkTitle || '',
+      homeworkDetail: rec.homeworkDetail || '',
+      dueDate: rec.dueDate || '',
+    };
+    setCopiedClip(clip);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard
+        .writeText(
+          `${clip.lessonUnitTitle} | ${clip.lessonTitle}\n${clip.lessonContentDetails}\n作业: ${clip.homeworkTitle} - ${clip.homeworkDetail}`
+        )
+        .catch(() => {});
+    }
+    setSyncMessage(
+      `បានចម្លងមេរៀន និងកិច្ចការផ្ទះពីថ្នាក់ទី ${clip.sourceClassName} រួចរាល់! សូមចុច «បិទភ្ជាប់ (粘贴)» នៅថ្នាក់បន្ទាប់។ (已复制 ${clip.sourceClassName} 班课程与作业)`
+    );
+    window.setTimeout(() => setSyncMessage(null), 4000);
+  };
+
+  const handlePasteToClass = (targetClassId: string) => {
+    const targetCls = state.classes.find((c) => c.id === targetClassId);
+    const sourceClip =
+      copiedClip ||
+      (currentRecord
+        ? {
+            sourceClassName: currentClass?.name || '',
+            lessonUnitTitle: currentRecord.lessonUnitTitle || '',
+            lessonTitle: currentRecord.lessonTitle || '',
+            lessonContentDetails: currentRecord.lessonContentDetails || '',
+            homeworkTitle: currentRecord.homeworkTitle || '',
+            homeworkDetail: currentRecord.homeworkDetail || '',
+            dueDate: currentRecord.dueDate || '',
+          }
+        : null);
+
+    if (!sourceClip) {
+      setSyncMessage('សូមចុចប៊ូតុង «ចម្លង (复制)» ពីថ្នាក់ណាមួយជាមុនសិន!');
+      window.setTimeout(() => setSyncMessage(null), 3000);
+      return;
+    }
+
+    upsertRecord(
+      targetClassId,
+      (rec) => ({
+        ...rec,
+        assigned: true,
+        lessonUnitTitle: sourceClip.lessonUnitTitle,
+        lessonTitle: sourceClip.lessonTitle,
+        lessonContentDetails: sourceClip.lessonContentDetails,
+        homeworkTitle: sourceClip.homeworkTitle,
+        homeworkDetail: sourceClip.homeworkDetail,
+        dueDate: sourceClip.dueDate,
+      }),
+      true
+    );
+
+    setSyncMessage(
+      `បានបិទភ្ជាប់មេរៀន និងកិច្ចការផ្ទះទៅថ្នាក់ទី ${targetCls?.name || targetClassId} ហើយបង្កើតតភ្ជាប់ក្នុង «សម្រង់អត្ថបទប្រចាំសប្តាហ៍» ស្វ័យប្រវត្តិ! (已粘贴到 ${targetCls?.name || targetClassId} 班并自动连续生成周志)`
+    );
+    window.setTimeout(() => setSyncMessage(null), 4000);
+  };
+
+  const handlePasteToAllOtherClasses = () => {
+    const sourceClip =
+      copiedClip ||
+      (currentRecord
+        ? {
+            sourceClassName: currentClass?.name || '',
+            lessonUnitTitle: currentRecord.lessonUnitTitle || '',
+            lessonTitle: currentRecord.lessonTitle || '',
+            lessonContentDetails: currentRecord.lessonContentDetails || '',
+            homeworkTitle: currentRecord.homeworkTitle || '',
+            homeworkDetail: currentRecord.homeworkDetail || '',
+            dueDate: currentRecord.dueDate || '',
+          }
+        : null);
+
+    if (!sourceClip) return;
+
+    onUpdateState((prev) => {
+      const baseList =
+        prev.dailyHomeworkRecords && prev.dailyHomeworkRecords.length > 0
+          ? [...prev.dailyHomeworkRecords]
+          : generateDefaultDailyHomeworkRecords(prev.classes, prev.students);
+
+      for (const cls of prev.classes) {
+        const idx = baseList.findIndex(
+          (r) => r.classId === cls.id && r.date === selectedDate
+        );
+        const existing =
+          idx >= 0
+            ? baseList[idx]
+            : dateRecordsByClass[cls.id] || {
+                id: `hw-${cls.id}-${selectedDate}`,
+                classId: cls.id,
+                date: selectedDate,
+                assigned: true,
+                submissions: {},
+                notes: {},
+                homeworkTitle: '',
+                homeworkDetail: '',
+                dueDate: '',
+              };
+
+        const updated: DailyHomeworkRecord = {
+          ...existing,
+          date: selectedDate,
+          assigned: true,
+          lessonUnitTitle: sourceClip.lessonUnitTitle,
+          lessonTitle: sourceClip.lessonTitle,
+          lessonContentDetails: sourceClip.lessonContentDetails,
+          homeworkTitle: sourceClip.homeworkTitle,
+          homeworkDetail: sourceClip.homeworkDetail,
+          dueDate: sourceClip.dueDate,
+          syncedToWeeklyLog: true,
+        };
+
+        if (idx >= 0) {
+          baseList[idx] = updated;
+        } else {
+          baseList.push(updated);
+        }
+      }
+
+      const nextWeeklyLogs = syncWeeklyLogsFromDailyHomework(
+        prev.classes,
+        baseList,
+        prev.weeklyLogs,
+        selectedDate
+      );
+
+      return {
+        ...prev,
+        dailyHomeworkRecords: baseList,
+        weeklyLogs: nextWeeklyLogs,
+      };
+    });
+
+    setSyncMessage(
+      `បានចម្លង និងបិទភ្ជាប់មេរៀន & កិច្ចការផ្ទះទៅគ្រប់ថ្នាក់ទាំងអស់ (${state.classes.length} ថ្នាក់) និងបង្កើត «សម្រង់អត្ថបទប្រចាំសប្តាហ៍» បន្តបន្ទាប់គ្នារួចរាល់! (已一键粘贴到所有班级并连续生成周志)`
+    );
+    window.setTimeout(() => setSyncMessage(null), 4000);
+  };
+
+  const handleSyncAllClassesToWeeklyLog = () => {
+    onUpdateState((prev) => {
+      const baseList =
+        prev.dailyHomeworkRecords && prev.dailyHomeworkRecords.length > 0
+          ? [...prev.dailyHomeworkRecords]
+          : allRecords;
+      const nextLogs = syncWeeklyLogsFromDailyHomework(
+        prev.classes,
+        baseList,
+        prev.weeklyLogs,
+        selectedDate
+      );
+      return {
+        ...prev,
+        dailyHomeworkRecords: baseList,
         weeklyLogs: nextLogs,
       };
     });
     setSyncMessage(
-      'បានបញ្ចូលកំណត់ត្រាមេរៀន និងកិច្ចការផ្ទះទាំងអស់ទៅក្នុង សម្រង់អត្ថបទប្រចាំសប្តាហ៍ រួចរាល់!'
+      'បានបញ្ចូលកំណត់ត្រាមេរៀន និងកិច្ចការផ្ទះទាំងអស់ទៅក្នុង សម្រង់អត្ថបទប្រចាំសប្តាហ៍ តាមលំដាប់ថ្នាក់រួចរាល់!'
     );
     window.setTimeout(() => setSyncMessage(null), 3500);
   };
@@ -385,7 +582,7 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
       <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
               <ClipboardCheck className="w-5 h-5" />
             </div>
             <div>
@@ -393,7 +590,7 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
                 កំណត់ត្រាកិច្ចការផ្ទះ និងកំណត់ត្រាមេរៀនប្រចាំថ្ងៃ (ភ្ជាប់ស្វ័យប្រវត្តិទៅសម្រង់អត្ថបទប្រចាំសប្តាហ៍)
               </h2>
               <p className="text-xs text-slate-600">
-                ពិនិត្យមើលថ្នាក់ដែលបានដាក់កិច្ចការថ្ងៃនេះ សិស្សប្រគល់/មិនទាន់ប្រគល់ និងបង្កើតកំណត់ត្រាមេរៀនចូលទៅក្នុង សម្រង់អត្ថបទប្រចាំសប្តាហ៍
+                បំពេញតែ ១ ថ្នាក់ រួចចុចរូបតំណាង «ចម្លង (复制)» និង «បិទភ្ជាប់ (粘贴)» ទៅថ្នាក់បន្ទាប់ ដើម្បីបង្កើត សម្រង់អត្ថបទប្រចាំសប្តាហ៍ តភ្ជាប់គ្នាស្វ័យប្រវត្តិ (ឧ. 10C → 10B)
               </p>
             </div>
           </div>
@@ -472,25 +669,38 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
                   onClick={() => onSelectClass(cls.id)}
                   className={`p-3 rounded-xl border transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-slate-50 border-slate-900 ring-1 ring-slate-900'
+                      ? 'bg-indigo-50/50 border-indigo-600 ring-1 ring-indigo-600'
                       : 'bg-white border-slate-200 hover:border-slate-400'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-1.5 mb-1">
                     <span className="font-bold text-sm">
-                      ថ្នាក់ទី {cls.name} ({cls.scheduleDayKh})
+                      ថ្នាក់ទី {cls.name} ({cls.scheduleDayKh} {cls.scheduleTime})
                     </span>
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleToggleClassAssigned(cls.id);
+                          handleCopyFromClass(cls.id);
                         }}
-                        className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 text-[11px] font-bold cursor-pointer"
-                        title="ចុចដើម្បីប្តូរស្ថានភាពកិច្ចការផ្ទះ"
+                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-indigo-100 hover:bg-indigo-200 text-indigo-800 text-[11px] font-bold cursor-pointer"
+                        title="ចម្លងមេរៀន និងកិច្ចការផ្ទះពីថ្នាក់នេះ (复制本班课程与作业)"
                       >
-                        ✓ បានដាក់កិច្ចការ
+                        <Copy className="w-3 h-3" />
+                        <span>复制</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePasteToClass(cls.id);
+                        }}
+                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-violet-100 hover:bg-violet-200 text-violet-800 text-[11px] font-bold cursor-pointer"
+                        title="បិទភ្ជាប់មេរៀន និងកិច្ចការផ្ទះមកថ្នាក់នេះ (粘贴课程与作业到本班)"
+                      >
+                        <ClipboardPaste className="w-3 h-3" />
+                        <span>粘贴</span>
                       </button>
                       <button
                         type="button"
@@ -498,11 +708,10 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
                           e.stopPropagation();
                           handleDeleteClassHomework(cls.id);
                         }}
-                        className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-rose-100 hover:bg-rose-200 text-rose-800 text-[11px] font-bold cursor-pointer"
+                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-rose-100 hover:bg-rose-200 text-rose-800 text-[11px] font-bold cursor-pointer"
                         title="លុបកិច្ចការផ្ទះថ្នាក់នេះ (删除作业)"
                       >
                         <Trash2 className="w-3 h-3" />
-                        <span>លុប</span>
                       </button>
                     </div>
                   </div>
@@ -552,7 +761,7 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
                     onClick={() => onSelectClass(cls.id)}
                     className={`p-3 rounded-xl border transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-slate-50 border-slate-900 ring-1 ring-slate-900'
+                        ? 'bg-indigo-50/50 border-indigo-600 ring-1 ring-indigo-600'
                         : 'bg-white border-slate-200 hover:border-slate-400'
                     }`}
                   >
@@ -560,9 +769,20 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
                       <span className="font-bold text-sm">
                         ថ្នាក់ទី {cls.name} ({cls.scheduleDayKh})
                       </span>
-                      <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 text-[11px] font-bold">
-                        មិនទាន់ដាក់
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePasteToClass(cls.id);
+                          }}
+                          className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-violet-600 hover:bg-violet-700 text-white text-[11px] font-bold cursor-pointer"
+                          title="បិទភ្ជាប់មេរៀន និងកិច្ចការផ្ទះមកថ្នាក់នេះ (粘贴到本班)"
+                        >
+                          <ClipboardPaste className="w-3 h-3" />
+                          <span>បិទភ្ជាប់ (粘贴)</span>
+                        </button>
+                      </div>
                     </div>
                     <p className="text-xs text-slate-600 mb-2">
                       ម៉ោងសិក្សា: {cls.scheduleTime}
@@ -574,7 +794,7 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
                         handleToggleClassAssigned(cls.id);
                         onSelectClass(cls.id);
                       }}
-                      className="w-full py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer"
+                      className="w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer"
                     >
                       + ដាក់កិច្ចការផ្ទះថ្នាក់ {cls.name} ថ្ងៃនេះ
                     </button>
@@ -591,37 +811,80 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
         <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <BookOpen className="w-5 h-5" />
+              <BookOpen className="w-5 h-5 text-indigo-600" />
               <div>
                 <h3 className="text-sm font-bold">
                   កំណត់ត្រាមេរៀន និងកំណត់ត្រាកិច្ចការផ្ទះ សម្រាប់ថ្នាក់ទី {currentClass.name} ({currentClass.scheduleDayKh}{' '}
                   {currentClass.scheduleTime})
                 </h3>
                 <p className="text-xs text-slate-600">
-                  រាល់ការកែប្រែ ឬបង្កើតដោយ AI នឹងបញ្ចូលទៅក្នុង សម្រង់អត្ថបទប្រចាំសប្តាហ៍ (ថ្នាក់ទី {currentClass.name}) ដោយស្វ័យប្រវត្តិ
+                  រាល់ការបំពេញ ឬចម្លង/បិទភ្ជាប់ (复制/粘贴) នឹងបង្កើតតភ្ជាប់គ្នាក្នុង សម្រង់អត្ថបទប្រចាំសប្តាហ៍ តាមលំដាប់ថ្នាក់ដោយស្វ័យប្រវត្តិ
                 </p>
               </div>
             </div>
 
+            {/* Copy & Paste Toolbar + Status Buttons */}
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
+                onClick={() => handleCopyFromClass(currentClass.id)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold cursor-pointer"
+                title="ចម្លងមេរៀន និងកិច្ចការផ្ទះពីថ្នាក់នេះ (复制本班课程与作业)"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span>ចម្លង (复制)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handlePasteToClass(currentClass.id)}
+                disabled={!copiedClip}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer ${
+                  copiedClip
+                    ? 'bg-violet-600 hover:bg-violet-700 text-white border-violet-600 shadow-2xs'
+                    : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                }`}
+                title={
+                  copiedClip
+                    ? `បិទភ្ជាប់ពីថ្នាក់ ${copiedClip.sourceClassName} មកថ្នាក់ ${currentClass.name} (从 ${copiedClip.sourceClassName} 粘贴到 ${currentClass.name})`
+                    : 'សូមចុច «ចម្លង (复制)» ជាមុនសិន'
+                }
+              >
+                <ClipboardPaste className="w-3.5 h-3.5" />
+                <span>
+                  បិទភ្ជាប់ (粘贴
+                  {copiedClip ? ` ពី ${copiedClip.sourceClassName}` : ''})
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePasteToAllOtherClasses}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer shadow-2xs"
+                title="ចម្លងមេរៀន និងកិច្ចការផ្ទះនេះទៅគ្រប់ថ្នាក់ទាំងអស់ និងបង្កើតសម្រង់អត្ថបទប្រចាំសប្តាហ៍តភ្ជាប់គ្នា (一键复制粘贴到所有班级)"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>បិទភ្ជាប់ទៅគ្រប់ថ្នាក់ (粘贴到所有班)</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => handleToggleClassAssigned(currentClass.id)}
-                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${
                   currentRecord.assigned
-                    ? 'bg-emerald-600 text-white'
+                    ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
                     : 'bg-amber-500 text-white'
                 }`}
               >
                 {currentRecord.assigned ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>ស្ថានភាព៖ បានដាក់កិច្ចការថ្ងៃនេះហើយ</span>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                    <span>បានដាក់កិច្ចការ</span>
                   </>
                 ) : (
                   <>
                     <XCircle className="w-4 h-4" />
-                    <span>ស្ថានភាព៖ មិនទាន់ដាក់កិច្ចការ (ចុចដើម្បីដាក់)</span>
+                    <span>មិនទាន់ដាក់កិច្ចការ</span>
                   </>
                 )}
               </button>
@@ -629,11 +892,11 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => handleDeleteClassHomework(currentClass.id)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer"
                 title="លុបកិច្ចការផ្ទះថ្នាក់នេះ (删除作业)"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>លុបកិច្ចការផ្ទះ (删除作业)</span>
+                <span>លុប (删除)</span>
               </button>
             </div>
           </div>
@@ -651,14 +914,41 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
           />
 
           {/* កំណត់ត្រាមេរៀន (Lesson Record Fields -> Synced to Weekly Log) */}
-          <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold">
-                ១. កំណត់ត្រាមេរៀន (自动同步到 សម្រង់អត្ថបទប្រចាំសប្តាហ៍)
+          <div className="p-3.5 rounded-lg bg-indigo-50/40 border border-indigo-200/80 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs font-bold text-indigo-950">
+                ១. កំណត់ត្រាមេរៀន (自动同步并按班级顺序连续生成 សម្រង់អត្ថបទប្រចាំសប្តាហ៍)
               </span>
-              <span className="text-[11px] font-semibold text-emerald-700">
-                ✓ ភ្ជាប់ជាមួយសម្រង់អត្ថបទប្រចាំសប្តាហ៍រួចរាល់
-              </span>
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <label className="inline-flex items-center gap-1 font-semibold text-slate-700">
+                  <span>ថ្ងៃបង្រៀន៖</span>
+                  <input
+                    type="text"
+                    value={currentClass.scheduleDayKh || ''}
+                    onChange={(e) =>
+                      handleUpdateClassSchedule(currentClass.id, {
+                        scheduleDayKh: e.target.value,
+                      })
+                    }
+                    placeholder="ឧ. ថ្ងៃពុធ"
+                    className="w-24 px-2 py-0.5 rounded border border-slate-300 bg-white text-xs font-bold"
+                  />
+                </label>
+                <label className="inline-flex items-center gap-1 font-semibold text-slate-700">
+                  <span>ម៉ោងសិក្សា (节次)៖</span>
+                  <input
+                    type="text"
+                    value={currentClass.scheduleTime || ''}
+                    onChange={(e) =>
+                      handleUpdateClassSchedule(currentClass.id, {
+                        scheduleTime: e.target.value,
+                      })
+                    }
+                    placeholder="ឧ. 13:00-14:30"
+                    className="w-32 px-2 py-0.5 rounded border border-slate-300 bg-white text-xs font-bold font-mono"
+                  />
+                </label>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>

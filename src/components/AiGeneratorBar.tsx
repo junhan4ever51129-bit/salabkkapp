@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
-import { Check, FileUp, Languages, Loader2, Sparkles, Upload, X } from 'lucide-react';
+import { Check, FileSearch, FileUp, Languages, Loader2, Sparkles, Upload, X } from 'lucide-react';
 
 export type AiTaskType =
   | 'curriculum'
@@ -12,7 +12,8 @@ export type AiTaskType =
   | 'daily_homework'
   | 'signature_date'
   | 'teacher_reflection'
-  | 'translate_zh_km';
+  | 'translate_zh_km'
+  | 'scan_pdf_lesson';
 
 interface Props {
   taskType: AiTaskType;
@@ -44,10 +45,12 @@ export const AiGeneratorBar: React.FC<Props> = ({
   const [lessonTitleInput, setLessonTitleInput] = useState('');
   const [vocabInput, setVocabInput] = useState('');
   const [sentencesInput, setSentencesInput] = useState('');
+  const [dialogueInput, setDialogueInput] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [mode, setMode] = useState<'replace' | 'append'>(allowAppend ? 'append' : 'replace');
   const [isLoading, setIsLoading] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [isScanningPdf, setIsScanningPdf] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(
     null
   );
@@ -63,7 +66,7 @@ export const AiGeneratorBar: React.FC<Props> = ({
   const displayPlaceholder =
     placeholderKh ||
     placeholder ||
-    'វាយបញ្ចូលភាសាចិន (中文) ឬខ្មែរ ឬបង្ហោះឯកសារ PDF/រូបភាព ដើម្បីបកប្រែភាសាខ្មែរ និងបង្កើតតាមគំរូ...';
+    'វាយបញ្ចូលភាសាចិន (中文) ឬខ្មែរ ឬបង្ហោះឯកសារ PDF/រូបភាព ដើម្បីឱ្យ AI ស្កេនមេរៀន (New Words, Sentence Patterns, Using in Context) និងបង្កើតតាមគំរូ...';
 
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -103,25 +106,121 @@ export const AiGeneratorBar: React.FC<Props> = ({
         lessonTitle?: string;
         vocabulary?: string;
         sentences?: string;
+        dialogue?: string;
         promptKh?: string;
       };
     }).translatedInputs;
     if (!tr) return;
-    if (tr.lessonNumber && lessonNumberInput.trim()) {
-      setLessonNumberInput(tr.lessonNumber);
+    if (tr.lessonNumber && tr.lessonNumber.trim()) {
+      setLessonNumberInput(tr.lessonNumber.trim());
     }
-    if (tr.lessonTitle && lessonTitleInput.trim()) {
-      setLessonTitleInput(tr.lessonTitle);
+    if (tr.lessonTitle && tr.lessonTitle.trim()) {
+      setLessonTitleInput(tr.lessonTitle.trim());
     }
-    if (tr.vocabulary && vocabInput.trim()) {
-      setVocabInput(tr.vocabulary);
+    if (tr.vocabulary && tr.vocabulary.trim()) {
+      setVocabInput(tr.vocabulary.trim());
     }
-    if (tr.sentences && sentencesInput.trim()) {
-      setSentencesInput(tr.sentences);
+    if (tr.sentences && tr.sentences.trim()) {
+      setSentencesInput(tr.sentences.trim());
+    }
+    if (tr.dialogue && tr.dialogue.trim()) {
+      setDialogueInput(tr.dialogue.trim());
+    }
+  };
+
+  const prepareFilePayload = async (file: File | null) => {
+    let fileBase64: string | undefined;
+    let fileMimeType: string | undefined;
+    let extraFileText = '';
+
+    if (file) {
+      const lower = file.name.toLowerCase();
+      if (
+        lower.endsWith('.xlsx') ||
+        lower.endsWith('.xls') ||
+        lower.endsWith('.csv') ||
+        lower.endsWith('.txt') ||
+        lower.endsWith('.json')
+      ) {
+        const extractedText = await extractSpreadsheetOrText(file);
+        extraFileText = `\n\nឯកសារភ្ជាប់ (${file.name}):\n${extractedText.slice(0, 25000)}`;
+      } else {
+        fileBase64 = await fileToBase64(file);
+        fileMimeType =
+          file.type || (lower.endsWith('.pdf') ? 'application/pdf' : 'image/png');
+      }
+    }
+
+    return { fileBase64, fileMimeType, extraFileText, fileName: file?.name };
+  };
+
+  const handleScanUploadedFile = async (fileToScan?: File | null) => {
+    const targetFile = fileToScan || selectedFile;
+    if (!targetFile) return;
+
+    setIsScanningPdf(true);
+    setStatusMsg({
+      type: 'ok',
+      text: `កំពុងស្កេនឯកសារ "${targetFile.name}" ដើម្បីទាញយក ជំពូក/មេរៀន, ពាក្យថ្មី (New Words), ទម្រង់ល្បះ (Sentence Patterns), និងការសន្ទនា (Using in Context)... (AI 正在扫描 PDF 自动提取单元第几课、生词、句型、对话并生成表格...)`,
+    });
+
+    try {
+      const { fileBase64, fileMimeType, extraFileText, fileName } =
+        await prepareFilePayload(targetFile);
+
+      const scanPrompt = `请扫描上传的教材 PDF / 图片文件 (${targetFile.name})，自动识别并提取：
+1. 单元与第几课 (Unit / Lesson Number)
+2. 课文题目 (Lesson Title)
+3. New Words / new word -> 生词 (Vocabulary，附上高棉语翻译)
+4. Sentence Patterns / sentence patterns -> 句型/句子 (Sentence Patterns，附上高棉语翻译)
+5. Using in Context / using in context -> 对话或课文内容 (Dialogue / Text in Context，附上高棉语翻译)
+并同时按照当前模块 (${taskType}) 生成对应的完整中柬双语教学记录。${extraFileText}`;
+
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskType: isLessonTemplateTask ? taskType : 'scan_pdf_lesson',
+          prompt: scanPrompt,
+          fileBase64,
+          fileMimeType,
+          fileName,
+          contextData: {
+            ...(contextData || {}),
+          },
+        }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.error || 'ការស្កេន PDF បរាជ័យ (PDF 扫描失败)');
+      }
+
+      applyTranslatedInputsToBoxes(payload.data);
+
+      if (onResult) onResult(payload.data, mode);
+      if (onApplyResult) onApplyResult(payload.data, mode);
+
+      setStatusMsg({
+        type: 'ok',
+        text: `ស្កេនឯកសារ "${targetFile.name}" រួចរាល់! បានទាញយក មេរៀនទីប៉ុន្មាន, ចំណងជើង, ពាក្យថ្មី (New Words), ទម្រង់ល្បះ (Sentence Patterns) និងការសន្ទនា (Using in Context) ព្រមទាំងបង្កើតចូលតារាងខាងក្រោមរួចរាល់! (已从 PDF 自动提取：单元第几课、题目、生词 New Words、句型 Sentence Patterns、对话 Using in Context，并已填入下方表格！)`,
+      });
+    } catch (err) {
+      setStatusMsg({
+        type: 'err',
+        text: err instanceof Error ? err.message : 'មានបញ្ហាក្នុងការស្កេន PDF',
+      });
+    } finally {
+      setIsScanningPdf(false);
     }
   };
 
   const handleTranslateOnly = async () => {
+    if (selectedFile) {
+      await handleScanUploadedFile(selectedFile);
+      return;
+    }
+
     setIsTranslating(true);
     setStatusMsg(null);
     try {
@@ -130,12 +229,13 @@ export const AiGeneratorBar: React.FC<Props> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           taskType: 'translate_zh_km',
-          prompt: `Translate these Chinese educational inputs into bilingual Chinese + Cambodian Khmer (中文 · ភាសាខ្មែរ):\nLesson/Unit: ${lessonNumberInput}\nTitle: ${lessonTitleInput}\nVocabulary: ${vocabInput}\nSentences: ${sentencesInput}\nExtra: ${promptText}`,
+          prompt: `Translate these Chinese educational inputs into bilingual Chinese + Cambodian Khmer (中文 · ភាសាខ្មែរ):\nLesson/Unit: ${lessonNumberInput}\nTitle: ${lessonTitleInput}\nVocabulary (New Words): ${vocabInput}\nSentences (Sentence Patterns): ${sentencesInput}\nDialogue (Using in Context): ${dialogueInput}\nExtra: ${promptText}`,
           contextData: {
             lessonNumber: lessonNumberInput.trim() || undefined,
             lessonTitle: lessonTitleInput.trim() || undefined,
             vocabulary: vocabInput.trim() || undefined,
             sentences: sentencesInput.trim() || undefined,
+            dialogue: dialogueInput.trim() || undefined,
           },
         }),
       });
@@ -167,9 +267,11 @@ export const AiGeneratorBar: React.FC<Props> = ({
     const titleStr = lessonTitleInput.trim() || '第一课 · មេរៀនទី១';
     const vocabStr = vocabInput.trim();
     const sentStr = sentencesInput.trim();
+    const dialStr = dialogueInput.trim();
     const contentCombined = [
-      vocabStr ? `1. 生词 ពាក្យថ្មី៖ ${vocabStr}` : '',
-      sentStr ? `2. 句型 ទម្រង់ល្បះ៖ ${sentStr}` : '',
+      vocabStr ? `1. 生词 ពាក្យថ្មី (New Words)៖ ${vocabStr}` : '',
+      sentStr ? `2. 句型 ទម្រង់ល្បះ (Sentence Patterns)៖ ${sentStr}` : '',
+      dialStr ? `3. 对话/课文 ការសន្ទនា និងអត្ថបទ (Using in Context)៖ ${dialStr}` : '',
     ]
       .filter(Boolean)
       .join('\n');
@@ -195,33 +297,42 @@ export const AiGeneratorBar: React.FC<Props> = ({
         })),
       };
     } else if (taskType === 'curriculum') {
-      manualData = {
-        items: [
-          {
-            monthNameKh: 'វិច្ឆិកា',
-            weekNumber: '១',
-            lessonContent: `${unitStr}\n${titleStr}\n1. 生词 ពាក្យថ្មី៖ ${vocabStr}`,
-            pageNumber: 'សៀ.សិស្ស ១៣',
-            hours: 1.5,
-            note: '',
-          },
-          {
-            monthNameKh: 'វិច្ឆិកា',
-            weekNumber: '២',
-            lessonContent: `${unitStr}\n${titleStr}\n2. 句型 ទម្រង់ល្បះ៖ ${sentStr}`,
-            pageNumber: 'សៀ.សិស្ស ១៤',
-            hours: 1.5,
-            note: '',
-          },
-        ],
-      };
+      const items = [
+        {
+          monthNameKh: 'វិច្ឆិកា',
+          weekNumber: '១',
+          lessonContent: `${unitStr}\n${titleStr}\n1. 生词 ពាក្យថ្មី (New Words)៖ ${vocabStr}`,
+          pageNumber: 'សៀ.សិស្ស ១៣',
+          hours: 1.5,
+          note: '',
+        },
+        {
+          monthNameKh: 'វិច្ឆិកា',
+          weekNumber: '២',
+          lessonContent: `${unitStr}\n${titleStr}\n2. 句型 ទម្រង់ល្បះ (Sentence Patterns)៖ ${sentStr}`,
+          pageNumber: 'សៀ.សិស្ស ១៤',
+          hours: 1.5,
+          note: '',
+        },
+      ];
+      if (dialStr) {
+        items.push({
+          monthNameKh: 'វិច្ឆិកា',
+          weekNumber: '៣',
+          lessonContent: `${unitStr}\n${titleStr}\n3. 对话/课文 ការសន្ទនា និងអត្ថបទ (Using in Context)៖ ${dialStr}`,
+          pageNumber: 'សៀ.សិស្ស ១៥',
+          hours: 1.5,
+          note: '',
+        });
+      }
+      manualData = { items };
     } else if (taskType === 'daily_homework') {
       manualData = {
         lessonUnitTitle: unitStr,
         lessonTitle: titleStr,
         lessonContentDetails: contentCombined,
         homeworkTitle: `${unitStr} · ${titleStr}`,
-        homeworkDetail: `ហាត់សរសេរពាក្យថ្មី (${vocabStr}) មួយពាក្យ ៥ ជួរ និងអានប្រយោគ (${sentStr})។`,
+        homeworkDetail: `ហាត់សរសេរពាក្យថ្មី (${vocabStr}) មួយពាក្យ ៥ ជួរ, អានប្រយោគ (${sentStr})${dialStr ? ` និងហាត់សន្ទនាអត្ថបទ (${dialStr})` : ''}។`,
         dueDate: 'សប្តាហ៍ក្រោយ',
       };
     } else if (taskType === 'lesson_plan') {
@@ -231,14 +342,14 @@ export const AiGeneratorBar: React.FC<Props> = ({
         durationLabel: '៤ ម៉ោងសិក្សា (១ម៉ោងសិក្សា មាន៩០នាទី)',
         pagesLabel: 'ទំព័រទី១៣ ដល់ ទំព័រទី១៧',
         textbookSource: 'សៀវភៅសិក្សាគោល ភាសាចិនរីករាយ 快乐汉语 (第二册)',
-        knowledgeObjective: `សិស្សយល់ដឹង និងចងចាំពាក្យថ្មី (${vocabStr}) និងទម្រង់ល្បះ (${sentStr}) ក្នុងមេរៀន ${titleStr}។`,
+        knowledgeObjective: `សិស្សយល់ដឹង និងចងចាំពាក្យថ្មី (${vocabStr}), ទម្រង់ល្បះ (${sentStr})${dialStr ? ` និងខ្លឹមសារសន្ទនា (${dialStr})` : ''} ក្នុងមេរៀន ${titleStr}។`,
         skillObjective: `សិស្សចេះអាន បញ្ចេញសំឡេងភីនអ៊ីន សន្ទនា និងសរសេរអក្សរចិននៃមេរៀន ${titleStr} បានត្រឹមត្រូវ។`,
         attitudeObjective: 'សិស្សមានវិន័យល្អ យកចិត្តទុកដាក់ស្តាប់គ្រូ និងសហការគ្នាក្នុងការសន្ទនាភាសាចិន។',
         teachingMaterialsTeacher: 'សៀវភៅសម្រាប់គ្រូ កិច្ចតែងការបង្រៀន ប័ណ្ណអក្សររូបភាព',
         teachingMaterialsStudent: 'សៀវភៅគោលសម្រាប់សិស្ស សៀវភៅលំហាត់',
         sessions: [
           {
-            sessionTitle: 'ម៉ោងសិក្សាទី១ (៩០នាទី) — ពាក្យថ្មី និងទម្រង់ល្បះ (生词与句型教学)',
+            sessionTitle: 'ម៉ោងសិក្សាទី១ (៩០នាទី) — ពាក្យថ្មី ទម្រង់ល្បះ និងការសន្ទនា (生词、句型与对话教学)',
             steps: [
               {
                 stepTitle: 'ជំហានទី១ លំនឹងថ្នាក់ (៥នាទី)',
@@ -254,20 +365,20 @@ export const AiGeneratorBar: React.FC<Props> = ({
               },
               {
                 stepTitle: 'ជំហានទី៣ មេរៀនប្រចាំថ្ងៃ (៥០នាទី)',
-                teacherActivity: 'សរសេរចំណងជើងមេរៀន ពន្យល់ពាក្យថ្មី និងដឹកនាំសិស្សអានទម្រង់ល្បះជាភាសាចិន-ខ្មែរ',
+                teacherActivity: 'សរសេរចំណងជើងមេរៀន ពន្យល់ពាក្យថ្មី (New Words) ដឹកនាំសិស្សអានទម្រង់ល្បះ (Sentence Patterns) និងសន្ទនាអត្ថបទ (Using in Context) ជាភាសាចិន-ខ្មែរ',
                 lessonContent: `${unitStr} · ${titleStr}\n${contentCombined}`,
                 studentActivity: 'សិស្សអានតាមគ្រូ ចាប់គូសន្ទនា និងកត់ត្រាចូលសៀវភៅ',
               },
               {
                 stepTitle: 'ជំហានទី៤ ពង្រឹងពុទ្ធិ (១៥នាទី)',
-                teacherActivity: 'ហៅសិស្សឡើងអានពាក្យថ្មី និងបកប្រែប្រយោគជាភាសាខ្មែរ',
+                teacherActivity: 'ហៅសិស្សឡើងអានពាក្យថ្មី បកប្រែប្រយោគ និងសម្តែងការសន្ទនាជាភាសាខ្មែរ-ចិន',
                 lessonContent: contentCombined,
-                studentActivity: 'សិស្សឡើងអាន និងបកប្រែប្រយោគ',
+                studentActivity: 'សិស្សឡើងអាន បកប្រែប្រយោគ និងសន្ទនាជាគូ',
               },
               {
                 stepTitle: 'ជំហានទី៥ បណ្តាំផ្ញើ និងកិច្ចការផ្ទះ (១០នាទី)',
                 teacherActivity: 'ដាក់កិច្ចការផ្ទះ និងណែនាំឱ្យសិស្សស្វ័យសិក្សា',
-                lessonContent: `កិច្ចការផ្ទះ (作业)៖ សរសេរពាក្យថ្មី (${vocabStr}) ៥ ជួរ។`,
+                lessonContent: `កិច្ចការផ្ទះ (作业)៖ សរសេរពាក្យថ្មី (${vocabStr}) ៥ ជួរ និងហាត់អានការសន្ទនា។`,
                 studentActivity: 'សិស្សកត់ត្រាកិច្ចការផ្ទះ',
               },
             ],
@@ -298,10 +409,13 @@ export const AiGeneratorBar: React.FC<Props> = ({
         structuredParts.push(`题目 (ចំណងជើងមេរៀន): ${lessonTitleInput.trim()}`);
       }
       if (vocabInput.trim()) {
-        structuredParts.push(`生词 (ពាក្យថ្មី): ${vocabInput.trim()}`);
+        structuredParts.push(`生词 New Words (ពាក្យថ្មី): ${vocabInput.trim()}`);
       }
       if (sentencesInput.trim()) {
-        structuredParts.push(`句子 / 句型 (ទម្រង់ល្បះ): ${sentencesInput.trim()}`);
+        structuredParts.push(`句子 / 句型 Sentence Patterns (ទម្រង់ល្បះ): ${sentencesInput.trim()}`);
+      }
+      if (dialogueInput.trim()) {
+        structuredParts.push(`对话 / 课文内容 Using in Context (ការសន្ទនា / អត្ថបទ): ${dialogueInput.trim()}`);
       }
 
       const structuredBlock =
@@ -319,26 +433,10 @@ export const AiGeneratorBar: React.FC<Props> = ({
           `Generate structured Cambodian & Chinese educational data strictly matching the official school template for ${taskType}`;
       }
 
-      let fileBase64: string | undefined;
-      let fileMimeType: string | undefined;
-
-      if (selectedFile) {
-        const lower = selectedFile.name.toLowerCase();
-        if (
-          lower.endsWith('.xlsx') ||
-          lower.endsWith('.xls') ||
-          lower.endsWith('.csv') ||
-          lower.endsWith('.txt') ||
-          lower.endsWith('.json')
-        ) {
-          const extractedText = await extractSpreadsheetOrText(selectedFile);
-          combinedPrompt += `\n\nឯកសារភ្ជាប់ (${selectedFile.name}):\n${extractedText.slice(0, 25000)}`;
-        } else {
-          fileBase64 = await fileToBase64(selectedFile);
-          fileMimeType =
-            selectedFile.type ||
-            (lower.endsWith('.pdf') ? 'application/pdf' : 'image/png');
-        }
+      const { fileBase64, fileMimeType, extraFileText, fileName } =
+        await prepareFilePayload(selectedFile);
+      if (extraFileText) {
+        combinedPrompt += extraFileText;
       }
 
       const response = await fetch('/api/ai/generate', {
@@ -349,12 +447,14 @@ export const AiGeneratorBar: React.FC<Props> = ({
           prompt: combinedPrompt,
           fileBase64,
           fileMimeType,
+          fileName,
           contextData: {
             ...(contextData || {}),
             lessonNumber: lessonNumberInput.trim() || undefined,
             lessonTitle: lessonTitleInput.trim() || undefined,
             vocabulary: vocabInput.trim() || undefined,
             sentences: sentencesInput.trim() || undefined,
+            dialogue: dialogueInput.trim() || undefined,
           },
         }),
       });
@@ -364,7 +464,7 @@ export const AiGeneratorBar: React.FC<Props> = ({
         throw new Error(payload.error || 'ការបង្កើតដោយ AI បរាជ័យ (AI generation failed)');
       }
 
-      // Auto-populate the 4 editable input boxes with the Chinese + Khmer translation so the user can see and tweak it
+      // Auto-populate all 5 editable input boxes with the Chinese + Khmer translation so the user can see and tweak it
       applyTranslatedInputsToBoxes(payload.data);
 
       if (onResult) onResult(payload.data, mode);
@@ -372,7 +472,7 @@ export const AiGeneratorBar: React.FC<Props> = ({
 
       setStatusMsg({
         type: 'ok',
-        text: 'បានបកប្រែភាសាខ្មែរ និងបង្កើតតាមគំរូស្តង់ដាររួចរាល់! កន្លែងណាបកប្រែខុស អ្នកអាចកែប្រែដោយដៃផ្ទាល់ក្នុងប្រអប់ ឬក្នុងតារាងខាងក្រោមបានភ្លាមៗ។ (已自动翻译高棉语并填入表格，所有高棉语均可直接手动修改)',
+        text: 'បានបកប្រែភាសាខ្មែរ និងបង្កើតតាមគំរូស្តង់ដាររួចរាល់! កន្លែងណាបកប្រែខុស អ្នកអាចកែប្រែដោយដៃផ្ទាល់ក្នុងប្រអប់ ឬក្នុងតារាងខាងក្រោមបានភ្លាមៗ។ (已自动提取并翻译高棉语填入表格，所有高棉语均可直接手动修改)',
       });
     } catch (err) {
       setStatusMsg({
@@ -391,7 +491,7 @@ export const AiGeneratorBar: React.FC<Props> = ({
           <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
           <span>{displayTitle}</span>
           <span className="text-[11px] font-normal text-indigo-700">
-            (只需输入中文，AI 自动翻译高棉语并生成模版 · បញ្ចូលតែភាសាចិនក៏បាន AI នឹងបកប្រែជាភាសាខ្មែរស្វ័យប្រវត្តិ និងអាចកែប្រែដោយដៃបាន)
+            (支持上传教材 PDF 自动识别：第几课、New Words 生词、Sentence Patterns 句型、Using in Context 对话/课文，并自动译为高棉语)
           </span>
         </div>
 
@@ -400,12 +500,12 @@ export const AiGeneratorBar: React.FC<Props> = ({
             <>
               <button
                 type="button"
-                disabled={isTranslating || isLoading}
+                disabled={isTranslating || isLoading || isScanningPdf}
                 onClick={handleTranslateOnly}
                 className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-indigo-300 text-indigo-800 rounded font-semibold hover:bg-indigo-100 disabled:opacity-50 cursor-pointer text-[11px]"
-                title="只将框内输入的中文翻译为高棉语，方便先检查或手动修改"
+                title="将框内中文或上传的PDF自动翻译/提取为高棉语"
               >
-                {isTranslating ? (
+                {isTranslating || isScanningPdf ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
                 ) : (
                   <Languages className="w-3.5 h-3.5 text-indigo-600" />
@@ -455,22 +555,22 @@ export const AiGeneratorBar: React.FC<Props> = ({
 
       {/* Quick Template Input Fields for Curriculum, Weekly Log, Lesson Plan & Daily Homework */}
       {isLessonTemplateTask && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-0.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 pt-0.5">
           <div>
             <label className="block text-[11px] font-semibold text-indigo-950 mb-0.5">
-              មេរៀនទីប៉ុន្មាន / ជំពូក (第几课/单元 - 输入中文自动译高棉语)៖
+              មេរៀនទីប៉ុន្មាន / ជំពូក (第几课/单元)៖
             </label>
             <input
               type="text"
               value={lessonNumberInput}
               onChange={(e) => setLessonNumberInput(e.target.value)}
-              placeholder="ឧ. 第一单元 第三课"
+              placeholder="ឧ. 第三单元 第七课"
               className="w-full px-2.5 py-1.5 bg-white border border-indigo-200 rounded text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-600"
             />
           </div>
           <div>
             <label className="block text-[11px] font-semibold text-indigo-950 mb-0.5">
-              ចំណងជើងមេរៀន (什么题目 - 输入中文自动译高棉语)៖
+              ចំណងជើងមេរៀន (课文题目)៖
             </label>
             <input
               type="text"
@@ -482,7 +582,7 @@ export const AiGeneratorBar: React.FC<Props> = ({
           </div>
           <div>
             <label className="block text-[11px] font-semibold text-indigo-950 mb-0.5">
-              ពាក្យថ្មី (生词 - 输入中文自动译高棉语)៖
+              ពាក្យថ្មី (生词 · New Words)៖
             </label>
             <input
               type="text"
@@ -494,13 +594,25 @@ export const AiGeneratorBar: React.FC<Props> = ({
           </div>
           <div>
             <label className="block text-[11px] font-semibold text-indigo-950 mb-0.5">
-              ទម្រង់ល្បះ / ប្រយោគ (句子/句型 - 输入中文自动译高棉语)៖
+              ទម្រង់ល្បះ (句型 · Sentence Patterns)៖
             </label>
             <input
               type="text"
               value={sentencesInput}
               onChange={(e) => setSentencesInput(e.target.value)}
               placeholder="ឧ. 我六点起床。你几点去上学？"
+              className="w-full px-2.5 py-1.5 bg-white border border-indigo-200 rounded text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-semibold text-indigo-950 mb-0.5">
+              ការសន្ទនា / អត្ថបទ (对话/课文 · Using in Context)៖
+            </label>
+            <input
+              type="text"
+              value={dialogueInput}
+              onChange={(e) => setDialogueInput(e.target.value)}
+              placeholder="ឧ. A: 你每天几点起床？ B: 我六点起床。"
               className="w-full px-2.5 py-1.5 bg-white border border-indigo-200 rounded text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-600"
             />
           </div>
@@ -525,23 +637,56 @@ export const AiGeneratorBar: React.FC<Props> = ({
           onChange={(e) => {
             const file = e.target.files?.[0] || null;
             setSelectedFile(file);
+            if (file) {
+              void handleScanUploadedFile(file);
+            }
           }}
         />
 
         {selectedFile ? (
-          <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-md text-xs font-medium shrink-0">
-            <FileUp className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span className="max-w-[160px] truncate">{selectedFile.name}</span>
+          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-md text-xs font-medium">
+              <FileUp className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span className="max-w-[150px] truncate">{selectedFile.name}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedFile(null);
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                }}
+                className="text-emerald-700 hover:text-rose-600 ml-1 cursor-pointer"
+                title="លុបឯកសារភ្ជាប់"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
             <button
               type="button"
-              onClick={() => {
-                setSelectedFile(null);
-                if (fileInputRef.current) fileInputRef.current.value = '';
-              }}
-              className="text-emerald-700 hover:text-rose-600 ml-1 cursor-pointer"
-              title="លុបឯកសារភ្ជាប់"
+              disabled={isScanningPdf || isLoading}
+              onClick={() => void handleScanUploadedFile(selectedFile)}
+              className="flex items-center justify-center gap-1 px-2.5 py-1.5 bg-amber-500 text-white rounded-md hover:bg-amber-600 disabled:opacity-60 font-semibold whitespace-nowrap cursor-pointer text-xs shadow-xs"
+              title="重新扫描此 PDF 自动提取：单元第几课、New Words (生词)、Sentence Patterns (句型)、Using in Context (对话/课文)"
             >
-              <X className="w-3.5 h-3.5" />
+              {isScanningPdf ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>កំពុងស្កេន PDF...</span>
+                </>
+              ) : (
+                <>
+                  <FileSearch className="w-3.5 h-3.5" />
+                  <span>AI 扫描PDF提取课程</span>
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center justify-center gap-1 px-2.5 py-1.5 bg-white border border-indigo-300 text-indigo-800 rounded-md hover:bg-indigo-100 font-medium whitespace-nowrap cursor-pointer text-xs"
+              title="更换上传另一个 PDF 或图片文件"
+            >
+              <Upload className="w-3.5 h-3.5 text-indigo-600" />
+              <span>ប្តូរ PDF (换文件)</span>
             </button>
           </div>
         ) : (
@@ -551,20 +696,20 @@ export const AiGeneratorBar: React.FC<Props> = ({
             className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white border border-indigo-300 text-indigo-800 rounded-md hover:bg-indigo-100 font-medium whitespace-nowrap shrink-0 cursor-pointer"
           >
             <Upload className="w-3.5 h-3.5 text-indigo-600" />
-            បង្ហោះ PDF / រូបភាព (上传PDF)
+            បង្ហោះ PDF / រូបភាព (上传PDF自动提取)
           </button>
         )}
 
         <button
           type="button"
-          disabled={isLoading}
+          disabled={isLoading || isScanningPdf}
           onClick={handleGenerate}
           className="flex items-center justify-center gap-1.5 px-4 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-60 font-medium whitespace-nowrap shrink-0 cursor-pointer"
         >
-          {isLoading ? (
+          {isLoading || isScanningPdf ? (
             <>
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              កំពុងបកប្រែភាសាខ្មែរ & បង្កើត...
+              កំពុងស្កេន & បង្កើត...
             </>
           ) : (
             <>
@@ -589,4 +734,5 @@ export const AiGeneratorBar: React.FC<Props> = ({
     </div>
   );
 };
+
 

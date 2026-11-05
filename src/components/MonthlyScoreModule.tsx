@@ -420,19 +420,29 @@ export const MonthlyScoreModule: React.FC<Props> = ({
   ) => {
     updateAnnualPlanForClass(classId, (prevPlan) => {
       const classStus = state.students.filter((s) => s.classId === classId);
+      const parsedOverride = parseInt(
+        String(prevPlan.totalStudentsOverride || '').replace(/[០-៩]/g, (ch) =>
+          String('០១២៣៤៥៦៧៨៩'.indexOf(ch))
+        ),
+        10
+      );
+      const parsedColTotal = parseInt(
+        String(prevPlan.rows.TOTAL?.[colKey]?.count || '').replace(
+          /[០-៩]/g,
+          (ch) => String('០១២៣៤៥៦៧៨៩'.indexOf(ch))
+        ),
+        10
+      );
+      // Whole class student count is the primary denominator for %
       const totalStusNum = Math.max(
         1,
-        parseInt(
-          String(
-            prevPlan.rows.TOTAL?.[colKey]?.count ||
-              prevPlan.totalStudentsOverride ||
-              classStus.length ||
-              1
-          ).replace(/[០-៩]/g, (ch) => String('០១២៣៤៥៦៧៨៩'.indexOf(ch))),
-          10
-        ) ||
-          classStus.length ||
-          1
+        !Number.isNaN(parsedOverride) && parsedOverride > 0
+          ? parsedOverride
+          : classStus.length > 0
+          ? classStus.length
+          : !Number.isNaN(parsedColTotal) && parsedColTotal > 0
+          ? parsedColTotal
+          : 1
       );
 
       if (rowKey === 'TOTAL') {
@@ -470,11 +480,15 @@ export const MonthlyScoreModule: React.FC<Props> = ({
         }
         return {
           ...prevPlan,
+          totalStudentsOverride:
+            !Number.isNaN(newTotalNum) && newTotalNum > 0
+              ? rawCount
+              : prevPlan.totalStudentsOverride,
           rows: nextRows,
         };
       }
 
-      // User edited a grade (A..F) ចំនួន -> automatically calculate % based on សរុប (totalStusNum)
+      // User manually entered a grade (A..F) ចំនួន -> automatically calculate % based on whole class student count (totalStusNum)
       const cleanCount = rawCount
         .trim()
         .replace(/[០-៩]/g, (ch) => String('០១២៣៤៥៦៧៨៩'.indexOf(ch)));
@@ -498,7 +512,7 @@ export const MonthlyScoreModule: React.FC<Props> = ({
           TOTAL: {
             ...prevPlan.rows.TOTAL,
             [colKey]: {
-              count: String(classStus.length || totalStusNum),
+              count: String(totalStusNum),
               pct: '100',
             },
           },
@@ -531,19 +545,17 @@ export const MonthlyScoreModule: React.FC<Props> = ({
       }
 
       const classStus = state.students.filter((s) => s.classId === classId);
+      const parsedOverride = parseInt(
+        String(prevPlan.totalStudentsOverride || '').replace(/[០-៩]/g, (ch) =>
+          String('០១២៣៤៥៦៧៨៩'.indexOf(ch))
+        ),
+        10
+      );
       const totalStusNum = Math.max(
         1,
-        parseInt(
-          String(
-            prevPlan.rows.TOTAL?.[colKey]?.count ||
-              prevPlan.totalStudentsOverride ||
-              classStus.length ||
-              1
-          ).replace(/[០-៩]/g, (ch) => String('០១២៣៤៥៦៧៨៩'.indexOf(ch))),
-          10
-        ) ||
-          classStus.length ||
-          1
+        !Number.isNaN(parsedOverride) && parsedOverride > 0
+          ? parsedOverride
+          : classStus.length || 1
       );
 
       const cleanPct = rawPct
@@ -570,7 +582,7 @@ export const MonthlyScoreModule: React.FC<Props> = ({
           TOTAL: {
             ...prevPlan.rows.TOTAL,
             [colKey]: {
-              count: String(classStus.length || totalStusNum),
+              count: String(totalStusNum),
               pct: '100',
             },
           },
@@ -920,16 +932,16 @@ export const MonthlyScoreModule: React.FC<Props> = ({
   return (
     <div className="space-y-5">
       {/* Sub-mode Switcher & Month Filter Bar */}
-      <div className="bg-white border border-slate-200 rounded-lg p-3.5 space-y-3 no-print">
+      <div className="bg-white border border-indigo-100 shadow-2xs rounded-xl p-3.5 space-y-3 no-print">
         {/* 5 Clean Numbered Sub-Modes */}
-        <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-100 pb-3">
+        <div className="flex flex-wrap items-center gap-1.5 border-b border-indigo-50 pb-3">
           <button
             type="button"
             onClick={() => setSubMode('monthly_breakdown')}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap shrink-0 cursor-pointer ${
               subMode === 'monthly_breakdown'
-                ? 'bg-indigo-600 text-white shadow-2xs'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs ring-2 ring-blue-200'
+                : 'bg-sky-50/80 text-indigo-950 border border-sky-200/70 hover:bg-sky-100'
             }`}
           >
             <Calculator className="w-3.5 h-3.5" />
@@ -939,10 +951,10 @@ export const MonthlyScoreModule: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setSubMode('skill_attitude')}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap shrink-0 cursor-pointer ${
               subMode === 'skill_attitude'
-                ? 'bg-indigo-600 text-white shadow-2xs'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-xs ring-2 ring-teal-200'
+                : 'bg-sky-50/80 text-indigo-950 border border-sky-200/70 hover:bg-sky-100'
             }`}
           >
             <ClipboardCheck className="w-3.5 h-3.5" />
@@ -952,10 +964,10 @@ export const MonthlyScoreModule: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setSubMode('model_school_checklist')}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap shrink-0 cursor-pointer ${
               subMode === 'model_school_checklist'
-                ? 'bg-indigo-600 text-white shadow-2xs'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs ring-2 ring-amber-200'
+                : 'bg-sky-50/80 text-indigo-950 border border-sky-200/70 hover:bg-sky-100'
             }`}
           >
             <CheckSquare className="w-3.5 h-3.5" />
@@ -965,10 +977,10 @@ export const MonthlyScoreModule: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setSubMode('annual_classroom_plan')}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap shrink-0 cursor-pointer ${
               subMode === 'annual_classroom_plan'
-                ? 'bg-indigo-600 text-white shadow-2xs'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-xs ring-2 ring-violet-200'
+                : 'bg-sky-50/80 text-indigo-950 border border-sky-200/70 hover:bg-sky-100'
             }`}
           >
             <BarChart3 className="w-3.5 h-3.5" />
@@ -978,10 +990,10 @@ export const MonthlyScoreModule: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setSubMode('chinese_scores')}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap shrink-0 cursor-pointer ${
               subMode === 'chinese_scores'
-                ? 'bg-indigo-600 text-white shadow-2xs'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-xs ring-2 ring-cyan-200'
+                : 'bg-sky-50/80 text-indigo-950 border border-sky-200/70 hover:bg-sky-100'
             }`}
           >
             <Table2 className="w-3.5 h-3.5" />
@@ -996,8 +1008,8 @@ export const MonthlyScoreModule: React.FC<Props> = ({
           <div className="space-y-2 text-xs">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <span className="text-slate-500 font-medium">ជ្រើសរើសឆមាស៖</span>
-                <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-md">
+                <span className="text-indigo-900 font-bold">ជ្រើសរើសឆមាស៖</span>
+                <div className="flex items-center gap-1 p-1 bg-sky-50 border border-sky-200/70 rounded-lg">
                   {(
                     [
                       { id: 'sem1', label: 'ឆមាសទី១ (វិច្ឆិកា–មីនា)' },
@@ -1009,10 +1021,10 @@ export const MonthlyScoreModule: React.FC<Props> = ({
                       key={s.id}
                       type="button"
                       onClick={() => setSemesterFilter(s.id)}
-                      className={`px-2.5 py-1 rounded font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                      className={`px-2.5 py-1 rounded-md font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                         semesterFilter === s.id
-                          ? 'bg-white text-slate-900 shadow-2xs'
-                          : 'text-slate-600 hover:text-slate-900'
+                          ? 'bg-blue-600 text-white shadow-2xs'
+                          : 'text-indigo-900 hover:bg-sky-100'
                       }`}
                     >
                       {s.label}
@@ -1059,14 +1071,14 @@ export const MonthlyScoreModule: React.FC<Props> = ({
               />
             ) : (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-slate-600 font-medium">ការបង្ហាញ៖</span>
+                <span className="text-indigo-900 font-bold">ការបង្ហាញ៖</span>
                 <button
                   type="button"
                   onClick={() => setShowAllClassesAnnualPlan(false)}
-                  className={`px-2.5 py-1 rounded-md font-medium cursor-pointer ${
+                  className={`px-3 py-1 rounded-lg font-bold cursor-pointer ${
                     !showAllClassesAnnualPlan
-                      ? 'bg-slate-900 text-white'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-2xs'
+                      : 'bg-sky-50 text-indigo-900 border border-sky-200 hover:bg-sky-100'
                   }`}
                 >
                   តែថ្នាក់ទី {activeClass?.name}
@@ -1074,10 +1086,10 @@ export const MonthlyScoreModule: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setShowAllClassesAnnualPlan(true)}
-                  className={`px-2.5 py-1 rounded-md font-medium cursor-pointer ${
+                  className={`px-3 py-1 rounded-lg font-bold cursor-pointer ${
                     showAllClassesAnnualPlan
-                      ? 'bg-slate-900 text-white'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-2xs'
+                      : 'bg-sky-50 text-indigo-900 border border-sky-200 hover:bg-sky-100'
                   }`}
                 >
                   គ្រប់ថ្នាក់ទាំងអស់ ({state.classes.length} ថ្នាក់)
@@ -1330,66 +1342,48 @@ export const MonthlyScoreModule: React.FC<Props> = ({
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-xs border-collapse border border-black">
+              <table className="w-full text-xs border-collapse border border-black a4-singleline-table whitespace-nowrap">
                 <thead>
                   <tr className="bg-slate-50 text-black font-bold">
-                    <th rowSpan={2} className="py-2 px-1.5 text-center border border-black w-9">
+                    <th rowSpan={2} className="py-1.5 px-1.5 text-center border border-black whitespace-nowrap">
                       ល.រ
                     </th>
-                    <th rowSpan={2} className="py-2 px-2 text-center border border-black w-16">
-                      អត្តលេខ
+                    <th rowSpan={2} className="py-1.5 px-2 text-center border border-black whitespace-nowrap">
+                      ឈ្មោះ
                     </th>
-                    <th rowSpan={2} className="py-2 px-2.5 text-left border border-black min-w-[140px]">
-                      គោត្តនាម និងនាម
-                    </th>
-                    <th rowSpan={2} className="py-2 px-1.5 text-center border border-black w-10">
+                    <th rowSpan={2} className="py-1.5 px-1.5 text-center border border-black whitespace-nowrap">
                       ភេទ
                     </th>
                     <th
                       colSpan={monthlyBreakdownConfig.sessionCount}
-                      className="py-1.5 px-2 text-center border border-black bg-indigo-50/60"
+                      className="py-1 px-2 text-center border border-black bg-indigo-50/60 whitespace-nowrap"
                     >
-                      សកម្មភាពក្នុងថ្នាក់រៀន (课堂表现：✓ ល្អ=ពេញពិន្ទុ · ○ មធ្យម=ពាក់កណ្តាល · ✗ ខ្សោយ=០)
+                      សកម្មភាពក្នុងថ្នាក់រៀន
                     </th>
-                    <th rowSpan={2} className="py-1.5 px-2 text-center border border-black w-20 bg-emerald-50/50">
-                      សកម្មភាព
-                      <div className="text-[10px] font-normal text-slate-600">
-                        (课堂 {monthlyBreakdownConfig.performanceMax}分)
-                      </div>
+                    <th rowSpan={2} className="py-1.5 px-1.5 text-center border border-black bg-emerald-50/50 whitespace-nowrap">
+                      សកម្មភាព ({monthlyBreakdownConfig.performanceMax})
                     </th>
-                    <th rowSpan={2} className="py-1.5 px-2 text-center border border-black w-20 bg-sky-50/50">
-                      វត្តមាន
-                      <div className="text-[10px] font-normal text-slate-600">
-                        (考勤 {monthlyBreakdownConfig.attendanceMax}分)
-                      </div>
+                    <th rowSpan={2} className="py-1.5 px-1.5 text-center border border-black bg-sky-50/50 whitespace-nowrap">
+                      វត្តមាន ({monthlyBreakdownConfig.attendanceMax})
                     </th>
-                    <th rowSpan={2} className="py-1.5 px-2 text-center border border-black w-20 bg-amber-50/50">
-                      កិច្ចការផ្ទះ
-                      <div className="text-[10px] font-normal text-slate-600">
-                        (作业 {monthlyBreakdownConfig.homeworkMax}分)
-                      </div>
+                    <th rowSpan={2} className="py-1.5 px-1.5 text-center border border-black bg-amber-50/50 whitespace-nowrap">
+                      កិច្ចការផ្ទះ ({monthlyBreakdownConfig.homeworkMax})
                     </th>
-                    <th rowSpan={2} className="py-1.5 px-2 text-center border border-black w-20 bg-purple-50/50">
-                      ប្រឡង
-                      <div className="text-[10px] font-normal text-slate-600">
-                        (考试 {monthlyBreakdownConfig.examMax}分)
-                      </div>
+                    <th rowSpan={2} className="py-1.5 px-1.5 text-center border border-black bg-purple-50/50 whitespace-nowrap">
+                      ប្រឡង ({monthlyBreakdownConfig.examMax})
                     </th>
-                    <th rowSpan={2} className="py-1.5 px-2 text-center border border-black w-20 bg-slate-100">
-                      ពិន្ទុសរុប
-                      <div className="text-[10px] font-normal text-slate-600">
-                        (总分{' '}
-                        {monthlyBreakdownConfig.examMax +
-                          monthlyBreakdownConfig.attendanceMax +
-                          monthlyBreakdownConfig.performanceMax +
-                          monthlyBreakdownConfig.homeworkMax}
-                        )
-                      </div>
+                    <th rowSpan={2} className="py-1.5 px-1.5 text-center border border-black bg-slate-100 whitespace-nowrap">
+                      ពិន្ទុសរុប (
+                      {monthlyBreakdownConfig.examMax +
+                        monthlyBreakdownConfig.attendanceMax +
+                        monthlyBreakdownConfig.performanceMax +
+                        monthlyBreakdownConfig.homeworkMax}
+                      )
                     </th>
-                    <th rowSpan={2} className="py-1.5 px-1.5 text-center border border-black w-12">
+                    <th rowSpan={2} className="py-1.5 px-1.5 text-center border border-black whitespace-nowrap">
                       ចំ.ថ្នាក់
                     </th>
-                    <th rowSpan={2} className="py-1.5 px-1.5 text-center border border-black w-12">
+                    <th rowSpan={2} className="py-1.5 px-1.5 text-center border border-black whitespace-nowrap">
                       និទ្ទេស
                     </th>
                   </tr>
@@ -1399,6 +1393,9 @@ export const MonthlyScoreModule: React.FC<Props> = ({
                       (_, i) => i + 1
                     ).map((sIdx) => {
                       const sIso = monthlyBreakdownConfig.sessionDates[sIdx] || '';
+                      const shortDateLabel = sIso
+                        ? isoToDdMmYyyy(sIso).slice(0, 5)
+                        : `${String((sIdx - 1) * 7 + 2).padStart(2, '0')}/11`;
                       const isAfterCutoff =
                         Boolean(monthlyBreakdownConfig.scoringEndDate) &&
                         Boolean(sIso) &&
@@ -1406,36 +1403,36 @@ export const MonthlyScoreModule: React.FC<Props> = ({
                       return (
                         <th
                           key={sIdx}
-                          className={`py-1.5 px-1.5 text-center border border-black min-w-[105px] ${
+                          className={`py-1 px-1 text-center border border-black whitespace-nowrap ${
                             isAfterCutoff ? 'opacity-50 bg-slate-100' : ''
                           }`}
                         >
-                          <div className="text-[11px]">
-                            លើកទី{formatNumeral(sIdx, state.useKhmerNumerals)}
+                          <div className="flex items-center justify-center gap-1">
+                            <span className="font-mono text-[11px] font-bold text-slate-900">
+                              {shortDateLabel}
+                            </span>
+                            <input
+                              type="date"
+                              value={sIso}
+                              onChange={(e) =>
+                                updateMonthlyConfig((c) => ({
+                                  ...c,
+                                  sessionDates: {
+                                    ...c.sessionDates,
+                                    [sIdx]: e.target.value,
+                                  },
+                                }))
+                              }
+                              title="ចុចប្តូរថ្ងៃខែ"
+                              className="w-5 h-5 p-0 text-[10px] border border-slate-300 rounded bg-white cursor-pointer no-print opacity-75 hover:opacity-100"
+                            />
                           </div>
-                          <input
-                            type="date"
-                            value={sIso}
-                            onChange={(e) =>
-                              updateMonthlyConfig((c) => ({
-                                ...c,
-                                sessionDates: {
-                                  ...c.sessionDates,
-                                  [sIdx]: e.target.value,
-                                },
-                              }))
-                            }
-                            className="w-full mt-0.5 px-1 py-0.5 text-[10px] border border-slate-300 rounded bg-white text-center font-mono cursor-pointer no-print"
-                          />
-                          <div className="hidden print:block text-[10px] font-normal">
-                            {sIso ? isoToDdMmYyyy(sIso).slice(0, 5) : ''}
-                          </div>
-                          <div className="flex items-center justify-center gap-1 mt-1 no-print">
+                          <div className="flex items-center justify-center gap-0.5 mt-0.5 no-print">
                             <button
                               type="button"
                               onClick={() => handleBatchFillSessionMark(sIdx, 'good')}
                               title="ដាក់ ✓ ទាំងអស់ក្នុងជួរឈរនេះ"
-                              className="px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 hover:bg-emerald-200 text-[10px] font-bold cursor-pointer"
+                              className="px-1 py-0 rounded bg-emerald-100 text-emerald-800 hover:bg-emerald-200 text-[9px] font-bold cursor-pointer"
                             >
                               全✓
                             </button>
@@ -1443,7 +1440,7 @@ export const MonthlyScoreModule: React.FC<Props> = ({
                               type="button"
                               onClick={() => handleBatchFillSessionMark(sIdx, 'half')}
                               title="ដាក់ ○ ទាំងអស់ក្នុងជួរឈរនេះ"
-                              className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 hover:bg-amber-200 text-[10px] font-bold cursor-pointer"
+                              className="px-1 py-0 rounded bg-amber-100 text-amber-800 hover:bg-amber-200 text-[9px] font-bold cursor-pointer"
                             >
                               全○
                             </button>
@@ -1455,17 +1452,14 @@ export const MonthlyScoreModule: React.FC<Props> = ({
                 </thead>
                 <tbody>
                   {monthlyBreakdownRows.map((row, idx) => (
-                    <tr key={row.studentId} className="hover:bg-slate-50/80">
-                      <td className="py-1.5 px-1.5 text-center border border-black font-mono">
+                    <tr key={row.studentId} className="hover:bg-slate-50/80 whitespace-nowrap">
+                      <td className="py-1 px-1.5 text-center border border-black font-mono whitespace-nowrap">
                         {formatNumeral(idx + 1, state.useKhmerNumerals)}
                       </td>
-                      <td className="py-1.5 px-1.5 text-center border border-black font-mono">
-                        {row.studentCode}
-                      </td>
-                      <td className="py-1.5 px-2.5 border border-black font-medium">
+                      <td className="py-1 px-2 border border-black font-medium whitespace-nowrap">
                         {row.name}
                       </td>
-                      <td className="py-1.5 px-1.5 text-center border border-black">
+                      <td className="py-1 px-1.5 text-center border border-black whitespace-nowrap">
                         {row.gender === 'F' ? 'ស' : 'ប'}
                       </td>
 
@@ -2394,10 +2388,52 @@ export const MonthlyScoreModule: React.FC<Props> = ({
                         value={plan.totalStudentsOverride ?? String(rosterTotal)}
                         onChange={(e) => {
                           const newTotal = e.target.value;
-                          updateAnnualPlanForClass(cls.id, (prev) => ({
-                            ...prev,
-                            totalStudentsOverride: newTotal,
-                          }));
+                          const newTotalNum = parseFloat(newTotal);
+                          updateAnnualPlanForClass(cls.id, (prev) => {
+                            const nextRows = { ...prev.rows };
+                            if (nextRows.TOTAL) {
+                              nextRows.TOTAL = {
+                                baseline: { count: newTotal, pct: newTotalNum > 0 ? '100' : '0' },
+                                sem1Target: { count: newTotal, pct: newTotalNum > 0 ? '100' : '0' },
+                                sem1Actual: { count: newTotal, pct: newTotalNum > 0 ? '100' : '0' },
+                                sem2Target: { count: newTotal, pct: newTotalNum > 0 ? '100' : '0' },
+                                sem2Actual: { count: newTotal, pct: newTotalNum > 0 ? '100' : '0' },
+                                yearEndTarget: { count: newTotal, pct: newTotalNum > 0 ? '100' : '0' },
+                                yearEndActual: { count: newTotal, pct: newTotalNum > 0 ? '100' : '0' },
+                              };
+                            }
+                            if (!isNaN(newTotalNum) && newTotalNum > 0) {
+                              const cols: AnnualPlanColumnKey[] = [
+                                'baseline',
+                                'sem1Target',
+                                'sem1Actual',
+                                'sem2Target',
+                                'sem2Actual',
+                                'yearEndTarget',
+                                'yearEndActual',
+                              ];
+                              ANNUAL_PLAN_GRADES.forEach((rk) => {
+                                const r = { ...nextRows[rk] };
+                                cols.forEach((ck) => {
+                                  const cVal = r[ck]?.count ?? '';
+                                  const cNum = parseFloat(cVal);
+                                  if (cVal.trim() !== '' && !isNaN(cNum)) {
+                                    const rawPct = (cNum / newTotalNum) * 100;
+                                    const formattedPct = Number.isInteger(rawPct)
+                                      ? String(rawPct)
+                                      : rawPct.toFixed(1).replace(/\.0$/, '');
+                                    r[ck] = { count: cVal, pct: formattedPct };
+                                  }
+                                });
+                                nextRows[rk] = r;
+                              });
+                            }
+                            return {
+                              ...prev,
+                              totalStudentsOverride: newTotal,
+                              rows: nextRows,
+                            };
+                          });
                         }}
                         title="ទាញផ្ទាល់ពីបញ្ជីវត្តមានសិស្ស (អាចវាយកែដោយដៃ)"
                         className="w-20 border-b border-dashed border-slate-300 bg-transparent px-1 py-0.5 font-mono font-bold focus:outline-none focus:border-indigo-600"
@@ -2556,7 +2592,10 @@ export const MonthlyScoreModule: React.FC<Props> = ({
                                       type="text"
                                       value={cellPair.count}
                                       placeholder={
-                                        !isTotal && col.key === 'sem1Target'
+                                        !isTotal &&
+                                        (col.key === 'sem1Target' ||
+                                          col.key === 'sem2Target' ||
+                                          col.key === 'yearEndTarget')
                                           ? 'វាយចំនួន'
                                           : ''
                                       }

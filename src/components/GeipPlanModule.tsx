@@ -10,24 +10,36 @@ import {
 } from '../types';
 import {
   calculateModelSchoolChecklistStats,
+  cleanClassDisplayCode,
   convertIsoDateToKhmerSignature,
   ddMmYyyyToIso,
   deriveTeacherDutyReportFromLiveRecords,
   formatNumeral,
   isoToDdMmYyyy,
+  normalizeTeacherDutyReport,
+  syncCurriculumFromLessonPlans,
+  syncDailyHomeworkFromWeeklyLogs,
+  syncLessonPlansFromCurriculum,
+  syncWeeklyLogsFromDailyHomework,
 } from '../utils/calculations';
 import { AiGeneratorBar } from './AiGeneratorBar';
 import { MarkdownCopyBar } from './MarkdownDocumentView';
 import { SignatureDateEditor } from './SignatureDateEditor';
 import {
+  AlertTriangle,
   BookMarked,
   CalendarDays,
   ClipboardList,
+  ClipboardPaste,
+  Copy,
   FileCheck2,
+  Link2,
   Plus,
   RefreshCw,
+  Share2,
   Sparkles,
   Trash2,
+  X,
 } from 'lucide-react';
 
 interface Props {
@@ -145,11 +157,21 @@ export const GeipPlanModule: React.FC<Props> = ({
   const [selectedLessonPlanId, setSelectedLessonPlanId] = useState<string>(
     state.lessonPlans[0]?.id || 'lp-1'
   );
-  const [weekMondayDateInput, setWeekMondayDateInput] = useState('17/11/2025');
-  const [lpDateWeekday, setLpDateWeekday] = useState('');
-  const [lpDateDay, setLpDateDay] = useState('');
-  const [lpDateMonth, setLpDateMonth] = useState('');
-  const [lpDateYear, setLpDateYear] = useState('២០២៦');
+  const [weekMondayDateInput, setWeekMondayDateInput] = useState('02/11/2026');
+  const [pendingDeleteLessonPlan, setPendingDeleteLessonPlan] = useState<{
+    id: string;
+    linkedCurriculumId?: string;
+    index: number;
+    title: string;
+  } | null>(null);
+  const [copiedWeeklyLogClip, setCopiedWeeklyLogClip] = useState<{
+    sourceClassId: string;
+    unitTitle: string;
+    lessonTitle: string;
+    contentDetails: string;
+  } | null>(null);
+  const [autoPropagateWeeklyLogs, setAutoPropagateWeeklyLogs] = useState<boolean>(true);
+  const [weeklySyncNotice, setWeeklySyncNotice] = useState<string | null>(null);
 
   const activeClass =
     state.classes.find((c) => c.id === selectedClassId) || state.classes[0];
@@ -161,18 +183,36 @@ export const GeipPlanModule: React.FC<Props> = ({
 
   const activeMonth =
     enabledMonths.find((m) => m.id === selectedMonthId) ||
-    enabledMonths.find((m) => m.id === 'jul') ||
+    enabledMonths.find((m) => m.id === 'nov') ||
     enabledMonths[0] ||
     state.months[0];
 
+  // Bidirectional 1-to-1 synced lesson plans from curriculumPlan
+  const effectiveLessonPlans = useMemo(
+    () =>
+      syncLessonPlansFromCurriculum(state.curriculumPlan, state.lessonPlans),
+    [state.curriculumPlan, state.lessonPlans]
+  );
+
   const activeLessonPlan =
-    state.lessonPlans.find((lp) => lp.id === selectedLessonPlanId) ||
-    state.lessonPlans[0];
+    effectiveLessonPlans.find((lp) => lp.id === selectedLessonPlanId) ||
+    effectiveLessonPlans[0];
+
+  // Sequential weekly logs synced with active term classes & daily homework/lesson records
+  const displayedWeeklyLogs = useMemo(
+    () =>
+      syncWeeklyLogsFromDailyHomework(
+        state.classes,
+        state.dailyHomeworkRecords || [],
+        state.weeklyLogs
+      ),
+    [state.classes, state.dailyHomeworkRecords, state.weeklyLogs]
+  );
 
   const weeklyMeta: WeeklyLogSignatureMeta = state.weeklyLogMeta || {
-    fridayDateStr: '14/11/2025',
-    lunarDate: 'ថ្ងៃសុក្រ ៩រោច ខែកត្តិក ឆ្នាំម្សាញ់ សប្តស័ក ព.ស.២៥៦៩',
-    gregorianDate: 'រាជធានីភ្នំពេញ, ថ្ងៃទី១៤ ខែវិច្ឆិកា ឆ្នាំ២០២៥',
+    fridayDateStr: '06/11/2026',
+    lunarDate: 'ថ្ងៃសុក្រ ១២រោច ខែកត្តិក ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០',
+    gregorianDate: 'រាជធានីភ្នំពេញ, ថ្ងៃទី០៦ ខែវិច្ឆិកា ឆ្នាំ២០២៦',
     textbookTitle: '快乐汉语（第二册）ភាសាចិនរីករាយ (កំរិត២)',
   };
 
@@ -193,22 +233,19 @@ export const GeipPlanModule: React.FC<Props> = ({
   const liveDerivedDutyReport: TeacherMonthlyTaskReport = useMemo(
     () =>
       deriveTeacherDutyReportFromLiveRecords(
-        state,
+        {
+          ...state,
+          weeklyLogs: displayedWeeklyLogs,
+        },
         activeClass?.id || '8A',
-        activeMonth?.id || 'jul'
+        activeMonth?.id || 'nov'
       ),
-    [state, activeClass?.id, activeMonth?.id]
+    [state, displayedWeeklyLogs, activeClass?.id, activeMonth?.id]
   );
 
   const currentTaskReport: TeacherMonthlyTaskReport = useMemo(() => {
     const saved = state.teacherTaskReports[activeClass?.id]?.[activeMonth?.id];
-    if (saved) {
-      return {
-        ...liveDerivedDutyReport,
-        ...saved,
-      };
-    }
-    return liveDerivedDutyReport;
+    return normalizeTeacherDutyReport(saved, liveDerivedDutyReport);
   }, [state.teacherTaskReports, activeClass?.id, activeMonth?.id, liveDerivedDutyReport]);
 
   const updateCurrentTaskReport = (
@@ -234,7 +271,11 @@ export const GeipPlanModule: React.FC<Props> = ({
   const handleSyncDutyFromWeeklyAndDaily = () => {
     const cId = activeClass.id;
     const mId = activeMonth.id;
-    const fresh = deriveTeacherDutyReportFromLiveRecords(state, cId, mId);
+    const fresh = deriveTeacherDutyReportFromLiveRecords(
+      { ...state, weeklyLogs: displayedWeeklyLogs },
+      cId,
+      mId
+    );
     onUpdateState((prev) => ({
       ...prev,
       teacherTaskReports: {
@@ -252,7 +293,11 @@ export const GeipPlanModule: React.FC<Props> = ({
     onUpdateState((prev) => {
       const nextReports = { ...prev.teacherTaskReports };
       for (const cls of prev.classes) {
-        const fresh = deriveTeacherDutyReportFromLiveRecords(prev, cls.id, mId);
+        const fresh = deriveTeacherDutyReportFromLiveRecords(
+          { ...prev, weeklyLogs: displayedWeeklyLogs },
+          cls.id,
+          mId
+        );
         nextReports[cls.id] = {
           ...(nextReports[cls.id] || {}),
           [mId]: fresh,
@@ -265,7 +310,7 @@ export const GeipPlanModule: React.FC<Props> = ({
     });
   };
 
-  // --- Curriculum Handlers ---
+  // --- Curriculum Handlers (Bidirectionally synced with Lesson Plans ៤. កិច្ចតែងការបង្រៀន) ---
   const handleAddCurriculumRow = () => {
     const newRow: CurriculumPlanItem = {
       id: `cur-${Date.now()}`,
@@ -276,10 +321,18 @@ export const GeipPlanModule: React.FC<Props> = ({
       hours: 1.5,
       note: '',
     };
-    onUpdateState((prev) => ({
-      ...prev,
-      curriculumPlan: [...prev.curriculumPlan, newRow],
-    }));
+    onUpdateState((prev) => {
+      const nextCurriculum = [...prev.curriculumPlan, newRow];
+      const nextLessonPlans = syncLessonPlansFromCurriculum(
+        nextCurriculum,
+        prev.lessonPlans
+      );
+      return {
+        ...prev,
+        curriculumPlan: nextCurriculum,
+        lessonPlans: nextLessonPlans,
+      };
+    });
   };
 
   const handleCurriculumChange = (
@@ -287,57 +340,342 @@ export const GeipPlanModule: React.FC<Props> = ({
     field: keyof CurriculumPlanItem,
     value: string | number
   ) => {
-    onUpdateState((prev) => ({
-      ...prev,
-      curriculumPlan: prev.curriculumPlan.map((item) =>
+    onUpdateState((prev) => {
+      const nextCurriculum = prev.curriculumPlan.map((item) =>
         item.id === id ? { ...item, [field]: value } : item
-      ),
-    }));
+      );
+      const nextLessonPlans = syncLessonPlansFromCurriculum(
+        nextCurriculum,
+        prev.lessonPlans
+      );
+      return {
+        ...prev,
+        curriculumPlan: nextCurriculum,
+        lessonPlans: nextLessonPlans,
+      };
+    });
   };
 
   const handleDeleteCurriculumRow = (id: string) => {
-    onUpdateState((prev) => ({
-      ...prev,
-      curriculumPlan: prev.curriculumPlan.filter((item) => item.id !== id),
-    }));
+    onUpdateState((prev) => {
+      const nextCurriculum = prev.curriculumPlan.filter((item) => item.id !== id);
+      const nextLessonPlans = syncLessonPlansFromCurriculum(
+        nextCurriculum,
+        prev.lessonPlans.filter((lp) => lp.linkedCurriculumId !== id)
+      );
+      return {
+        ...prev,
+        curriculumPlan: nextCurriculum,
+        lessonPlans: nextLessonPlans,
+      };
+    });
   };
 
-  // --- Weekly Log Handlers ---
+  // --- Weekly Log Handlers (Bidirectionally synced with កំណត់ត្រាមេរៀន និងកំណត់ត្រាកិច្ចការផ្ទះ) ---
   const handleWeeklyLogChange = (
     id: string,
     field: keyof WeeklyLessonLogItem,
     value: string
   ) => {
-    onUpdateState((prev) => ({
-      ...prev,
-      weeklyLogs: prev.weeklyLogs.map((w) =>
-        w.id === id ? { ...w, [field]: value } : w
-      ),
-    }));
+    onUpdateState((prev) => {
+      const baseLogs = syncWeeklyLogsFromDailyHomework(
+        prev.classes,
+        prev.dailyHomeworkRecords || [],
+        prev.weeklyLogs
+      );
+      const editedIdx = baseLogs.findIndex((w) => w.id === id);
+      const isContentField =
+        field === 'unitTitle' || field === 'lessonTitle' || field === 'contentDetails';
+
+      const nextWeeklyLogs = baseLogs.map((w, idx) => {
+        if (w.id === id) {
+          return { ...w, [field]: value };
+        }
+        // When autoPropagateWeeklyLogs is enabled, editing lesson content in e.g. 10C (period 1) automatically updates 10B (period 2) and subsequent classes
+        if (autoPropagateWeeklyLogs && isContentField && editedIdx >= 0 && idx > editedIdx) {
+          return { ...w, [field]: value };
+        }
+        return w;
+      });
+      const nextDailyRecords = syncDailyHomeworkFromWeeklyLogs(
+        nextWeeklyLogs,
+        prev.classes,
+        prev.dailyHomeworkRecords || []
+      );
+      return {
+        ...prev,
+        weeklyLogs: nextWeeklyLogs,
+        dailyHomeworkRecords: nextDailyRecords,
+      };
+    });
+  };
+
+  const handleCopyWeeklyLogRow = (log: WeeklyLessonLogItem, rowIndex?: number) => {
+    const clip = {
+      sourceClassId: log.classId,
+      unitTitle: log.unitTitle || '',
+      lessonTitle: log.lessonTitle || '',
+      contentDetails: log.contentDetails || '',
+    };
+    setCopiedWeeklyLogClip(clip);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard
+        .writeText(`${clip.unitTitle}\n${clip.lessonTitle}\n${clip.contentDetails}`)
+        .catch(() => {});
+    }
+
+    // If copying from the last row (or if there is only 1 row), automatically create a blank next row below so the user has a space to click Paste!
+    onUpdateState((prev) => {
+      const baseLogs = syncWeeklyLogsFromDailyHomework(
+        prev.classes,
+        prev.dailyHomeworkRecords || [],
+        prev.weeklyLogs
+      );
+      const isLastRow =
+        rowIndex === undefined || rowIndex >= baseLogs.length - 1;
+      if (!isLastRow) {
+        return prev;
+      }
+      const nextTimeRange =
+        log.timeRange === '13:00-14:30' ? '15:00-16:30' : '13:00-14:30';
+      const newBlankRow: WeeklyLessonLogItem = {
+        id: `wlog-manual-${Date.now()}`,
+        dateStr: log.dateStr || weekMondayDateInput,
+        weekdayKh: log.weekdayKh || 'ពុធ',
+        timeRange: nextTimeRange,
+        classId: '',
+        unitTitle: '',
+        lessonTitle: '',
+        contentDetails: '',
+      };
+      return {
+        ...prev,
+        weeklyLogs: [...baseLogs, newBlankRow],
+      };
+    });
+
+    setWeeklySyncNotice(
+      `✓ បានចម្លងមេរៀនពីថ្នាក់ ${clip.sourceClassId} និងបង្កើតជួរថ្មីខាងក្រោមរួចរាល់! សូមចុច «បិទភ្ជាប់ (粘贴)» នៅជួរខាងក្រោម។ (已复制并在下方自动留出新行空间，请点击下方「粘贴」)`
+    );
+    window.setTimeout(() => setWeeklySyncNotice(null), 5000);
+  };
+
+  const handleInsertBlankRowBelow = (afterIndex: number, autoPaste = false) => {
+    const source =
+      copiedWeeklyLogClip ||
+      (displayedWeeklyLogs[afterIndex]
+        ? {
+            sourceClassId: displayedWeeklyLogs[afterIndex].classId,
+            unitTitle: displayedWeeklyLogs[afterIndex].unitTitle,
+            lessonTitle: displayedWeeklyLogs[afterIndex].lessonTitle,
+            contentDetails: displayedWeeklyLogs[afterIndex].contentDetails,
+          }
+        : null);
+
+    onUpdateState((prev) => {
+      const baseLogs = syncWeeklyLogsFromDailyHomework(
+        prev.classes,
+        prev.dailyHomeworkRecords || [],
+        prev.weeklyLogs
+      );
+      const refRow = baseLogs[afterIndex] || baseLogs[baseLogs.length - 1];
+      const nextTimeRange =
+        refRow?.timeRange === '13:00-14:30' ? '15:00-16:30' : '13:00-14:30';
+      const newRow: WeeklyLessonLogItem = {
+        id: `wlog-manual-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        dateStr: refRow?.dateStr || weekMondayDateInput,
+        weekdayKh: refRow?.weekdayKh || 'ពុធ',
+        timeRange: nextTimeRange,
+        classId: '',
+        unitTitle: autoPaste && source ? source.unitTitle : '',
+        lessonTitle: autoPaste && source ? source.lessonTitle : '',
+        contentDetails: autoPaste && source ? source.contentDetails : '',
+      };
+      const nextWeeklyLogs = [...baseLogs];
+      nextWeeklyLogs.splice(afterIndex + 1, 0, newRow);
+      const nextDailyRecords = syncDailyHomeworkFromWeeklyLogs(
+        nextWeeklyLogs,
+        prev.classes,
+        prev.dailyHomeworkRecords || []
+      );
+      return {
+        ...prev,
+        weeklyLogs: nextWeeklyLogs,
+        dailyHomeworkRecords: nextDailyRecords,
+      };
+    });
+
+    setWeeklySyncNotice(
+      autoPaste
+        ? `✓ បានបន្ថែមជួរថ្មីខាងក្រោម និងបិទភ្ជាប់មេរៀនរួចរាល់! (已在下一行新增并粘贴课程内容)`
+        : `✓ បានបន្ថែមជួរទទេខាងក្រោមរួចរាល់! អ្នកអាចចុច «បិទភ្ជាប់ (粘贴)» បាន។ (已在下一行留出空白行，可点击粘贴)`
+    );
+    window.setTimeout(() => setWeeklySyncNotice(null), 4000);
+  };
+
+  const handlePasteWeeklyLogRow = (targetLogId: string) => {
+    const source =
+      copiedWeeklyLogClip ||
+      (displayedWeeklyLogs[0]
+        ? {
+            sourceClassId: displayedWeeklyLogs[0].classId,
+            unitTitle: displayedWeeklyLogs[0].unitTitle,
+            lessonTitle: displayedWeeklyLogs[0].lessonTitle,
+            contentDetails: displayedWeeklyLogs[0].contentDetails,
+          }
+        : null);
+    if (!source) return;
+
+    onUpdateState((prev) => {
+      const baseLogs = syncWeeklyLogsFromDailyHomework(
+        prev.classes,
+        prev.dailyHomeworkRecords || [],
+        prev.weeklyLogs
+      );
+      const nextWeeklyLogs = baseLogs.map((w) =>
+        w.id === targetLogId
+          ? {
+              ...w,
+              unitTitle: source.unitTitle,
+              lessonTitle: source.lessonTitle,
+              contentDetails: source.contentDetails,
+            }
+          : w
+      );
+      const nextDailyRecords = syncDailyHomeworkFromWeeklyLogs(
+        nextWeeklyLogs,
+        prev.classes,
+        prev.dailyHomeworkRecords || []
+      );
+      return {
+        ...prev,
+        weeklyLogs: nextWeeklyLogs,
+        dailyHomeworkRecords: nextDailyRecords,
+      };
+    });
+    setWeeklySyncNotice(`✓ បានបិទភ្ជាប់មេរៀនពីថ្នាក់ ${source.sourceClassId} រួចរាល់! (已成功粘贴课程内容到本行)`);
+    window.setTimeout(() => setWeeklySyncNotice(null), 3500);
+  };
+
+  const handlePropagateWeeklyLogToSubsequent = (fromIndex = 0) => {
+    onUpdateState((prev) => {
+      const baseLogs = syncWeeklyLogsFromDailyHomework(
+        prev.classes,
+        prev.dailyHomeworkRecords || [],
+        prev.weeklyLogs
+      );
+      const sourceRow = baseLogs[fromIndex] || baseLogs[0];
+      if (!sourceRow) return prev;
+
+      const clip = copiedWeeklyLogClip && fromIndex === 0 ? copiedWeeklyLogClip : {
+        sourceClassId: sourceRow.classId,
+        unitTitle: sourceRow.unitTitle,
+        lessonTitle: sourceRow.lessonTitle,
+        contentDetails: sourceRow.contentDetails,
+      };
+
+      const nextWeeklyLogs = baseLogs.map((w, idx) =>
+        idx >= fromIndex
+          ? {
+              ...w,
+              unitTitle: clip.unitTitle,
+              lessonTitle: clip.lessonTitle,
+              contentDetails: clip.contentDetails,
+            }
+          : w
+      );
+      const nextDailyRecords = syncDailyHomeworkFromWeeklyLogs(
+        nextWeeklyLogs,
+        prev.classes,
+        prev.dailyHomeworkRecords || []
+      );
+      return {
+        ...prev,
+        weeklyLogs: nextWeeklyLogs,
+        dailyHomeworkRecords: nextDailyRecords,
+      };
+    });
+    setWeeklySyncNotice(
+      `✓ បានបំពេញ និងចម្លងមេរៀនបន្តបន្ទាប់គ្នាទៅគ្រប់ថ្នាក់រួចរាល់! (已连续复制并生成到后续所有班级)`
+    );
+    window.setTimeout(() => setWeeklySyncNotice(null), 4000);
+  };
+
+  const handleConfirmDeleteLessonPlan = () => {
+    if (!pendingDeleteLessonPlan) return;
+    const { id, linkedCurriculumId, index } = pendingDeleteLessonPlan;
+    onUpdateState((prev) => {
+      const basePlans = syncLessonPlansFromCurriculum(
+        prev.curriculumPlan,
+        prev.lessonPlans
+      );
+      const nextLessonPlans = basePlans.filter(
+        (lp, idx) => lp.id !== id && idx !== index
+      );
+      const nextCurriculum = prev.curriculumPlan.filter((c, idx) => {
+        if (linkedCurriculumId && c.id === linkedCurriculumId) return false;
+        if (c.linkedLessonPlanId && c.linkedLessonPlanId === id) return false;
+        if (idx === index && prev.curriculumPlan.length === basePlans.length) return false;
+        return true;
+      });
+      if (selectedLessonPlanId === id && nextLessonPlans.length > 0) {
+        const nextSel =
+          nextLessonPlans[Math.min(index, nextLessonPlans.length - 1)] ||
+          nextLessonPlans[0];
+        setSelectedLessonPlanId(nextSel.id);
+      }
+      return {
+        ...prev,
+        lessonPlans: nextLessonPlans,
+        curriculumPlan: nextCurriculum,
+      };
+    });
+    setPendingDeleteLessonPlan(null);
   };
 
   const handleDeleteWeeklyLog = (id: string) => {
-    onUpdateState((prev) => ({
-      ...prev,
-      weeklyLogs: prev.weeklyLogs.filter((w) => w.id !== id),
-    }));
+    onUpdateState((prev) => {
+      const baseLogs = syncWeeklyLogsFromDailyHomework(
+        prev.classes,
+        prev.dailyHomeworkRecords || [],
+        prev.weeklyLogs
+      );
+      return {
+        ...prev,
+        weeklyLogs: baseLogs.filter((w) => w.id !== id),
+      };
+    });
   };
 
   const handleAddSingleWeeklyLog = () => {
     const newItem: WeeklyLessonLogItem = {
-      id: `wlog-${Date.now()}`,
+      id: `wlog-manual-${Date.now()}`,
       dateStr: weekMondayDateInput,
-      weekdayKh: 'ពុធ',
-      timeRange: '15:00-16:30',
-      classId: '10C',
-      unitTitle: '第一单元 我和朋友',
-      lessonTitle: '第一课 他是谁 · មេរៀនទី១ តើគាត់គឺជានរណា',
-      contentDetails: '1. 生词 ពាក្យថ្មី៖ ...\n2. 句型 ទម្រង់ល្បះ៖ ...',
+      weekdayKh: (activeClass?.scheduleDayKh || 'ពុធ').replace(/^ថ្ងៃ\s*/g, ''),
+      timeRange: activeClass?.scheduleTime || '15:00-16:30',
+      classId: '',
+      unitTitle: copiedWeeklyLogClip?.unitTitle || '',
+      lessonTitle: copiedWeeklyLogClip?.lessonTitle || '',
+      contentDetails: copiedWeeklyLogClip?.contentDetails || '',
     };
-    onUpdateState((prev) => ({
-      ...prev,
-      weeklyLogs: [...prev.weeklyLogs, newItem],
-    }));
+    onUpdateState((prev) => {
+      const baseLogs = syncWeeklyLogsFromDailyHomework(
+        prev.classes,
+        prev.dailyHomeworkRecords || [],
+        prev.weeklyLogs
+      );
+      const nextWeeklyLogs = [...baseLogs, newItem];
+      const nextDailyRecords = syncDailyHomeworkFromWeeklyLogs(
+        nextWeeklyLogs,
+        prev.classes,
+        prev.dailyHomeworkRecords || []
+      );
+      return {
+        ...prev,
+        weeklyLogs: nextWeeklyLogs,
+        dailyHomeworkRecords: nextDailyRecords,
+      };
+    });
   };
 
   const addDaysToDdMmYyyy = (baseStr: string, offsetDays: number): string => {
@@ -358,27 +696,74 @@ export const GeipPlanModule: React.FC<Props> = ({
   };
 
   const handleGenerateFull8ClassWeek = () => {
-    const generated: WeeklyLessonLogItem[] = WEEKLY_8_CLASS_TEMPLATE.map(
-      (tpl, idx) => ({
-        id: `wlog-week-${Date.now()}-${idx}`,
-        dateStr: addDaysToDdMmYyyy(weekMondayDateInput, tpl.dayOffset),
-        weekdayKh: tpl.weekdayKh,
-        timeRange: tpl.timeRange,
-        classId: tpl.classId,
-        unitTitle: tpl.defaultUnit,
-        lessonTitle: tpl.defaultLesson,
-        contentDetails: tpl.defaultContent,
-      })
-    );
-    const fridayStr = addDaysToDdMmYyyy(weekMondayDateInput, 4);
-    onUpdateState((prev) => ({
-      ...prev,
-      weeklyLogs: generated,
-      weeklyLogMeta: {
-        ...(prev.weeklyLogMeta || weeklyMeta),
-        fridayDateStr: fridayStr,
-      },
-    }));
+    onUpdateState((prev) => {
+      const generated: WeeklyLessonLogItem[] =
+        prev.classes.length > 0
+          ? prev.classes.map((cls, idx) => {
+              const cleanCode = cleanClassDisplayCode(cls.name || cls.id);
+              const dayShort = (cls.scheduleDayKh || 'ចន្ទ')
+                .replace(/^ថ្ងៃ\s*/g, '')
+                .trim();
+              const dayOffsetMap: Record<string, number> = {
+                ចន្ទ: 0,
+                អង្គារ: 1,
+                ពុធ: 2,
+                ព្រហស្បតិ៍: 3,
+                សុក្រ: 4,
+                សៅរ៍: 5,
+              };
+              const offset = dayOffsetMap[dayShort] ?? Math.min(idx, 4);
+              const existingRec = (prev.dailyHomeworkRecords || []).find(
+                (r) => r.classId === cls.id
+              );
+              return {
+                id: `wlog-week-${cls.id}-${Date.now()}-${idx}`,
+                dateStr: addDaysToDdMmYyyy(weekMondayDateInput, offset),
+                weekdayKh: dayShort,
+                timeRange:
+                  cls.scheduleTime ||
+                  (idx % 2 === 0 ? '13:00-14:30' : '15:00-16:30'),
+                classId: cleanCode,
+                unitTitle:
+                  existingRec?.lessonUnitTitle ||
+                  (cls.gradeLevel >= 10 ? '第一单元 我和朋友' : '第一单元 你和我'),
+                lessonTitle:
+                  existingRec?.lessonTitle ||
+                  (cls.gradeLevel >= 10
+                    ? '第一课 他是谁 · មេរៀនទី១ តើគាត់គឺជានរណា'
+                    : '第一课 你好 · មេរៀនទី១ សួស្តី'),
+                contentDetails:
+                  existingRec?.lessonContentDetails ||
+                  '1. 生词 ពាក្យថ្មី៖ 你、好、吗、我、很\n2. 句型 ទម្រង់ល្បះ៖ ①你好！ ②你好吗？ ③我很好。',
+              };
+            })
+          : WEEKLY_8_CLASS_TEMPLATE.map((tpl, idx) => ({
+              id: `wlog-week-${Date.now()}-${idx}`,
+              dateStr: addDaysToDdMmYyyy(weekMondayDateInput, tpl.dayOffset),
+              weekdayKh: tpl.weekdayKh,
+              timeRange: tpl.timeRange,
+              classId: tpl.classId,
+              unitTitle: tpl.defaultUnit,
+              lessonTitle: tpl.defaultLesson,
+              contentDetails: tpl.defaultContent,
+            }));
+
+      const fridayStr = addDaysToDdMmYyyy(weekMondayDateInput, 4);
+      const nextDailyRecords = syncDailyHomeworkFromWeeklyLogs(
+        generated,
+        prev.classes,
+        prev.dailyHomeworkRecords || []
+      );
+      return {
+        ...prev,
+        weeklyLogs: generated,
+        dailyHomeworkRecords: nextDailyRecords,
+        weeklyLogMeta: {
+          ...(prev.weeklyLogMeta || weeklyMeta),
+          fridayDateStr: fridayStr,
+        },
+      };
+    });
   };
 
   const updateWeeklyMeta = (patch: Partial<WeeklyLogSignatureMeta>) => {
@@ -391,30 +776,53 @@ export const GeipPlanModule: React.FC<Props> = ({
     }));
   };
 
-  // --- Lesson Plan Inline Editing Handlers ---
+  // --- Lesson Plan Inline Editing Handlers (Bidirectionally synced with ១. កម្មវិធីសិក្សាប្រចាំឆ្នាំ) ---
   const updateActiveLessonPlan = (patch: Partial<ChineseLessonPlan>) => {
     if (!activeLessonPlan) return;
-    onUpdateState((prev) => ({
-      ...prev,
-      lessonPlans: prev.lessonPlans.map((lp) =>
+    onUpdateState((prev) => {
+      const basePlans = syncLessonPlansFromCurriculum(
+        prev.curriculumPlan,
+        prev.lessonPlans
+      );
+      const nextLessonPlans = basePlans.map((lp) =>
         lp.id === activeLessonPlan.id ? { ...lp, ...patch } : lp
-      ),
-    }));
+      );
+      const nextCurriculum = syncCurriculumFromLessonPlans(
+        nextLessonPlans,
+        prev.curriculumPlan
+      );
+      return {
+        ...prev,
+        lessonPlans: nextLessonPlans,
+        curriculumPlan: nextCurriculum,
+      };
+    });
   };
 
   const handleAddLessonPlan = () => {
+    const newId = `lp-${Date.now()}`;
+    const newCurId = `cur-auto-${Date.now()}`;
     const newLp: ChineseLessonPlan = {
-      id: `lp-${Date.now()}`,
+      id: newId,
+      linkedCurriculumId: newCurId,
       chapterTitle: 'ជំពូកទី៣ ការទិញទំនិញ (第三单元 购物)',
       lessonTitle: 'មេរៀនថ្មី (新课)',
-      durationLabel: '៤ ម៉ោងសិក្សា (១ម៉ោងសិក្សា មាន៩០នាទី)',
+      durationLabel: '១.៥ ម៉ោងសិក្សា (១ម៉ោងសិក្សា មាន៩០នាទី)',
       pagesLabel: 'ទំព័រទី... ដល់ ទំព័រទី...',
       textbookSource: 'សៀវភៅសិក្សាគោល ភាសាចិនរីករាយ 快乐汉语',
-      knowledgeObjective: 'សិស្សប្រើប្រាស់ត្រឹមត្រូវក្នុងការប្រាស្រ័យទាក់ទងគ្នាជាភាសាចិន...',
-      skillObjective: 'សិស្សចេះអាន និងសរសេរពាក្យថ្មី និងគំនូសអក្សរចិន...',
-      attitudeObjective: 'សិស្សមានវិន័យល្អក្នុងការចូលរួម សហការណ៍ ក្នុងសកម្មភាពសិក្សា។',
-      teachingMaterialsTeacher: 'សៀវភៅសម្រាប់គ្រូ កិច្ចតែងការបង្រៀន ប័ណ្ណអក្សររូបភាព',
+      knowledgeObjective:
+        'សិស្សប្រើប្រាស់ត្រឹមត្រូវក្នុងការប្រាស្រ័យទាក់ទងគ្នាជាភាសាចិន...',
+      skillObjective:
+        'សិស្សចេះអាន និងសរសេរពាក្យថ្មី និងគំនូសអក្សរចិន...',
+      attitudeObjective:
+        'សិស្សមានវិន័យល្អក្នុងការចូលរួម សហការណ៍ ក្នុងសកម្មភាពសិក្សា។',
+      teachingMaterialsTeacher:
+        'សៀវភៅសម្រាប់គ្រូ កិច្ចតែងការបង្រៀន ប័ណ្ណអក្សររូបភាព',
       teachingMaterialsStudent: 'សៀវភៅគោលសម្រាប់សិស្ស សៀវភៅលំហាត់',
+      dateWeekday: '',
+      dateDay: '',
+      dateMonth: '',
+      dateYear: '២០២៦',
       sessions: [
         {
           sessionTitle: 'ម៉ោងសិក្សាទី១ — ពាក្យថ្មី និងទម្រង់ល្បះ',
@@ -433,9 +841,12 @@ export const GeipPlanModule: React.FC<Props> = ({
             },
             {
               stepTitle: 'ជំហានទី៣ ខ្លឹមសារមេរៀន (៦០នាទី)',
-              teacherActivity: 'សរសេរចំណងជើង និងបង្រៀនពាក្យថ្មី ព្រមទាំងទម្រង់ល្បះ',
-              lessonContent: '一. 生词 ពាក្យថ្មី៖ ...\n二. 句型 ទម្រង់ល្បះ៖ ...',
-              studentActivity: 'សិស្សអានតាមគ្រូ ចាប់គូសន្ទនា និងកត់ត្រាចូលសៀវភៅ',
+              teacherActivity:
+                'សរសេរចំណងជើង និងបង្រៀនពាក្យថ្មី ព្រមទាំងទម្រង់ល្បះ',
+              lessonContent:
+                '一. 生词 ពាក្យថ្មី៖ ...\n二. 句型 ទម្រង់ល្បះ៖ ...',
+              studentActivity:
+                'សិស្សអានតាមគ្រូ ចាប់គូសន្ទនា និងកត់ត្រាចូលសៀវភៅ',
             },
             {
               stepTitle: 'ជំហានទី៤ ពង្រឹងពុទ្ធិ (១០នាទី)',
@@ -446,17 +857,30 @@ export const GeipPlanModule: React.FC<Props> = ({
             {
               stepTitle: 'ជំហានទី៥ បណ្តាំផ្ញើ (៥នាទី)',
               teacherActivity: 'ដាក់កិច្ចការផ្ទះ និងណែនាំឱ្យសិស្សស្វ័យសិក្សា',
-              lessonContent: '作业 កិច្ចការផ្ទះ៖ ហាត់សរសេរពាក្យថ្មី និងទម្រង់ល្បះ',
+              lessonContent:
+                '作业 កិច្ចការផ្ទះ៖ ហាត់សរសេរពាក្យថ្មី និងទម្រង់ល្បះ',
               studentActivity: 'សិស្សកត់ត្រាកិច្ចការផ្ទះ',
             },
           ],
         },
       ],
     };
-    onUpdateState((prev) => ({
-      ...prev,
-      lessonPlans: [...prev.lessonPlans, newLp],
-    }));
+    onUpdateState((prev) => {
+      const basePlans = syncLessonPlansFromCurriculum(
+        prev.curriculumPlan,
+        prev.lessonPlans
+      );
+      const nextLessonPlans = [...basePlans, newLp];
+      const nextCurriculum = syncCurriculumFromLessonPlans(
+        nextLessonPlans,
+        prev.curriculumPlan
+      );
+      return {
+        ...prev,
+        lessonPlans: nextLessonPlans,
+        curriculumPlan: nextCurriculum,
+      };
+    });
     setSelectedLessonPlanId(newLp.id);
   };
 
@@ -476,11 +900,19 @@ export const GeipPlanModule: React.FC<Props> = ({
       note: it.note || '',
     }));
 
-    onUpdateState((prev) => ({
-      ...prev,
-      curriculumPlan:
-        mode === 'replace' ? built : [...prev.curriculumPlan, ...built],
-    }));
+    onUpdateState((prev) => {
+      const nextCurriculum =
+        mode === 'replace' ? built : [...prev.curriculumPlan, ...built];
+      const nextLessonPlans = syncLessonPlansFromCurriculum(
+        nextCurriculum,
+        mode === 'replace' ? [] : prev.lessonPlans
+      );
+      return {
+        ...prev,
+        curriculumPlan: nextCurriculum,
+        lessonPlans: nextLessonPlans,
+      };
+    });
   };
 
   const handleAiWeeklyLogResult = (data: unknown, mode: 'replace' | 'append') => {
@@ -499,10 +931,20 @@ export const GeipPlanModule: React.FC<Props> = ({
       contentDetails: lg.contentDetails || '',
     }));
 
-    onUpdateState((prev) => ({
-      ...prev,
-      weeklyLogs: mode === 'replace' ? built : [...prev.weeklyLogs, ...built],
-    }));
+    onUpdateState((prev) => {
+      const nextWeeklyLogs =
+        mode === 'replace' ? built : [...displayedWeeklyLogs, ...built];
+      const nextDailyRecords = syncDailyHomeworkFromWeeklyLogs(
+        nextWeeklyLogs,
+        prev.classes,
+        prev.dailyHomeworkRecords || []
+      );
+      return {
+        ...prev,
+        weeklyLogs: nextWeeklyLogs,
+        dailyHomeworkRecords: nextDailyRecords,
+      };
+    });
   };
 
   const handleAiHomeworkDutyResult = (data: unknown) => {
@@ -550,7 +992,7 @@ export const GeipPlanModule: React.FC<Props> = ({
       id: `lp-ai-${Date.now()}`,
       chapterTitle: d.chapterTitle || 'ជំពូកទី១ ខ្ញុំ និង អ្នក (第一单元)',
       lessonTitle: d.lessonTitle || 'មេរៀនថ្មី',
-      durationLabel: d.durationLabel || '៤ ម៉ោងសិក្សា (១ម៉ោងសិក្សា មាន៩០នាទី)',
+      durationLabel: d.durationLabel || '១.៥ ម៉ោងសិក្សា (១ម៉ោងសិក្សា មាន៩០នាទី)',
       pagesLabel: d.pagesLabel || 'ទំព័រទី១ ដល់ ទំព័រទី៥',
       textbookSource:
         d.textbookSource ||
@@ -563,15 +1005,31 @@ export const GeipPlanModule: React.FC<Props> = ({
         'សៀវភៅសម្រាប់គ្រូ កិច្ចតែងការបង្រៀន ប័ណ្ណអក្សររូបភាព',
       teachingMaterialsStudent:
         d.teachingMaterialsStudent || 'សៀវភៅគោលសម្រាប់សិស្ស សៀវភៅលំហាត់',
+      dateWeekday: activeLessonPlan?.dateWeekday || '',
+      dateDay: activeLessonPlan?.dateDay || '',
+      dateMonth: activeLessonPlan?.dateMonth || '',
+      dateYear: activeLessonPlan?.dateYear || '២០២៦',
       sessions:
         Array.isArray(d.sessions) && d.sessions.length > 0
           ? d.sessions
           : activeLessonPlan?.sessions || [],
     };
-    onUpdateState((prev) => ({
-      ...prev,
-      lessonPlans: [...prev.lessonPlans, created],
-    }));
+    onUpdateState((prev) => {
+      const basePlans = syncLessonPlansFromCurriculum(
+        prev.curriculumPlan,
+        prev.lessonPlans
+      );
+      const nextLessonPlans = [...basePlans, created];
+      const nextCurriculum = syncCurriculumFromLessonPlans(
+        nextLessonPlans,
+        prev.curriculumPlan
+      );
+      return {
+        ...prev,
+        lessonPlans: nextLessonPlans,
+        curriculumPlan: nextCurriculum,
+      };
+    });
     setSelectedLessonPlanId(created.id);
   };
 
@@ -766,21 +1224,50 @@ export const GeipPlanModule: React.FC<Props> = ({
 
         {docTab === 'lesson_plan' && (
           <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-slate-100 text-xs">
-            <span className="text-slate-500">ជ្រើសរើសមេរៀន៖</span>
-            {state.lessonPlans.map((lp) => (
-              <button
-                key={lp.id}
-                type="button"
-                onClick={() => setSelectedLessonPlanId(lp.id)}
-                className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-                  activeLessonPlan?.id === lp.id
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                {lp.lessonTitle}
-              </button>
-            ))}
+            <span className="text-slate-500">ជ្រើសរើសមេរៀន ({effectiveLessonPlans.length})៖</span>
+            {effectiveLessonPlans.map((lp, idx) => {
+              const isSelected = activeLessonPlan?.id === lp.id;
+              return (
+                <div
+                  key={lp.id}
+                  className={`inline-flex items-center rounded-md font-medium transition-colors border ${
+                    isSelected
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                      : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setSelectedLessonPlanId(lp.id)}
+                    className="px-2.5 py-1.5 cursor-pointer text-left"
+                  >
+                    {idx + 1}. {lp.lessonTitle}
+                  </button>
+                  {effectiveLessonPlans.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPendingDeleteLessonPlan({
+                          id: lp.id,
+                          linkedCurriculumId: lp.linkedCurriculumId,
+                          index: idx,
+                          title: `${idx + 1}. ${lp.lessonTitle}`,
+                        });
+                      }}
+                      className={`px-1.5 py-1.5 mr-0.5 rounded-r-md transition-colors cursor-pointer ${
+                        isSelected
+                          ? 'text-indigo-100 hover:bg-indigo-700 hover:text-white'
+                          : 'text-slate-400 hover:bg-rose-100 hover:text-rose-600'
+                      }`}
+                      title="លុបមេរៀននេះ (删除此课程)"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -788,6 +1275,22 @@ export const GeipPlanModule: React.FC<Props> = ({
       {/* TAB 1: ANNUAL CHINESE CURRICULUM PLAN (កម្មវិធីសិក្សាភាសាចិន កំរិត២) */}
       {docTab === 'curriculum' && (
         <div className="space-y-4">
+          <div className="bg-indigo-50/80 border border-indigo-200 rounded-lg p-3 flex flex-wrap items-center justify-between gap-2 text-xs text-indigo-950 no-print">
+            <div className="flex items-center gap-2 font-bold">
+              <Link2 className="w-4 h-4 text-indigo-600 shrink-0" />
+              <span>
+                ១. កម្មវិធីសិក្សាប្រចាំឆ្នាំ និង ៤. កិច្ចតែងការបង្រៀន ភ្ជាប់គ្នាស្វ័យប្រវត្តិ (年度教学计划与教案内容双向互通，填其中一个另一个自动生成，日期可自行调整)
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDocTab('lesson_plan')}
+              className="px-2.5 py-1 rounded bg-indigo-600 text-white font-bold hover:bg-indigo-700 cursor-pointer"
+            >
+              មើល ៤. កិច្ចតែងការបង្រៀន ({effectiveLessonPlans.length}) →
+            </button>
+          </div>
+
           <AiGeneratorBar
             taskType="curriculum"
             titleKh="AI បង្កើត ឬបង្ហោះឯកសារកម្មវិធីសិក្សាភាសាចិន (កម្មវិធីសិក្សា ៥៧ ម៉ោង)"
@@ -941,14 +1444,56 @@ export const GeipPlanModule: React.FC<Props> = ({
         </div>
       )}
 
-      {/* TAB 2: WEEKLY LESSON LOG FOR ALL 8 CLASSES (សម្រង់អត្ថបទប្រចាំសប្តាហ៍ — PDF 2 STYLE) */}
+      {/* TAB 2: WEEKLY LESSON LOG FOR ALL CLASSES (សម្រង់អត្ថបទប្រចាំសប្តាហ៍ — PDF 2 STYLE) */}
       {docTab === 'weekly_log' && (
         <div className="space-y-4">
+          <div className="bg-emerald-50/90 border border-emerald-300 rounded-lg p-3 space-y-2.5 text-xs text-emerald-950 no-print">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2 font-bold">
+                <Link2 className="w-4 h-4 text-emerald-700 shrink-0" />
+                <span>
+                  សម្រង់អត្ថបទប្រចាំសប្តាហ៍ ភ្ជាប់ស្វ័យប្រវត្តិជាមួយ «កំណត់ត្រាមេរៀន និងកំណត់ត្រាកិច្ចការផ្ទះ» តាមលំដាប់ថ្នាក់បង្រៀន (ឧ. 10C ម៉ោងទី១ → 10B ម៉ោងទី២ បន្តបន្ទាប់គ្នា)
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-emerald-300 text-emerald-900 font-bold cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={autoPropagateWeeklyLogs}
+                    onChange={(e) => setAutoPropagateWeeklyLogs(e.target.checked)}
+                    className="rounded border-emerald-400 text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <span>ភ្ជាប់បន្តគ្រប់ថ្នាក់ស្វ័យប្រវត្តិ (改第1节自动连续同步后续班)</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => handlePropagateWeeklyLogToSubsequent(0)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-600 text-white font-bold hover:bg-emerald-700 shadow-2xs cursor-pointer"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>បំពេញមេរៀនបន្តគ្នាគ្រប់ថ្នាក់ (一键按第1节连续复制生成所有班)</span>
+                </button>
+              </div>
+            </div>
+            {weeklySyncNotice && (
+              <div className="px-3 py-1.5 rounded bg-emerald-600 text-white font-bold text-xs flex items-center justify-between">
+                <span>{weeklySyncNotice}</span>
+                <button
+                  type="button"
+                  onClick={() => setWeeklySyncNotice(null)}
+                  className="text-emerald-100 hover:text-white cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+
           <AiGeneratorBar
             taskType="weekly_log"
-            titleKh="AI បង្កើត ឬបង្ហោះឯកសារសម្រង់អត្ថបទប្រចាំសប្តាហ៍ (ទាំង ៨ ថ្នាក់៖ 9A, 9C, 8C, 8A, 10A, 10C, 9B, 8B)"
-            placeholderKh="ឧ. បង្កើតសម្រង់អត្ថបទប្រចាំសប្តាហ៍ មេរៀនទី២ នាងខ្ពស់ជាងខ្ញុំ សម្រាប់ទាំង ៨ ថ្នាក់ (ចន្ទ–ព្រហស្បតិ៍) ឬបង្ហោះ PDF/រូបភាព..."
-            defaultPrompt={`Generate a complete 8-class weekly teaching log (សម្រង់អត្ថបទប្រចាំសប្តាហ៍) starting Monday ${weekMondayDateInput} for classes 9A, 9C (Monday), 8C, 8A (Tuesday), 10A, 10C (Wednesday), and 9B, 8B (Thursday).`}
+            titleKh="AI បង្កើត ឬបង្ហោះឯកសារសម្រង់អត្ថបទប្រចាំសប្តាហ៍"
+            placeholderKh="ឧ. បង្កើតសម្រង់អត្ថបទប្រចាំសប្តាហ៍ មេរៀនទី២ នាងខ្ពស់ជាងខ្ញុំ សម្រាប់គ្រប់ថ្នាក់ ឬបង្ហោះ PDF/រូបភាព..."
+            defaultPrompt={`Generate a complete weekly teaching log (សម្រង់អត្ថបទប្រចាំសប្តាហ៍) starting Monday ${weekMondayDateInput} for classes ${state.classes.map((c) => cleanClassDisplayCode(c.name || c.id)).join(', ') || '10C, 10B'}.`}
             onResult={handleAiWeeklyLogResult}
           />
 
@@ -1005,7 +1550,7 @@ export const GeipPlanModule: React.FC<Props> = ({
                 </tr>
               </thead>
               <tbody>
-                {state.weeklyLogs.map((log) => (
+                {displayedWeeklyLogs.map((log, logIdx) => (
                   <tr key={log.id} className="align-top group">
                     <td className="border border-slate-900 py-2 px-1.5 text-center">
                       <input
@@ -1015,9 +1560,13 @@ export const GeipPlanModule: React.FC<Props> = ({
                           const picked = e.target.value;
                           if (!picked) return;
                           const converted = convertIsoDateToKhmerSignature(picked);
-                          onUpdateState((prev) => ({
-                            ...prev,
-                            weeklyLogs: prev.weeklyLogs.map((w) =>
+                          onUpdateState((prev) => {
+                            const baseLogs = syncWeeklyLogsFromDailyHomework(
+                              prev.classes,
+                              prev.dailyHomeworkRecords || [],
+                              prev.weeklyLogs
+                            );
+                            const nextWeeklyLogs = baseLogs.map((w) =>
                               w.id === log.id
                                 ? {
                                     ...w,
@@ -1025,8 +1574,18 @@ export const GeipPlanModule: React.FC<Props> = ({
                                     weekdayKh: converted.weekdayKh,
                                   }
                                 : w
-                            ),
-                          }));
+                            );
+                            const nextDailyRecords = syncDailyHomeworkFromWeeklyLogs(
+                              nextWeeklyLogs,
+                              prev.classes,
+                              prev.dailyHomeworkRecords || []
+                            );
+                            return {
+                              ...prev,
+                              weeklyLogs: nextWeeklyLogs,
+                              dailyHomeworkRecords: nextDailyRecords,
+                            };
+                          });
                         }}
                         className="w-full px-1 py-0.5 mb-0.5 bg-slate-50 border border-slate-300 rounded text-[10px] font-bold cursor-pointer no-print"
                         title="ចុចជ្រើសរើសថ្ងៃ/ខែពីប្រតិទិន"
@@ -1062,21 +1621,72 @@ export const GeipPlanModule: React.FC<Props> = ({
                       <input
                         type="text"
                         value={log.classId}
+                        placeholder="ថ្នាក់ (如 10B)"
                         onChange={(e) =>
                           handleWeeklyLogChange(log.id, 'classId', e.target.value)
                         }
-                        className="w-full text-center font-mono font-bold text-xs bg-transparent focus:outline-none focus:bg-indigo-50/40"
+                        className="w-full text-center font-mono font-bold text-xs bg-transparent placeholder:text-[10px] placeholder:text-slate-400 focus:outline-none focus:bg-indigo-50/40"
                       />
                     </td>
                     <td className="border border-slate-900 py-2 px-3 space-y-1 relative">
+                      <div className="flex flex-wrap items-center justify-end gap-1 mb-1 no-print">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyWeeklyLogRow(log, logIdx)}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-50 border border-indigo-200 text-[10px] font-bold text-indigo-700 hover:bg-indigo-100 cursor-pointer"
+                          title="ចម្លងមេរៀនថ្នាក់នេះ (复制本行，若在最后一行会自动在下方新增空白行供粘贴)"
+                        >
+                          <Copy className="w-3 h-3" />
+                          <span>ចម្លង (复制)</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handlePasteWeeklyLogRow(log.id)}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] font-bold cursor-pointer ${
+                            copiedWeeklyLogClip && !log.lessonTitle
+                              ? 'bg-emerald-600 border-emerald-700 text-white shadow-2xs animate-pulse'
+                              : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                          }`}
+                          title="បិទភ្ជាប់មេរៀនមកជួរនេះ (粘贴课程内容到本行)"
+                        >
+                          <ClipboardPaste className="w-3 h-3" />
+                          <span>បិទភ្ជាប់ (粘贴)</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleInsertBlankRowBelow(logIdx, false)}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-50 border border-sky-200 text-[10px] font-bold text-sky-700 hover:bg-sky-100 cursor-pointer"
+                          title="បន្ថែមជួរទទេខាងក្រោមដើម្បីបិទភ្ជាប់ (在下方新增一行空白空间)"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>+បន្ថែមជួរខាងក្រោម (+下一行空间)</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleInsertBlankRowBelow(logIdx, true)}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-[10px] font-bold text-amber-800 hover:bg-amber-100 cursor-pointer"
+                          title="បន្ថែមជួរថ្មីខាងក្រោម និងបិទភ្ជាប់ភ្លាមៗ (直接在下一行新增并粘贴)"
+                        >
+                          <Share2 className="w-3 h-3" />
+                          <span>ចម្លងទៅជួរបន្ទាប់ (复制到下一行)</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteWeeklyLog(log.id)}
+                          className="inline-flex items-center p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
+                          title="លុបជួរនេះ"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                       <input
                         type="text"
                         value={log.unitTitle}
-                        placeholder="ជំពូក (Unit)..."
+                        placeholder="ជំពូក (Unit) — ចុច «បិទភ្ជាប់ (粘贴)» ខាងលើដើម្បីបិទភ្ជាប់..."
                         onChange={(e) =>
                           handleWeeklyLogChange(log.id, 'unitTitle', e.target.value)
                         }
-                        className="w-full text-center font-bold text-slate-950 bg-transparent focus:outline-none focus:bg-indigo-50/40"
+                        className="w-full text-center font-bold text-slate-950 bg-transparent placeholder:text-slate-300 placeholder:font-normal focus:outline-none focus:bg-indigo-50/40"
                       />
                       <input
                         type="text"
@@ -1085,27 +1695,48 @@ export const GeipPlanModule: React.FC<Props> = ({
                         onChange={(e) =>
                           handleWeeklyLogChange(log.id, 'lessonTitle', e.target.value)
                         }
-                        className="w-full text-center font-bold text-indigo-950 bg-transparent focus:outline-none focus:bg-indigo-50/40"
+                        className="w-full text-center font-bold text-indigo-950 bg-transparent placeholder:text-slate-300 placeholder:font-normal focus:outline-none focus:bg-indigo-50/40"
                       />
                       <textarea
                         rows={3}
                         value={log.contentDetails}
+                        placeholder="ខ្លឹមសារមេរៀន (點擊上方「បិទភ្ជាប់ (粘贴)」即可粘贴刚复制的内容)..."
                         onChange={(e) =>
                           handleWeeklyLogChange(log.id, 'contentDetails', e.target.value)
                         }
-                        className="w-full whitespace-pre-line leading-relaxed pt-1 text-slate-900 bg-transparent focus:outline-none focus:bg-indigo-50/40 resize-y"
+                        className="w-full whitespace-pre-line leading-relaxed pt-1 text-slate-900 bg-transparent placeholder:text-slate-300 focus:outline-none focus:bg-indigo-50/40 resize-y"
                       />
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteWeeklyLog(log.id)}
-                        className="opacity-0 group-hover:opacity-100 absolute top-1.5 right-1.5 text-slate-300 hover:text-rose-600 no-print"
-                        title="លុបជួរនេះ"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
                     </td>
                   </tr>
                 ))}
+
+                {/* Interactive Add Next Row / Paste Row inside table (No-Print) */}
+                <tr className="no-print bg-emerald-50/50">
+                  <td colSpan={4} className="border border-slate-900 py-2 px-3 text-center">
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleInsertBlankRowBelow(displayedWeeklyLogs.length - 1, false)
+                        }
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-indigo-300 text-indigo-700 font-bold text-xs hover:bg-indigo-50 shadow-2xs cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>+ បន្ថែមជួរថ្មីខាងក្រោម (+ 在下一行添加空白空间让我粘贴)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleInsertBlankRowBelow(displayedWeeklyLogs.length - 1, true)
+                        }
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 shadow-2xs cursor-pointer"
+                      >
+                        <ClipboardPaste className="w-3.5 h-3.5" />
+                        <span>+ បន្ថែមជួរថ្មី & បិទភ្ជាប់មេរៀនភ្លាមៗ (+ 新增下一行并直接粘贴课程内容)</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
 
                 {/* Friday Signature Row matching 2សម្រង់អត្ថបទ2025-2026.pdf */}
                 <tr className="align-top">
@@ -1568,6 +2199,22 @@ export const GeipPlanModule: React.FC<Props> = ({
       {/* TAB 4: 5-STEP CHINESE LESSON PLANS (កិច្ចតែងការបង្រៀន) */}
       {docTab === 'lesson_plan' && activeLessonPlan && (
         <div className="space-y-4">
+          <div className="bg-indigo-50/80 border border-indigo-200 rounded-lg p-3 flex flex-wrap items-center justify-between gap-2 text-xs text-indigo-950 no-print">
+            <div className="flex items-center gap-2 font-bold">
+              <Link2 className="w-4 h-4 text-indigo-600 shrink-0" />
+              <span>
+                ៤. កិច្ចតែងការបង្រៀន និង ១. កម្មវិធីសិក្សាប្រចាំឆ្នាំ ភ្ជាប់គ្នាស្វ័យប្រវត្តិ (កែប្រែមេរៀននៅទីនេះ នឹងធ្វើបច្ចុប្បន្នភាពទៅ ១. កម្មវិធីសិក្សាប្រចាំឆ្នាំ ដោយរក្សាទុកកាលបរិច្ឆេទតាមការកំណត់ផ្ទាល់)
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDocTab('curriculum')}
+              className="px-2.5 py-1 rounded bg-indigo-600 text-white font-bold hover:bg-indigo-700 cursor-pointer"
+            >
+              ← មើល ១. កម្មវិធីសិក្សាប្រចាំឆ្នាំ
+            </button>
+          </div>
+
           <AiGeneratorBar
             taskType="lesson_plan"
             allowAppend={false}
@@ -1613,32 +2260,40 @@ export const GeipPlanModule: React.FC<Props> = ({
                 <span>កាលបរិច្ឆេទ ៖ ថ្ងៃ</span>
                 <input
                   type="text"
-                  value={lpDateWeekday}
-                  onChange={(e) => setLpDateWeekday(e.target.value)}
+                  value={activeLessonPlan.dateWeekday ?? ''}
+                  onChange={(e) =>
+                    updateActiveLessonPlan({ dateWeekday: e.target.value })
+                  }
                   placeholder="..............."
                   className="w-20 text-center border-b border-dotted border-slate-500 bg-transparent focus:outline-none"
                 />
                 <span>ទី</span>
                 <input
                   type="text"
-                  value={lpDateDay}
-                  onChange={(e) => setLpDateDay(e.target.value)}
+                  value={activeLessonPlan.dateDay ?? ''}
+                  onChange={(e) =>
+                    updateActiveLessonPlan({ dateDay: e.target.value })
+                  }
                   placeholder="......."
                   className="w-12 text-center border-b border-dotted border-slate-500 bg-transparent focus:outline-none"
                 />
                 <span>ខែ</span>
                 <input
                   type="text"
-                  value={lpDateMonth}
-                  onChange={(e) => setLpDateMonth(e.target.value)}
+                  value={activeLessonPlan.dateMonth ?? ''}
+                  onChange={(e) =>
+                    updateActiveLessonPlan({ dateMonth: e.target.value })
+                  }
                   placeholder="..............."
                   className="w-24 text-center border-b border-dotted border-slate-500 bg-transparent focus:outline-none"
                 />
                 <span>ឆ្នាំ</span>
                 <input
                   type="text"
-                  value={lpDateYear}
-                  onChange={(e) => setLpDateYear(e.target.value)}
+                  value={activeLessonPlan.dateYear ?? '២០២៦'}
+                  onChange={(e) =>
+                    updateActiveLessonPlan({ dateYear: e.target.value })
+                  }
                   placeholder="២០២..."
                   className="w-16 text-center border-b border-dotted border-slate-500 bg-transparent focus:outline-none"
                 />
@@ -1647,20 +2302,31 @@ export const GeipPlanModule: React.FC<Props> = ({
                   <span>ជ្រើសរើសថ្ងៃ/ខែ៖</span>
                   <input
                     type="date"
+                    value={activeLessonPlan.isoDate || ''}
                     onChange={(e) => {
                       const picked = e.target.value;
                       if (!picked) return;
                       const conv = convertIsoDateToKhmerSignature(picked);
-                      setLpDateWeekday(conv.weekdayKh);
-                      setLpDateDay(conv.gregorianDay);
-                      setLpDateMonth(conv.gregorianMonth);
-                      setLpDateYear(conv.gregorianYear);
+                      updateActiveLessonPlan({
+                        isoDate: picked,
+                        dateWeekday: conv.weekdayKh,
+                        dateDay: conv.gregorianDay,
+                        dateMonth: conv.gregorianMonth,
+                        dateYear: conv.gregorianYear,
+                      });
                     }}
                     className="bg-white px-2 py-0.5 rounded border border-slate-300 text-[11px] font-bold cursor-pointer"
                   />
                 </div>
               </div>
-              <div>ថ្នាក់ ៖ ៨A / ៨B / ៨C / ៩A / ៩B / ៩C / ១០A / ១០C</div>
+              <div>
+                ថ្នាក់ ៖{' '}
+                {state.classes.length > 0
+                  ? state.classes
+                      .map((c) => cleanClassDisplayCode(c.name || c.id))
+                      .join(' / ')
+                  : '៨A / ៨B / ៨C / ៩A / ៩B / ៩C / ១០A / ១០C'}
+              </div>
               <div>
                 មុខវិជ្ជា ៖ <strong>{state.schoolInfo.subjectNameKh}</strong>
               </div>
@@ -1969,6 +2635,49 @@ export const GeipPlanModule: React.FC<Props> = ({
             <div className="pt-4 border-t-2 border-emerald-700 flex items-center justify-between text-xs text-slate-800">
               <div>រៀបរៀង និង បង្រៀនដោយ អ្នកគ្រូ {state.schoolInfo.teacherName}</div>
               <div>មុខវិជ្ជា៖ ភាសាចិន</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal for Deleting a Lesson Plan (图1) */}
+      {pendingDeleteLessonPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 no-print">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-5 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-slate-900">
+                  បញ្ជាក់ការលុបមេរៀន (确定删除这个内容吗？)
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  តើអ្នកពិតជាចង់លុបមេរៀន{' '}
+                  <span className="font-bold text-rose-600">
+                    «{pendingDeleteLessonPlan.title}»
+                  </span>{' '}
+                  មែនទេ?
+                  <br />
+                  您确定要删除课程「{pendingDeleteLessonPlan.title}」吗？删除后将无法恢复。
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setPendingDeleteLessonPlan(null)}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 cursor-pointer"
+              >
+                បោះបង់ (取消)
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteLessonPlan}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-2xs cursor-pointer"
+              >
+                បញ្ជាក់ការលុប (确定删除)
+              </button>
             </div>
           </div>
         </div>

@@ -3,9 +3,12 @@ import {
   AnnualClassroomPlanSheet,
   AppDatabaseState,
   AttendanceStatus,
+  ChineseLessonPlan,
   ClassGroup,
   ClassroomPerformanceMark,
   ComputedChineseStudentRow,
+  CurriculumPlanItem,
+  DailyHomeworkRecord,
   GradeLetter,
   GradeThresholds,
   MonthConfig,
@@ -16,6 +19,7 @@ import {
   StudentMonthlyBreakdownEntry,
   StudentStandardEvaluation,
   TeacherMonthlyTaskReport,
+  WeeklyLessonLogItem,
 } from '../types';
 
 const KHMER_DIGITS = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
@@ -797,26 +801,36 @@ export function getResolvedAnnualClassroomPlan(
     (s) => s.status === 'active' && !(s.note || '').includes('មិនដែលមករៀន')
   );
   const defaultTotal =
-    novDist.totalEvaluated > 0
+    rosterTotal > 0
+      ? rosterTotal
+      : novDist.totalEvaluated > 0
       ? novDist.totalEvaluated
-      : activeEvaluatedStudents.length || rosterTotal;
+      : activeEvaluatedStudents.length;
   const defaultFemale =
-    novDist.totalEvaluated > 0
+    rosterFemale > 0
+      ? rosterFemale
+      : novDist.totalEvaluated > 0
       ? novDist.femaleEvaluated
-      : activeEvaluatedStudents.filter((s) => s.gender === 'F').length ||
-        rosterFemale;
+      : activeEvaluatedStudents.filter((s) => s.gender === 'F').length;
+
+  const parsedOverrideTotal = parseInt(
+    String(existing?.totalStudentsOverride ?? '').replace(/[០-៩]/g, (ch) =>
+      String('០១២៣៤៥៦៧៨៩'.indexOf(ch))
+    ),
+    10
+  );
+  const parsedOverrideFemale = parseInt(
+    String(existing?.femaleStudentsOverride ?? '').replace(/[០-៩]/g, (ch) =>
+      String('០១២៣៤៥៦៧៨៩'.indexOf(ch))
+    ),
+    10
+  );
 
   const effectiveTotalNum = Math.max(
     1,
-    parseInt(
-      String(existing?.totalStudentsOverride || defaultTotal || 1).replace(
-        /[០-៩]/g,
-        (ch) => String('០១២៣៤៥៦៧៨៩'.indexOf(ch))
-      ),
-      10
-    ) ||
-      defaultTotal ||
-      1
+    !Number.isNaN(parsedOverrideTotal) && parsedOverrideTotal > 0
+      ? parsedOverrideTotal
+      : defaultTotal || 1
   );
 
   const calcPct = (countStr: string, denom = effectiveTotalNum): string => {
@@ -852,12 +866,12 @@ export function getResolvedAnnualClassroomPlan(
     if (hasManualCount) {
       return {
         count: savedPair!.count!,
-        pct: hasManualPct ? savedPair!.pct! : calcPct(savedPair!.count!, denom),
+        pct: calcPct(savedPair!.count!, effectiveTotalNum),
       };
     }
     if (hasManualPct) {
       return {
-        count: calcCountFromPct(savedPair!.pct!, denom),
+        count: calcCountFromPct(savedPair!.pct!, effectiveTotalNum),
         pct: savedPair!.pct!,
       };
     }
@@ -867,6 +881,7 @@ export function getResolvedAnnualClassroomPlan(
     };
   };
 
+  // Manual input of ចំនួន for គោលដៅឆមាសទី១, គោលដៅឆមាសទី២, គោលដៅបំណាច់ឆ្នាំ -> always calculate % from whole class student count (effectiveTotalNum)
   const resolveTargetPair = (
     savedPair: { count?: string; pct?: string } | undefined
   ): { count: string; pct: string } => {
@@ -875,12 +890,12 @@ export function getResolvedAnnualClassroomPlan(
     if (rawCount.trim() !== '') {
       return {
         count: rawCount,
-        pct: rawPct.trim() !== '' ? rawPct : calcPct(rawCount),
+        pct: calcPct(rawCount, effectiveTotalNum),
       };
     }
     if (rawPct.trim() !== '') {
       return {
-        count: calcCountFromPct(rawPct),
+        count: calcCountFromPct(rawPct, effectiveTotalNum),
         pct: rawPct,
       };
     }
@@ -890,9 +905,9 @@ export function getResolvedAnnualClassroomPlan(
   const grades: GradeLetter[] = ['A', 'B', 'C', 'D', 'E', 'F'];
   const rows = {} as AnnualClassroomPlanSheet['rows'];
 
-  const baseDenom = novDist.totalEvaluated > 0 ? novDist.totalEvaluated : effectiveTotalNum;
-  const s1Denom = sem1Dist.totalEvaluated > 0 ? sem1Dist.totalEvaluated : effectiveTotalNum;
-  const s2Denom = sem2Dist.totalEvaluated > 0 ? sem2Dist.totalEvaluated : effectiveTotalNum;
+  const baseDenom = effectiveTotalNum;
+  const s1Denom = effectiveTotalNum;
+  const s2Denom = effectiveTotalNum;
 
   grades.forEach((g) => {
     const exRow = existing?.rows?.[g];
@@ -919,10 +934,14 @@ export function getResolvedAnnualClassroomPlan(
   });
 
   const totalDisplay = String(
-    existing?.totalStudentsOverride || defaultTotal || 0
+    !Number.isNaN(parsedOverrideTotal) && parsedOverrideTotal > 0
+      ? existing?.totalStudentsOverride
+      : defaultTotal || 0
   );
   const femaleDisplay = String(
-    existing?.femaleStudentsOverride || defaultFemale || 0
+    !Number.isNaN(parsedOverrideFemale) && parsedOverrideFemale > 0
+      ? existing?.femaleStudentsOverride
+      : defaultFemale || 0
   );
 
   rows.TOTAL = {
@@ -1013,9 +1032,91 @@ export function calculateModelSchoolChecklistStats(
 const KHMER_LETTERS = ['ក', 'ខ', 'គ', 'ឃ', 'ង', 'ច', 'ឆ', 'ជ'];
 
 /**
+ * Strip all Chinese characters, Pinyin/Latin letters, and detailed lists to keep ONLY the concise Khmer lesson title
+ * e.g. "第六课 今天几月几号 · មេរៀនទី៦ ថ្ងៃនេះជាថ្ងៃទីប៉ុន្មាន?" -> "មេរៀនទី៦ ថ្ងៃនេះជាថ្ងៃទីប៉ុន្មាន?"
+ */
+export function extractPureKhmerLessonTitle(rawTitle: string): string {
+  if (!rawTitle) return 'មេរៀនទី៦ ថ្ងៃនេះជាថ្ងៃទីប៉ុន្មាន?';
+  const stripped = rawTitle
+    .split(/[—\-]/)[0]
+    .replace(/^[ក-អ]\.\s*/g, '')
+    .replace(/លំហាត់សន្ទនា\s*និងសៀវភៅលំហាត់\s*[៖:]?\s*/g, '')
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/（[^）]*）/g, ' ')
+    .replace(/ជំពូកទី[០-៩0-9]+\s*[^\s·]*/g, ' ')
+    .replace(/[\u3400-\u9FFF\uF900-\uFAFF]/g, ' ')
+    .replace(/[A-Za-z0-9]+/g, ' ')
+    .replace(/[①-⑳，。！：；“”‘’【】《》、·៖]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const match = stripped.match(/មេរៀនទី.*/);
+  if (match && match[0].trim()) {
+    return match[0]
+      .trim()
+      .replace(/^មេរៀនទី\s*([០-៩0-9]+)\s*៖?\s*/, 'មេរៀនទី$1 ');
+  }
+  return stripped || 'មេរៀនទី៦ ថ្ងៃនេះជាថ្ងៃទីប៉ុន្មាន?';
+}
+
+export function normalizeTeacherDutyReport(
+  saved: TeacherMonthlyTaskReport | undefined,
+  liveDerived: TeacherMonthlyTaskReport
+): TeacherMonthlyTaskReport {
+  if (!saved) return liveDerived;
+
+  const isAlreadyConcisePreStudy = (s: string) =>
+    !/[\u3400-\u9FFF\uF900-\uFAFF]/.test(s) &&
+    !/[A-Za-z]/.test(s) &&
+    s.includes('— ស្វ័យសិក្សាពាក្យថ្មី (ពាក្យថ្មី, ល្បះ)');
+
+  const isAlreadyConciseHomework = (s: string) =>
+    !/[\u3400-\u9FFF\uF900-\uFAFF]/.test(s) &&
+    !/[A-Za-z]/.test(s) &&
+    s.includes('លំហាត់សន្ទនា និងសៀវភៅលំហាត់៖');
+
+  const formatPreStudyList = (list: string[] | undefined): string[] => {
+    if (!list || list.length === 0) return liveDerived.preStudyDetails;
+    if (list.every(isAlreadyConcisePreStudy)) return list;
+    return list.map((item, idx) => {
+      const khTitle = extractPureKhmerLessonTitle(item);
+      return `${KHMER_LETTERS[idx] || 'ក'}. ${khTitle} — ស្វ័យសិក្សាពាក្យថ្មី (ពាក្យថ្មី, ល្បះ)`;
+    });
+  };
+
+  const formatHomeworkList = (
+    list: string[] | undefined,
+    fallback: string[]
+  ): string[] => {
+    if (!list || list.length === 0) return fallback;
+    if (list.every(isAlreadyConciseHomework)) return list;
+    return list.map((item, idx) => {
+      const khTitle = extractPureKhmerLessonTitle(item);
+      return `${KHMER_LETTERS[idx] || 'ក'}. លំហាត់សន្ទនា និងសៀវភៅលំហាត់៖ ${khTitle}`;
+    });
+  };
+
+  return {
+    ...liveDerived,
+    ...saved,
+    preStudyDetails: formatPreStudyList(saved.preStudyDetails),
+    projectDetails: formatHomeworkList(
+      saved.projectDetails,
+      liveDerived.projectDetails
+    ),
+    homeworkDetails: formatHomeworkList(
+      saved.homeworkDetails,
+      liveDerived.homeworkDetails
+    ),
+  };
+}
+
+/**
  * Automatically derive the Model School Teacher Monthly Duty Report (ភារកិច្ចគ្រូបង្រៀន ស្តង់ដាសាលាគំរូ)
  * directly from the real Weekly Lesson Logs (សម្រង់អត្ថបទប្រចាំសប្តាហ៍) and Daily Homework & Lesson Records
  * (កំណត់ត្រាកិច្ចការផ្ទះ និងកំណត់ត្រាមេរៀនប្រចាំថ្ងៃ).
+ * Pure Khmer only, concise format:
+ * - ក. មេរៀនទី៦ ថ្ងៃនេះជាថ្ងៃទីប៉ុន្មាន? — ស្វ័យសិក្សាពាក្យថ្មី (ពាក្យថ្មី, ល្បះ)
+ * - ក. លំហាត់សន្ទនា និងសៀវភៅលំហាត់៖ មេរៀនទី៦ ថ្ងៃនេះជាថ្ងៃទីប៉ុន្មាន?
  */
 export function deriveTeacherDutyReportFromLiveRecords(
   state: AppDatabaseState,
@@ -1031,155 +1132,77 @@ export function deriveTeacherDutyReportFromLiveRecords(
     state.standardEvaluations[classId]?.[monthId]
   );
 
+  const cleanTargetClass = cleanClassDisplayCode(
+    state.classes.find((c) => c.id === classId)?.name || classId
+  );
+
   // 1. Gather Weekly Lesson Logs (សម្រង់អត្ថបទប្រចាំសប្តាហ៍) for this class
   const classWeeklyLogs = state.weeklyLogs.filter(
-    (w) => w.classId.toUpperCase() === classId.toUpperCase()
+    (w) => cleanClassDisplayCode(w.classId) === cleanTargetClass
   );
   const effectiveWeeklyLogs =
     classWeeklyLogs.length > 0 ? classWeeklyLogs : state.weeklyLogs.slice(0, 2);
 
   // 2. Gather Daily Homework & Lesson Records (កំណត់ត្រាកិច្ចការផ្ទះ និងកំណត់ត្រាមេរៀនប្រចាំថ្ងៃ) for this class
   const classHwRecords = (state.dailyHomeworkRecords || []).filter(
-    (r) => r.classId.toUpperCase() === classId.toUpperCase()
+    (r) => cleanClassDisplayCode(r.classId) === cleanTargetClass
   );
 
-  // Build Pre-Study Details (ស្វ័យសិក្សាមុនពេលមកជួបគ្រូ) from Weekly Logs & Daily Lesson Records
-  const preStudyDetails: string[] = [];
-  effectiveWeeklyLogs.forEach((w) => {
-    const lines = (w.contentDetails || '')
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .filter(Boolean);
-    const vocabLine = lines.find((l) => l.includes('生词') || l.includes('ពាក្យថ្មី') || l.includes('声母'));
-    const sentenceLine = lines.find((l) => l.includes('句型') || l.includes('ល្បះ') || l.includes('课文'));
-
-    if (vocabLine) {
-      const idx = preStudyDetails.length;
-      preStudyDetails.push(
-        `${KHMER_LETTERS[idx] || 'ក'}. ${w.lessonTitle} — ស្វ័យសិក្សាពាក្យថ្មី (${vocabLine.replace(/^[0-9-]+\.\s*/, '')})`
-      );
-    } else if (w.lessonTitle) {
-      const idx = preStudyDetails.length;
-      preStudyDetails.push(
-        `${KHMER_LETTERS[idx] || 'ក'}. ${w.lessonTitle} (${w.unitTitle || 'ពាក្យថ្មី និងអត្ថបទ'})`
-      );
+  // Collect unique pure-Khmer lesson titles (prioritizing Daily Homework & Lesson Records, then Weekly Logs)
+  const khmerLessonTitles: string[] = [];
+  const addKhTitle = (raw?: string) => {
+    if (!raw || !raw.trim()) return;
+    const kh = extractPureKhmerLessonTitle(raw);
+    if (kh && !khmerLessonTitles.includes(kh)) {
+      khmerLessonTitles.push(kh);
     }
+  };
 
-    if (sentenceLine) {
-      const idx = preStudyDetails.length;
-      preStudyDetails.push(
-        `${KHMER_LETTERS[idx] || 'ខ'}. ${w.lessonTitle} — ស្វ័យសិក្សាទម្រង់ល្បះ (${sentenceLine.replace(/^[0-9-]+\.\s*/, '')})`
-      );
-    }
-  });
+  classHwRecords.forEach((hw) => addKhTitle(hw.lessonTitle || hw.homeworkTitle));
+  effectiveWeeklyLogs.forEach((w) => addKhTitle(w.lessonTitle));
 
-  // Also include lessons from Daily Homework Records if not already covered
-  classHwRecords.forEach((hw) => {
-    if (hw.lessonTitle && !preStudyDetails.some((p) => p.includes(hw.lessonTitle!))) {
-      const idx = preStudyDetails.length;
-      preStudyDetails.push(
-        `${KHMER_LETTERS[idx] || 'ក'}. ${hw.lessonTitle} (${hw.lessonContentDetails || hw.lessonUnitTitle || 'ពាក្យថ្មី និងទម្រង់ល្បះ'})`
-      );
-    }
-  });
-
-  if (preStudyDetails.length === 0) {
-    preStudyDetails.push(
-      'ក. មេរៀនទី៣ មួយថ្ងៃរបស់ខ្ញុំ (ពាក្យថ្មី ទំព័រ 13)',
-      'ខ. មេរៀនទី៣ មួយថ្ងៃរបស់ខ្ញុំ (ល្បះ ទំព័រ 13)'
-    );
+  if (khmerLessonTitles.length === 0) {
+    khmerLessonTitles.push('មេរៀនទី៦ ថ្ងៃនេះជាថ្ងៃទីប៉ុន្មាន?');
   }
 
-  // Build Project / Exercise Details (គម្រោង/ចំណោទ/លំហាត់) from Weekly Logs & Daily Lesson Records
-  const projectDetails: string[] = [];
-  classHwRecords.forEach((hw) => {
-    if (hw.lessonTitle || hw.lessonContentDetails) {
-      const idx = projectDetails.length;
-      projectDetails.push(
-        `${KHMER_LETTERS[idx] || 'ក'}. លំហាត់អនុវត្តក្នុងថ្នាក់ និងសៀវភៅលំហាត់៖ ${hw.lessonTitle || hw.homeworkTitle} (${hw.lessonContentDetails || hw.homeworkDetail})`
-      );
-    }
-  });
-  if (projectDetails.length === 0 && effectiveWeeklyLogs.length > 0) {
-    effectiveWeeklyLogs.forEach((w, idx) => {
-      projectDetails.push(
-        `${KHMER_LETTERS[idx] || 'ក'}. លំហាត់សន្ទនា និងសៀវភៅលំហាត់៖ ${w.lessonTitle} (${w.unitTitle})`
-      );
-    });
-  }
-  if (projectDetails.length === 0) {
-    projectDetails.push('ក. សៀវភៅលំហាត់ (ទំព័រទី 14-15) លំហាត់ 1-6');
-  }
+  // Build concise pure-Khmer Pre-Study Details, Project Details, and Homework Details
+  const preStudyDetails = khmerLessonTitles.map(
+    (khTitle, idx) =>
+      `${KHMER_LETTERS[idx] || 'ក'}. ${khTitle} — ស្វ័យសិក្សាពាក្យថ្មី (ពាក្យថ្មី, ល្បះ)`
+  );
 
-  // Build Homework Details (កិច្ចការផ្ទះ) from Daily Homework Records
-  const homeworkDetails: string[] = [];
+  const projectDetails = khmerLessonTitles.map(
+    (khTitle, idx) =>
+      `${KHMER_LETTERS[idx] || 'ក'}. លំហាត់សន្ទនា និងសៀវភៅលំហាត់៖ ${khTitle}`
+  );
+
+  const homeworkDetails = khmerLessonTitles.map(
+    (khTitle, idx) =>
+      `${KHMER_LETTERS[idx] || 'ក'}. លំហាត់សន្ទនា និងសៀវភៅលំហាត់៖ ${khTitle}`
+  );
+
   const assignedHwRecords = classHwRecords.filter((r) => r.assigned);
   const sourceHwRecords = assignedHwRecords.length > 0 ? assignedHwRecords : classHwRecords;
 
-  sourceHwRecords.forEach((hw, idx) => {
-    if (hw.homeworkTitle || hw.homeworkDetail) {
-      homeworkDetails.push(
-        `${KHMER_LETTERS[idx] || 'ក'}. ${hw.homeworkTitle}${hw.homeworkDetail ? ` — ${hw.homeworkDetail}` : ''}`
-      );
-    }
-  });
-  if (homeworkDetails.length === 0 && effectiveWeeklyLogs.length > 0) {
-    const firstLog = effectiveWeeklyLogs[0];
-    homeworkDetails.push(
-      `ក. កិច្ចការផ្ទះ ${firstLog.lessonTitle} (ហាត់សរសេរពាក្យថ្មី និងទម្រង់ល្បះចូលសៀវភៅកិច្ចការផ្ទះ)`
-    );
-  }
-
   // Compute real student submission count from DailyHomeworkRecords
   let submittedCountFromDaily = 0;
-  const missingStudentNames: string[] = [];
   if (sourceHwRecords.length > 0) {
     const latestRec = sourceHwRecords[sourceHwRecords.length - 1];
     classStudents.forEach((stu) => {
       const status = latestRec.submissions?.[stu.id];
       if (status === 'submitted') {
         submittedCountFromDaily += 1;
-      } else {
-        missingStudentNames.push(`${stu.name} (${stu.chineseName || '-'})`);
       }
     });
   } else {
     submittedCountFromDaily = checklistStats.homeworkCount || classStudents.length;
   }
 
-  // Identify low-scoring students (< 50% of classMaxScore) from monthly scores
-  const clsObj = state.classes.find((c) => c.id === classId);
-  const classMaxScore = getClassMaxScore(clsObj);
-  const enabledMonthIds = state.months.filter((m) => m.enabled).map((m) => m.id);
-  const scoreRows = calculateClassChineseResults(
-    classStudents,
-    state.scores[classId],
-    enabledMonthIds,
-    classMaxScore,
-    state.gradeThresholds,
-    true
-  );
-  const weakStudents = scoreRows
-    .filter((r) => r.averageScore !== null && r.averageScore < classMaxScore * 0.5)
-    .map((r) => `${r.name} (${r.chineseName || '-'})`);
-
-  const extraNotes: string[] = [];
-  if (missingStudentNames.length > 0) {
-    extraNotes.push(
-      `សិស្សមិនទាន់ប្រគល់កិច្ចការផ្ទះ (${missingStudentNames.length}នាក់)៖ ${missingStudentNames.slice(0, 6).join(', ')}`
-    );
-  }
-  if (weakStudents.length > 0) {
-    extraNotes.push(
-      `សិស្សរៀនខ្សោយត្រូវបំប៉នបន្ថែម (${weakStudents.length}នាក់)៖ ${weakStudents.slice(0, 6).join(', ')}`
-    );
-  }
-
   const baseVulnerableNote =
     'សិស្សក្រីក្រ ជួបការលំបាក សិស្សរងហិង្សាឬមានវិបត្តិផ្លូវចិត្ត សិស្សឈប់ច្រើនម៉ោងខ្លួន សិស្សរៀនខ្សោយមុខវិជ្ជាខ្លួន';
 
   return {
-    monthTitleKh: activeMonth?.nameKh || 'កក្កដា',
+    monthTitleKh: activeMonth?.nameKh || 'វិច្ឆិកា',
     preStudyAssignedCount: preStudyDetails.length,
     preStudyDetails,
     projectAssignedCount: projectDetails.length,
@@ -1196,10 +1219,7 @@ export function deriveTeacherDutyReportFromLiveRecords(
     studentHomeworkCountOverride: submittedCountFromDaily,
     studentStudyPlanCountOverride:
       checklistStats.studyPlanCount > 0 ? checklistStats.studyPlanCount : submittedCountFromDaily,
-    vulnerableStudentsNote:
-      extraNotes.length > 0
-        ? `${baseVulnerableNote}\n(${extraNotes.join(' · ')})`
-        : baseVulnerableNote,
+    vulnerableStudentsNote: baseVulnerableNote,
   };
 }
 
@@ -2125,6 +2145,455 @@ export function calculateClassMonthlyBreakdownRows(
     };
   });
 }
+
+/**
+ * Clean a class code or name (e.g. 'term-2026-2027__10C' or 'ថ្នាក់ទី ១០C') into a normalized display code ('10C').
+ */
+export function cleanClassDisplayCode(raw: string | undefined | null): string {
+  return String(raw || '')
+    .replace(/^.*__/, '')
+    .replace(/^ថ្នាក់ទី\s*/g, '')
+    .replace(/^ថ្នាក់\s*/g, '')
+    .replace(/[០-៩]/g, (ch) => String('០១២៣៤៥៦៧៨៩'.indexOf(ch)))
+    .replace(/\s+/g, '')
+    .toUpperCase();
+}
+
+/**
+ * Parse a curriculum row's lessonContent into chapterTitle, lessonTitle, and details.
+ */
+function parseCurriculumLessonContent(item: CurriculumPlanItem, idx: number): {
+  chapterTitle: string;
+  lessonTitle: string;
+  bodyContent: string;
+} {
+  const raw = (item.lessonContent || '').trim();
+  const lines = raw
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const firstLine = lines[0] || `មេរៀនសប្តាហ៍ទី${item.weekNumber || idx + 1}`;
+  let chapterTitle = `ខែ${item.monthNameKh || 'វិច្ឆិកា'} · សប្តាហ៍ទី${item.weekNumber || idx + 1}`;
+  let lessonTitle = firstLine;
+
+  if (firstLine.includes('·')) {
+    const parts = firstLine
+      .split('·')
+      .map((p) => p.trim())
+      .filter(Boolean);
+    if (parts.length >= 2) {
+      chapterTitle = parts[0];
+      lessonTitle = parts.slice(1).join(' · ');
+    }
+  } else if (firstLine.includes('单元') || firstLine.includes('ជំពូក')) {
+    chapterTitle = firstLine;
+    lessonTitle = lines[1] || firstLine;
+  }
+
+  return {
+    chapterTitle,
+    lessonTitle,
+    bodyContent: raw || firstLine,
+  };
+}
+
+/**
+ * Automatically synchronize Lesson Plans (៤. កិច្ចតែងការបង្រៀន) from Annual Curriculum Plan (១. កម្មវិធីសិក្សាប្រចាំឆ្នាំ).
+ * Preserves each Lesson Plan's manual date fields (dateWeekday, dateDay, dateMonth, dateYear, isoDate) so the teacher can adjust dates freely.
+ */
+export function syncLessonPlansFromCurriculum(
+  curriculumPlan: CurriculumPlanItem[],
+  existingLessonPlans: ChineseLessonPlan[]
+): ChineseLessonPlan[] {
+  if (!curriculumPlan || curriculumPlan.length === 0) {
+    return existingLessonPlans;
+  }
+
+  return curriculumPlan.map((item, idx) => {
+    const existing =
+      existingLessonPlans.find(
+        (lp) =>
+          lp.linkedCurriculumId === item.id ||
+          (item.linkedLessonPlanId && lp.id === item.linkedLessonPlanId)
+      ) || existingLessonPlans[idx];
+
+    const parsed = parseCurriculumLessonContent(item, idx);
+    const hoursStr = formatNumeral(item.hours || 1.5, true);
+    const durationLabel = `${hoursStr} ម៉ោងសិក្សា (១ម៉ោងសិក្សា មាន៩០នាទី)`;
+    const pagesLabel =
+      item.pageNumber && item.pageNumber.trim() !== '-'
+        ? item.pageNumber.startsWith('ទំព័រ') || item.pageNumber.startsWith('សៀ.')
+          ? item.pageNumber
+          : `ទំព័រ ${item.pageNumber}`
+        : existing?.pagesLabel || 'ទំព័រទី១ ដល់ ទំព័រទី៥';
+
+    const defaultSteps = [
+      {
+        stepTitle: 'ជំហានទី១ លំនឹងថ្នាក់ (៥នាទី)',
+        teacherActivity: 'ត្រួតពិនិត្យអនាម័យ សណ្តាប់ធ្នាប់ និងវត្តមានសិស្ស',
+        lessonContent: 'ពង្រឹងវិន័យ សណ្តាប់ធ្នាប់ និងពិនិត្យវត្តមានសិស្ស',
+        studentActivity: 'ស្លៀកពាក់ឯកសណ្ឋាន អង្គុយឱ្យត្រង់ ប្រធានថ្នាក់រាយការណ៍វត្តមាន',
+      },
+      {
+        stepTitle: 'ជំហានទី២ រំលឹកមេរៀនចាស់ (១០នាទី)',
+        teacherActivity: 'សួរសំណួររំលឹកពាក្យថ្មី និងទម្រង់ល្បះមេរៀនមុន',
+        lessonContent: 'រំលឹកពាក្យថ្មី និងល្បះសន្ទនាមេរៀនមុន',
+        studentActivity: 'សិស្សឆ្លើយសំណួរគ្រូ',
+      },
+      {
+        stepTitle: 'ជំហានទី៣ ខ្លឹមសារមេរៀន (៦០នាទី)',
+        teacherActivity:
+          '១. សរសេរចំណងជើងមេរៀនដាក់លើក្តារខៀន រួចអានឱ្យសិស្សស្តាប់\n២. បង្រៀនពាក្យថ្មី ទម្រង់ល្បះ និងការសន្ទនា\n៣. ហៅសិស្សឡើងអាន និងចាប់គូហ្វឹកហាត់សន្ទនា',
+        lessonContent: parsed.bodyContent,
+        studentActivity:
+          'សិស្សសង្កេត ស្តាប់គ្រូអាន អានតាមគ្រូ ចាប់គូឡើងសន្ទនា និងកត់ត្រាចូលសៀវភៅ',
+      },
+      {
+        stepTitle: 'ជំហានទី៤ ពង្រឹងពុទ្ធិ (១០នាទី)',
+        teacherActivity: 'ហៅសិស្សឡើងអាន និងបកប្រែពាក្យ ឬល្បះសំខាន់ៗក្នុងមេរៀន',
+        lessonContent: `ហ្វឹកហាត់អាន និងឆ្លើយសំណួរ៖ ${parsed.lessonTitle}`,
+        studentActivity: 'សិស្សឡើងអាន និងឆ្លើយសំណួររបស់គ្រូជាភាសាចិន',
+      },
+      {
+        stepTitle: 'ជំហានទី៥ បណ្តាំផ្ញើ (៥នាទី)',
+        teacherActivity: 'ដាក់កិច្ចការផ្ទះ និងណែនាំឱ្យសិស្សស្វ័យសិក្សាពេលត្រឡប់ទៅផ្ទះវិញ',
+        lessonContent: `作业 កិច្ចការផ្ទះ៖ ហាត់សរសេរពាក្យថ្មី និងទម្រង់ល្បះ (${parsed.lessonTitle})`,
+        studentActivity: 'សិស្សកត់ត្រាកិច្ចការផ្ទះ និងស្តាប់គ្រូដោយយកចិត្តទុកដាក់',
+      },
+    ];
+
+    const updatedSessions =
+      existing && existing.sessions && existing.sessions.length > 0
+        ? existing.sessions.map((sess, sIdx) => {
+            if (sIdx !== 0) return sess;
+            const hasStep3 = sess.steps.some((st) => st.stepTitle.includes('ជំហានទី៣'));
+            const nextSteps = hasStep3
+              ? sess.steps.map((st) =>
+                  st.stepTitle.includes('ជំហានទី៣')
+                    ? { ...st, lessonContent: parsed.bodyContent }
+                    : st
+                )
+              : sess.steps.map((st, k) =>
+                  k === Math.min(2, sess.steps.length - 1)
+                    ? { ...st, lessonContent: parsed.bodyContent }
+                    : st
+                );
+            return {
+              ...sess,
+              sessionTitle: `ម៉ោងសិក្សាទី១ — ${parsed.lessonTitle}`,
+              steps: nextSteps,
+            };
+          })
+        : [
+            {
+              sessionTitle: `ម៉ោងសិក្សាទី១ — ${parsed.lessonTitle}`,
+              steps: defaultSteps,
+            },
+          ];
+
+    return {
+      id: existing?.id || `lp-sync-${item.id}`,
+      linkedCurriculumId: item.id,
+      // Preserve user's manual date adjustments
+      dateWeekday: existing?.dateWeekday,
+      dateDay: existing?.dateDay,
+      dateMonth: existing?.dateMonth || item.monthNameKh,
+      dateYear: existing?.dateYear,
+      isoDate: existing?.isoDate,
+      chapterTitle: parsed.chapterTitle,
+      lessonTitle: parsed.lessonTitle,
+      durationLabel,
+      pagesLabel,
+      textbookSource:
+        existing?.textbookSource ||
+        'សៀវភៅសិក្សាគោល ភាសាចិនរីករាយ 快乐汉语 (第一册 & 第二册) KUAILE HANYU',
+      knowledgeObjective:
+        existing?.knowledgeObjective ||
+        `សិស្សប្រើប្រាស់ត្រឹមត្រូវក្នុងការប្រាស្រ័យទាក់ទងគ្នាជាភាសាចិនក្នុងមេរៀន «${parsed.lessonTitle}» តាមរយៈការហ្វឹកហាត់ជាបុគ្គល និងដៃគូ។`,
+      skillObjective: `សិស្សចេះអាន និងសរសេរពាក្យថ្មី ទម្រង់ល្បះ និងគំនូសអក្សរចិន៖ ${parsed.bodyContent.replace(/\r?\n/g, ' · ')}`,
+      attitudeObjective:
+        existing?.attitudeObjective ||
+        'សិស្សមានវិន័យល្អក្នុងការចូលរួម សហការណ៍ ក្នុងសកម្មភាពសិក្សា។',
+      teachingMaterialsTeacher:
+        existing?.teachingMaterialsTeacher ||
+        'សៀវភៅសម្រាប់គ្រូ កិច្ចតែងការបង្រៀន ប័ណ្ណអក្សររូបភាព',
+      teachingMaterialsStudent:
+        existing?.teachingMaterialsStudent ||
+        'សៀវភៅគោលសម្រាប់សិស្ស សៀវភៅលំហាត់',
+      sessions: updatedSessions,
+    };
+  });
+}
+
+/**
+ * Automatically synchronize Annual Curriculum Plan (១. កម្មវិធីសិក្សាប្រចាំឆ្នាំ) from Lesson Plans (៤. កិច្ចតែងការបង្រៀន).
+ */
+export function syncCurriculumFromLessonPlans(
+  lessonPlans: ChineseLessonPlan[],
+  existingCurriculum: CurriculumPlanItem[]
+): CurriculumPlanItem[] {
+  if (!lessonPlans || lessonPlans.length === 0) {
+    return existingCurriculum;
+  }
+
+  return lessonPlans.map((lp, idx) => {
+    const existing =
+      existingCurriculum.find(
+        (c) =>
+          c.id === lp.linkedCurriculumId ||
+          (c.linkedLessonPlanId && c.linkedLessonPlanId === lp.id)
+      ) || existingCurriculum[idx];
+
+    const step3 =
+      lp.sessions?.[0]?.steps?.find((st) => st.stepTitle.includes('ជំហានទី៣')) ||
+      lp.sessions?.[0]?.steps?.[2] ||
+      lp.sessions?.[0]?.steps?.[0];
+
+    const step3Body = (step3?.lessonContent || '').trim();
+    const headerTitle = [lp.chapterTitle, lp.lessonTitle]
+      .map((s) => (s || '').trim())
+      .filter(Boolean)
+      .join(' · ');
+
+    const combinedContent = step3Body
+      ? step3Body.includes(lp.lessonTitle)
+        ? step3Body
+        : `${headerTitle}\n${step3Body}`
+      : headerTitle;
+
+    const rawDuration = (lp.durationLabel || '').replace(
+      /[០-៩]/g,
+      (ch) => String('០១២៣៤៥៦៧៨៩'.indexOf(ch))
+    );
+    const matchHours = rawDuration.match(/(\d+(?:\.\d+)?)/);
+    const parsedHours = matchHours
+      ? parseFloat(matchHours[1])
+      : existing?.hours || 1.5;
+
+    const cleanPages = (lp.pagesLabel || '')
+      .replace(/^ទំព័រទី\s*/g, '')
+      .replace(/^ទំព័រ\s*/g, '')
+      .trim();
+
+    return {
+      id: existing?.id || lp.linkedCurriculumId || `cur-sync-${lp.id}`,
+      linkedLessonPlanId: lp.id,
+      monthNameKh: lp.dateMonth || existing?.monthNameKh || 'វិច្ឆិកា',
+      weekNumber: existing?.weekNumber || formatNumeral(idx + 1, true),
+      lessonContent: combinedContent,
+      pageNumber: cleanPages || existing?.pageNumber || '-',
+      hours: parsedHours > 0 ? parsedHours : 1.5,
+      note: existing?.note || '',
+    };
+  });
+}
+
+/**
+ * Sequentially synchronize Weekly Lesson Logs (សម្រង់អត្ថបទប្រចាំសប្តាហ៍) across all classes in the current term
+ * based on Daily Homework & Lesson Records (កំណត់ត្រាមេរៀន និងកំណត់ត្រាកិច្ចការផ្ទះ).
+ * Connects classes sequentially (e.g. 10C first period -> 10B second period -> ...) and propagates
+ * the filled lesson/homework content when subsequent classes share the same study progress.
+ */
+export function syncWeeklyLogsFromDailyHomework(
+  classes: ClassGroup[],
+  dailyHomeworkRecords: DailyHomeworkRecord[],
+  prevWeeklyLogs: WeeklyLessonLogItem[],
+  activeDateIso?: string,
+  editedClassId?: string
+): WeeklyLessonLogItem[] {
+  if (!classes || classes.length === 0) return prevWeeklyLogs;
+
+  const findRecordForClass = (cls: ClassGroup): DailyHomeworkRecord | undefined => {
+    const cleanCode = cleanClassDisplayCode(cls.name || cls.id);
+    if (activeDateIso) {
+      const exact = dailyHomeworkRecords.find(
+        (r) =>
+          r.date === activeDateIso &&
+          (r.classId === cls.id || cleanClassDisplayCode(r.classId) === cleanCode)
+      );
+      if (exact) return exact;
+    }
+    const matching = dailyHomeworkRecords.filter(
+      (r) => r.classId === cls.id || cleanClassDisplayCode(r.classId) === cleanCode
+    );
+    return matching[matching.length - 1];
+  };
+
+  // Reference record from the class just edited (so subsequent classes in the sequence also connect seamlessly)
+  const editedClassIndex = editedClassId
+    ? classes.findIndex(
+        (c) =>
+          c.id === editedClassId ||
+          cleanClassDisplayCode(c.name || c.id) === cleanClassDisplayCode(editedClassId)
+      )
+    : -1;
+  const editedClassObj = editedClassIndex >= 0 ? classes[editedClassIndex] : undefined;
+  const editedRec = editedClassObj ? findRecordForClass(editedClassObj) : undefined;
+
+  const usedLogIds = new Set<string>();
+
+  const classLogs = classes.map((cls, idx) => {
+    const cleanCode = cleanClassDisplayCode(cls.name || cls.id) || cls.name || cls.id;
+    const existingLog = prevWeeklyLogs.find(
+      (w) => !usedLogIds.has(w.id) && cleanClassDisplayCode(w.classId) === cleanCode
+    );
+    if (existingLog) {
+      usedLogIds.add(existingLog.id);
+    }
+    const rec = findRecordForClass(cls);
+    // When a class is edited (e.g. 10C first period), propagate its lesson to subsequent classes in the sequence
+    const shouldPropagateFromEdited =
+      editedRec !== undefined && editedClassIndex >= 0 && idx >= editedClassIndex;
+    const sourceRec = shouldPropagateFromEdited ? editedRec : rec || editedRec;
+
+    const weekdayShort = (cls.scheduleDayKh || existingLog?.weekdayKh || 'ចន្ទ')
+      .replace(/^ថ្ងៃ\s*/g, '')
+      .trim();
+    const dateStr = sourceRec?.date
+      ? isoToDdMmYyyy(sourceRec.date)
+      : existingLog?.dateStr ||
+        (activeDateIso ? isoToDdMmYyyy(activeDateIso) : '03/11/2026');
+
+    const unitTitle =
+      (shouldPropagateFromEdited ? sourceRec?.lessonUnitTitle : existingLog?.unitTitle || sourceRec?.lessonUnitTitle) ||
+      '第一单元 · ជំពូកទី១';
+    const lessonTitle =
+      (shouldPropagateFromEdited
+        ? sourceRec?.lessonTitle || sourceRec?.homeworkTitle
+        : existingLog?.lessonTitle || sourceRec?.lessonTitle || sourceRec?.homeworkTitle) ||
+      'មេរៀនប្រចាំសប្តាហ៍';
+
+    const combinedDetails = [
+      sourceRec?.lessonContentDetails || '',
+      sourceRec?.assigned && sourceRec?.homeworkDetail
+        ? `កិច្ចការផ្ទះ (作业)៖ ${sourceRec.homeworkTitle ? sourceRec.homeworkTitle + ' — ' : ''}${sourceRec.homeworkDetail}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const resolvedId = existingLog?.id || `wlog-seq-${cleanCode}-${idx + 1}`;
+    usedLogIds.add(resolvedId);
+
+    return {
+      id: resolvedId,
+      weekLabel: existingLog?.weekLabel || `សប្តាហ៍ (${dateStr})`,
+      dateStr,
+      weekdayKh: weekdayShort,
+      timeRange: existingLog?.timeRange || cls.scheduleTime || '13:00-14:30',
+      classId: existingLog?.classId || cleanCode,
+      unitTitle,
+      lessonTitle,
+      contentDetails:
+        (shouldPropagateFromEdited
+          ? combinedDetails || sourceRec?.homeworkDetail
+          : existingLog?.contentDetails || combinedDetails || sourceRec?.homeworkDetail) ||
+        '',
+    };
+  });
+
+  // Preserve any extra rows manually added by the teacher (e.g. via + បន្ថែមជួរ or Copy -> Add Next Row)
+  const extraManualLogs = prevWeeklyLogs.filter(
+    (w) =>
+      !usedLogIds.has(w.id) &&
+      (w.id.startsWith('wlog-manual-') ||
+        w.id.startsWith('wlog-paste-') ||
+        prevWeeklyLogs.length > classes.length)
+  );
+
+  return [...classLogs, ...extraManualLogs];
+}
+
+/**
+ * Synchronize Daily Homework & Lesson Records (កំណត់ត្រាមេរៀន និងកំណត់ត្រាកិច្ចការផ្ទះ) when a row in
+ * Weekly Lesson Log (សម្រង់អត្ថបទប្រចាំសប្តាហ៍) is edited.
+ */
+export function syncDailyHomeworkFromWeeklyLogs(
+  weeklyLogs: WeeklyLessonLogItem[],
+  classes: ClassGroup[],
+  prevDailyRecords: DailyHomeworkRecord[]
+): DailyHomeworkRecord[] {
+  const nextRecords = [...(prevDailyRecords || [])];
+
+  weeklyLogs.forEach((log) => {
+    const cleanLogClass = cleanClassDisplayCode(log.classId);
+    const matchedClass = classes.find(
+      (c) => cleanClassDisplayCode(c.name || c.id) === cleanLogClass
+    );
+    const targetClassId = matchedClass ? matchedClass.id : log.classId;
+    const isoDate = ddMmYyyyToIso(log.dateStr) || new Date().toISOString().slice(0, 10);
+
+    // Split contentDetails back into lessonContentDetails and homework line if present
+    const lines = (log.contentDetails || '').split(/\r?\n/);
+    const hwLineIdx = lines.findIndex(
+      (l) => l.includes('កិច្ចការផ្ទះ') || l.includes('作业')
+    );
+    let lessonDetails = log.contentDetails || '';
+    let parsedHwTitle = log.lessonTitle || 'កិច្ចការផ្ទះភាសាចិន';
+    let parsedHwDetail = '';
+
+    if (hwLineIdx >= 0) {
+      const hwRaw = lines[hwLineIdx]
+        .replace(/^.*?(?:កិច្ចការផ្ទះ\s*\(作业\)|កិច្ចការផ្ទះ|作业)\s*[៖:]\s*/i, '')
+        .trim();
+      lessonDetails = lines
+        .filter((_, i) => i !== hwLineIdx)
+        .join('\n')
+        .trim();
+      if (hwRaw.includes('—')) {
+        const [tPart, ...dParts] = hwRaw.split('—');
+        parsedHwTitle = tPart.trim() || parsedHwTitle;
+        parsedHwDetail = dParts.join('—').trim();
+      } else {
+        parsedHwDetail = hwRaw;
+      }
+    }
+
+    // Update all records for this class (or create one for isoDate)
+    const matchingIndices = nextRecords
+      .map((r, i) =>
+        r.classId === targetClassId ||
+        cleanClassDisplayCode(r.classId) === cleanLogClass
+          ? i
+          : -1
+      )
+      .filter((i) => i >= 0);
+
+    if (matchingIndices.length > 0) {
+      matchingIndices.forEach((rIdx) => {
+        const oldRec = nextRecords[rIdx];
+        nextRecords[rIdx] = {
+          ...oldRec,
+          lessonUnitTitle: log.unitTitle,
+          lessonTitle: log.lessonTitle,
+          lessonContentDetails: lessonDetails || oldRec.lessonContentDetails,
+          homeworkTitle: parsedHwTitle || oldRec.homeworkTitle,
+          homeworkDetail: parsedHwDetail || oldRec.homeworkDetail,
+          syncedToWeeklyLog: true,
+        };
+      });
+    } else {
+      nextRecords.push({
+        id: `hw-${targetClassId}-${isoDate}`,
+        classId: targetClassId,
+        date: isoDate,
+        assigned: true,
+        lessonUnitTitle: log.unitTitle,
+        lessonTitle: log.lessonTitle,
+        lessonContentDetails: lessonDetails,
+        homeworkTitle: parsedHwTitle,
+        homeworkDetail: parsedHwDetail,
+        dueDate: 'សប្តាហ៍ក្រោយ',
+        syncedToWeeklyLog: true,
+        submissions: {},
+        notes: {},
+      });
+    }
+  });
+
+  return nextRecords;
+}
+
 
 
 

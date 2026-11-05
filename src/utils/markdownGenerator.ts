@@ -15,8 +15,11 @@ import {
   getResolvedAnnualClassroomPlan,
   getResolvedMonthlyScoreConfig,
   isoToDdMmYyyy,
+  normalizeTeacherDutyReport,
   resolveStudentStandardEvaluation,
   sortStudentsByKhmerName,
+  syncLessonPlansFromCurriculum,
+  syncWeeklyLogsFromDailyHomework,
 } from './calculations';
 import { formatSignatureLinesMarkdown } from '../components/SignatureDateEditor';
 import {
@@ -73,7 +76,7 @@ export function getSignatureBlockMarkdown(
     `<div class="a4-official-signature">`,
     `  <div class="sig-left">`,
     includePrincipal
-      ? `    <div class="sig-bold">បានឃើញ និងឯកភាព</div>\n    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>\n    <div class="sig-space"></div>\n    <div class="sig-bold">${state.schoolInfo.principalName}</div>`
+      ? `    <div class="sig-bold">បានឃើញ និងឯកភាព</div>\n    <div class="moul">ជ.នាយកវិទ្យាល័យ</div>\n    <div class="sig-space"></div>`
       : ``,
     `  </div>`,
     `  <div class="sig-right">`,
@@ -457,6 +460,49 @@ export function generateAnnualClassroomPlanMarkdown(
   return classPages.join('\n\n===A4_PAGE_BREAK===\n\n');
 }
 
+function resolveMonthNumberFromKhmerOrId(
+  monthLabelKh: string,
+  monthId: string
+): string {
+  const cleanKh = (monthLabelKh || '').replace(/^ខែ\s*/g, '').trim();
+  const khMap: Record<string, string> = {
+    មករា: '1',
+    កុម្ភៈ: '2',
+    មីនា: '3',
+    មេសា: '4',
+    ឧសភា: '5',
+    មិថុនា: '6',
+    កក្កដា: '7',
+    សីហា: '8',
+    កញ្ញា: '9',
+    តុលា: '10',
+    វិច្ឆិកា: '11',
+    ធ្នូ: '12',
+  };
+  for (const [k, num] of Object.entries(khMap)) {
+    if (cleanKh.includes(k)) return num;
+  }
+  const idLower = (monthId || '').toLowerCase();
+  const idMap: Record<string, string> = {
+    jan: '1',
+    feb: '2',
+    mar: '3',
+    apr: '4',
+    may: '5',
+    jun: '6',
+    jul: '7',
+    aug: '8',
+    sep: '9',
+    oct: '10',
+    nov: '11',
+    dec: '12',
+  };
+  for (const [k, num] of Object.entries(idMap)) {
+    if (idLower.startsWith(k)) return num;
+  }
+  return '11';
+}
+
 export function generateAttendanceMarkdown(
   state: AppDatabaseState,
   _selectedClassId: string,
@@ -477,15 +523,19 @@ export function generateAttendanceMarkdown(
     const sessionMonthLabels = state.sessionMonths?.[cls.id]?.[activeMonth?.id] || {};
     const sessionDateLabels = state.sessionDates?.[cls.id]?.[activeMonth?.id] || {};
 
-    const colHeaders = sessions
+    const sessionHeaderThs = sessions
       .map((sIdx) => {
         const mLbl = sessionMonthLabels[sIdx] || activeMonth?.nameKh || '';
+        const monthNum = resolveMonthNumberFromKhmerOrId(
+          mLbl,
+          activeMonth?.id || 'nov'
+        );
         const rawDateLbl = sessionDateLabels[sIdx] || String(sIdx);
-        const dLbl = rawDateLbl.replace(/^ទី\s*/g, '').trim();
-        return `${mLbl ? mLbl + ' ' : ''}${dLbl}`;
+        const dLbl = rawDateLbl.replace(/^ទី\s*/g, '').trim() || String(sIdx);
+        const shortHeader = dLbl.includes('/') ? dLbl : `${dLbl}/${monthNum}`;
+        return `      <th style="text-align:center;white-space:nowrap;">${shortHeader}</th>`;
       })
-      .join(' | ');
-    const colAligns = sessions.map(() => ':---:').join(' | ');
+      .join('\n');
 
     const lines: string[] = [
       getOfficialHeaderMarkdown(state),
@@ -497,28 +547,48 @@ export function generateAttendanceMarkdown(
       `- **ថ្ងៃបង្រៀន ៖** **${cls.scheduleDayKh}** · **ម៉ោង ៖** **${cls.scheduleTime}** (${cls.weeklyHoursLabel})`,
       `- **សិស្សសរុប ៖** **${classStudents.length} នាក់** (ស្រី **${femaleCount} នាក់**)`,
       ``,
-      `| ល.រ | គោត្តនាម-នាម | ឈ្មោះចិន | ភេទ | ${colHeaders} | ផ្សេងៗ |`,
-      `| :---: | :--- | :--- | :---: | ${colAligns} | :--- |`,
+      `<table class="a4-table a4-singleline-table" border="1" cellspacing="0" cellpadding="3">`,
+      `  <thead>`,
+      `    <tr>`,
+      `      <th style="text-align:center;white-space:nowrap;">ល.រ</th>`,
+      `      <th style="text-align:center;white-space:nowrap;">គោត្តនាម-នាម</th>`,
+      `      <th style="text-align:center;white-space:nowrap;">ភេទ</th>`,
+      sessionHeaderThs,
+      `      <th style="text-align:center;white-space:nowrap;">ផ្សេងៗ</th>`,
+      `    </tr>`,
+      `  </thead>`,
+      `  <tbody>`,
     ];
 
     classStudents.forEach((stu, idx) => {
       const stuAtt = state.attendance?.[cls.id]?.[activeMonth?.id]?.[stu.id] || {};
-      const cells = sessions
+      const cellTds = sessions
         .map((sIdx) => {
           const st = stuAtt[sIdx] || 'P';
-          if (st === 'P') return '✓';
-          if (st === 'E') return 'P(ច្បាប់)';
-          if (st === 'U') return 'A(អត់ច្បាប់)';
-          if (st === 'L') return 'L(យឺត)';
-          return '✓';
+          let lbl = '✓';
+          if (st === 'P') lbl = '✓';
+          else if (st === 'E') lbl = 'P(ច្បាប់)';
+          else if (st === 'U') lbl = 'A(អត់ច្បាប់)';
+          else if (st === 'L') lbl = 'L(យឺត)';
+          return `      <td style="text-align:center;white-space:nowrap;">${lbl}</td>`;
         })
-        .join(' | ');
+        .join('\n');
       lines.push(
-        `| ${formatNumeral(idx + 1, state.useKhmerNumerals)} | **${stu.name}** | ${stu.chineseName || '-'} | ${stu.gender === 'F' ? 'ស' : 'ប'} | ${cells} | ${stu.note || ''} |`
+        `    <tr>`,
+        `      <td style="text-align:center;white-space:nowrap;">${formatNumeral(idx + 1, state.useKhmerNumerals)}</td>`,
+        `      <td style="white-space:nowrap;font-weight:700;">${stu.name}</td>`,
+        `      <td style="text-align:center;white-space:nowrap;">${stu.gender === 'F' ? 'ស' : 'ប'}</td>`,
+        cellTds,
+        `      <td style="white-space:nowrap;">${stu.note || ''}</td>`,
+        `    </tr>`
       );
     });
 
-    lines.push(getSignatureBlockMarkdown(state, true));
+    lines.push(
+      `  </tbody>`,
+      `</table>`,
+      getSignatureBlockMarkdown(state, true)
+    );
     return lines.join('\n');
   });
 
@@ -668,35 +738,12 @@ export function generateWeeklyLogMarkdown(state: AppDatabaseState): string {
     `| :---: | :---: | :---: | :--- |`,
   ];
 
-  // Combine weeklyLogs with any newly added classes in state.classes not yet in weeklyLogs
-  const allLogs = [...state.weeklyLogs];
-  state.classes.forEach((cls) => {
-    const cleanId = (cls.name || cls.id).replace(/^ថ្នាក់ទី\s*/g, '').trim();
-    const exists = allLogs.some(
-      (l) =>
-        l.classId.toUpperCase() === cls.id.toUpperCase() ||
-        l.classId.toUpperCase() === cleanId.toUpperCase()
-    );
-    if (!exists) {
-      const sampleLog = allLogs[0];
-      allLogs.push({
-        id: `wlog-auto-${cls.id}`,
-        dateStr: sampleLog?.dateStr || '12/11/2025',
-        weekdayKh: (cls.scheduleDayKh || 'ពុធ').replace(/^ថ្ងៃ\s*/g, '').trim(),
-        timeRange: cls.scheduleTime || '15:00-16:30',
-        classId: cleanId,
-        unitTitle:
-          cls.gradeLevel >= 10 ? '第一单元 我和朋友' : '第一单元 你和我',
-        lessonTitle:
-          cls.gradeLevel >= 10
-            ? '第一课 他是谁 · មេរៀនទី១ តើគាត់គឺជានរណា'
-            : '第一课 你好 · មេរៀនទី១ សួស្តី',
-        contentDetails:
-          sampleLog?.contentDetails ||
-          '1. 生词 ពាក្យថ្មី · 2. 句型 ទម្រង់ល្បះ និងការសន្ទនា',
-      });
-    }
-  });
+  // Sync weeklyLogs sequentially from state.classes and dailyHomeworkRecords
+  const allLogs = syncWeeklyLogsFromDailyHomework(
+    state.classes,
+    state.dailyHomeworkRecords || [],
+    state.weeklyLogs
+  );
 
   let lastDateKey = '';
   allLogs.forEach((log) => {
@@ -726,7 +773,15 @@ export function generateWeeklyLogMarkdown(state: AppDatabaseState): string {
 }
 
 export function generateLessonPlanMarkdown(state: AppDatabaseState): string {
-  const lessonPages = state.lessonPlans.map((lp, lpIdx) => {
+  const syncedPlans = syncLessonPlansFromCurriculum(
+    state.curriculumPlan,
+    state.lessonPlans
+  );
+  const lessonPages = syncedPlans.map((lp, lpIdx) => {
+    const dateLine =
+      lp.dateWeekday || lp.dateDay || lp.dateMonth || lp.dateYear
+        ? `- **កាលបរិច្ឆេទ ៖** ថ្ងៃ${lp.dateWeekday || '...............'} ទី${lp.dateDay || '.......'} ខែ${lp.dateMonth || '...............'} ឆ្នាំ${lp.dateYear || '២០២៦'}`
+        : `- **កាលបរិច្ឆេទ ៖** ថ្ងៃ............... ទី....... ខែ............... ឆ្នាំ២០២៦`;
     const pageLines: string[] = [
       getOfficialHeaderMarkdown(state),
       ``,
@@ -735,6 +790,7 @@ export function generateLessonPlanMarkdown(state: AppDatabaseState): string {
       ``,
       `### មេរៀនទី ${lpIdx + 1}៖ ${lp.lessonTitle}`,
       ``,
+      dateLine,
       `- **ជំពូក ៖** **${lp.chapterTitle}**`,
       `- **ចំណងជើងមេរៀន ៖** **${lp.lessonTitle}**`,
       `- **រយៈពេល ៖** ${lp.durationLabel} · **ទំព័រ ៖** ${lp.pagesLabel}`,
@@ -874,7 +930,7 @@ export function generateModelSchoolDutyMarkdown(
       activeMonth?.id || 'jul'
     );
     const savedReport = state.teacherTaskReports[cls.id]?.[activeMonth?.id];
-    const taskReport = savedReport ? { ...liveDerived, ...savedReport } : liveDerived;
+    const taskReport = normalizeTeacherDutyReport(savedReport, liveDerived);
 
     const lines: string[] = [
       getOfficialHeaderMarkdown(state),
@@ -928,12 +984,19 @@ export function generateMonthlyBreakdownAndPerformanceMarkdown(
     const maxTotal = cfg.examMax + cfg.attendanceMax + cfg.performanceMax + cfg.homeworkMax;
     const rows = calculateClassMonthlyBreakdownRows(state, cls.id, activeMonth.id);
     const femaleCount = rows.filter((r) => r.gender === 'F').length;
+    const fallbackMonthNum = resolveMonthNumberFromKhmerOrId(
+      activeMonth.nameKh,
+      activeMonth.id
+    ).padStart(2, '0');
 
     const sessionIndices = Array.from({ length: cfg.sessionCount }, (_, i) => i + 1);
     const sessionHeaders = sessionIndices.map((s) => {
       const iso = cfg.sessionDates[s] || '';
-      const shortDate = iso ? isoToDdMmYyyy(iso).slice(0, 5) : `លើកទី${s}`;
-      return `លើកទី${formatNumeral(s, state.useKhmerNumerals)}<br/>(${shortDate})`;
+      const defaultDay = String((s - 1) * 7 + 2).padStart(2, '0');
+      const shortDate = iso
+        ? isoToDdMmYyyy(iso).slice(0, 5)
+        : `${defaultDay}/${fallbackMonthNum}`;
+      return shortDate;
     });
 
     const lines: string[] = [
@@ -943,24 +1006,25 @@ export function generateMonthlyBreakdownAndPerformanceMarkdown(
       `## ថ្នាក់ទី ${cls.name} · ខែ ${activeMonth.nameKh} · ឆ្នាំសិក្សា : ${state.schoolInfo.academicYear}`,
       `<div style="display:flex;justify-content:space-between;font-weight:700;margin:6px 0;"><div>មុខវិជ្ជា ៖ ${state.schoolInfo.subjectNameKh} (ពិន្ទុពេញ ${maxTotal}៖ ប្រឡង ${cfg.examMax} + វត្តមាន ${cfg.attendanceMax} + សកម្មភាពក្នុងថ្នាក់ ${cfg.performanceMax} + កិច្ចការផ្ទះ ${cfg.homeworkMax})</div><div>ថ្ងៃបញ្ចប់ការគណនាពិន្ទុ ៖ ${isoToDdMmYyyy(cfg.scoringEndDate)}</div></div>`,
       `<div style="font-size:9pt;margin-bottom:6px;">សញ្ញាសកម្មភាពក្នុងថ្នាក់៖ <strong>✓</strong> = ល្អ (ពេញពិន្ទុ) · <strong>○</strong> = មធ្យម/ល្អពាក់កណ្តាល (ពាក់កណ្តាលពិន្ទុ) · <strong>✗</strong> = ខ្សោយ (០ពិន្ទុ) | សិស្សសរុប ${rows.length} នាក់ (ស្រី ${femaleCount} នាក់)</div>`,
-      `<table class="a4-table" border="1" cellspacing="0" cellpadding="4">`,
+      `<table class="a4-table a4-singleline-table" border="1" cellspacing="0" cellpadding="3">`,
       `  <thead>`,
       `    <tr>`,
-      `      <th rowspan="2" style="text-align:center;">ល.រ</th>`,
-      `      <th rowspan="2" style="text-align:center;">អត្តលេខ</th>`,
-      `      <th rowspan="2" style="text-align:center;">គោត្តនាម និងនាម</th>`,
-      `      <th rowspan="2" style="text-align:center;">ភេទ</th>`,
-      `      <th colspan="${cfg.sessionCount}" style="text-align:center;">សកម្មភាពក្នុងថ្នាក់រៀន (✓ / ○ / ✗)</th>`,
-      `      <th rowspan="2" style="text-align:center;">សកម្មភាព<br/>(${cfg.performanceMax})</th>`,
-      `      <th rowspan="2" style="text-align:center;">វត្តមាន<br/>(${cfg.attendanceMax})</th>`,
-      `      <th rowspan="2" style="text-align:center;">កិច្ចការផ្ទះ<br/>(${cfg.homeworkMax})</th>`,
-      `      <th rowspan="2" style="text-align:center;">ប្រឡង<br/>(${cfg.examMax})</th>`,
-      `      <th rowspan="2" style="text-align:center;">ពិន្ទុសរុប<br/>(${maxTotal})</th>`,
-      `      <th rowspan="2" style="text-align:center;">ចំ.ថ្នាក់</th>`,
-      `      <th rowspan="2" style="text-align:center;">និទ្ទេស</th>`,
+      `      <th rowspan="2" style="text-align:center;white-space:nowrap;">ល.រ</th>`,
+      `      <th rowspan="2" style="text-align:center;white-space:nowrap;">ឈ្មោះ</th>`,
+      `      <th rowspan="2" style="text-align:center;white-space:nowrap;">ភេទ</th>`,
+      `      <th colspan="${cfg.sessionCount}" style="text-align:center;white-space:nowrap;">សកម្មភាពក្នុងថ្នាក់រៀន</th>`,
+      `      <th rowspan="2" style="text-align:center;white-space:nowrap;">សកម្មភាព (${cfg.performanceMax})</th>`,
+      `      <th rowspan="2" style="text-align:center;white-space:nowrap;">វត្តមាន (${cfg.attendanceMax})</th>`,
+      `      <th rowspan="2" style="text-align:center;white-space:nowrap;">កិច្ចការផ្ទះ (${cfg.homeworkMax})</th>`,
+      `      <th rowspan="2" style="text-align:center;white-space:nowrap;">ប្រឡង (${cfg.examMax})</th>`,
+      `      <th rowspan="2" style="text-align:center;white-space:nowrap;">ពិន្ទុសរុប (${maxTotal})</th>`,
+      `      <th rowspan="2" style="text-align:center;white-space:nowrap;">ចំ.ថ្នាក់</th>`,
+      `      <th rowspan="2" style="text-align:center;white-space:nowrap;">និទ្ទេស</th>`,
       `    </tr>`,
       `    <tr>`,
-      ...sessionHeaders.map((h) => `      <th style="text-align:center;font-size:8.5pt;">${h}</th>`),
+      ...sessionHeaders.map(
+        (h) => `      <th style="text-align:center;font-size:8.5pt;white-space:nowrap;">${h}</th>`
+      ),
       `    </tr>`,
       `  </thead>`,
       `  <tbody>`,
@@ -971,24 +1035,23 @@ export function generateMonthlyBreakdownAndPerformanceMarkdown(
         .map((s) => {
           const m = r.performanceMarks[s];
           const sym = m === 'good' ? '✓' : m === 'half' ? '○' : m === 'bad' ? '✗' : '';
-          return `      <td style="text-align:center;font-weight:700;">${sym}</td>`;
+          return `      <td style="text-align:center;font-weight:700;white-space:nowrap;">${sym}</td>`;
         })
         .join('\n');
 
       lines.push(
         `    <tr>`,
-        `      <td style="text-align:center;">${formatNumeral(idx + 1, state.useKhmerNumerals)}</td>`,
-        `      <td style="text-align:center;">${r.studentCode}</td>`,
-        `      <td>${r.name}</td>`,
-        `      <td style="text-align:center;">${r.gender === 'F' ? 'ស' : 'ប'}</td>`,
+        `      <td style="text-align:center;white-space:nowrap;">${formatNumeral(idx + 1, state.useKhmerNumerals)}</td>`,
+        `      <td style="white-space:nowrap;">${r.name}</td>`,
+        `      <td style="text-align:center;white-space:nowrap;">${r.gender === 'F' ? 'ស' : 'ប'}</td>`,
         markCells,
-        `      <td style="text-align:center;">${formatNumeral(r.performanceScore, state.useKhmerNumerals)}</td>`,
-        `      <td style="text-align:center;">${formatNumeral(r.attendanceScore, state.useKhmerNumerals)}</td>`,
-        `      <td style="text-align:center;">${formatNumeral(r.homeworkScore, state.useKhmerNumerals)}</td>`,
-        `      <td style="text-align:center;">${r.examScore === null ? '-' : formatNumeral(r.examScore, state.useKhmerNumerals)}</td>`,
-        `      <td style="text-align:center;font-weight:700;">${r.totalScore === null ? '-' : formatNumeral(r.totalScore, state.useKhmerNumerals)}</td>`,
-        `      <td style="text-align:center;font-weight:700;">${r.rank !== null ? formatNumeral(r.rank, state.useKhmerNumerals) : '-'}</td>`,
-        `      <td style="text-align:center;font-weight:700;">${r.grade}</td>`,
+        `      <td style="text-align:center;white-space:nowrap;">${formatNumeral(r.performanceScore, state.useKhmerNumerals)}</td>`,
+        `      <td style="text-align:center;white-space:nowrap;">${formatNumeral(r.attendanceScore, state.useKhmerNumerals)}</td>`,
+        `      <td style="text-align:center;white-space:nowrap;">${formatNumeral(r.homeworkScore, state.useKhmerNumerals)}</td>`,
+        `      <td style="text-align:center;white-space:nowrap;">${r.examScore === null ? '-' : formatNumeral(r.examScore, state.useKhmerNumerals)}</td>`,
+        `      <td style="text-align:center;font-weight:700;white-space:nowrap;">${r.totalScore === null ? '-' : formatNumeral(r.totalScore, state.useKhmerNumerals)}</td>`,
+        `      <td style="text-align:center;font-weight:700;white-space:nowrap;">${r.rank !== null ? formatNumeral(r.rank, state.useKhmerNumerals) : '-'}</td>`,
+        `      <td style="text-align:center;font-weight:700;white-space:nowrap;">${r.grade}</td>`,
         `    </tr>`
       );
     });

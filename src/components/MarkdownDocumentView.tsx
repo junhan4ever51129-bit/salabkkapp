@@ -296,17 +296,25 @@ export function buildStandaloneHtmlDocument(
     padding: 0;
   }
   table.a4-table {
-    width: 100%;
+    width: 99.6%;
+    max-width: 99.6%;
     border-collapse: collapse;
-    margin: 8px 0 12px 0;
+    margin: 8px auto 12px auto;
     font-size: 9.5pt;
+    table-layout: auto;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    box-sizing: border-box;
   }
   table.a4-table th,
   table.a4-table td {
     border: 1px solid #000000;
-    padding: 4px 6px;
+    padding: 4px 5px;
     text-align: left;
     vertical-align: top;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    box-sizing: border-box;
   }
   table.a4-table th {
     font-weight: 700;
@@ -315,10 +323,21 @@ export function buildStandaloneHtmlDocument(
   }
   table.a4-nowrap-table th,
   table.a4-nowrap-table td {
-    white-space: nowrap;
-    font-size: 9pt;
-    padding: 4px 5px;
+    font-size: 8.5pt;
+    padding: 3px 4px;
     text-align: center;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+  }
+  table.a4-singleline-table th,
+  table.a4-singleline-table td {
+    font-size: 8.5pt;
+    padding: 3px 4px;
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+    word-wrap: normal !important;
+    vertical-align: middle;
   }
   table.a4-weekly-table td:nth-child(1),
   table.a4-weekly-table td:nth-child(2),
@@ -354,11 +373,18 @@ export function buildStandaloneHtmlDocument(
     }
     .a4-sheet {
       width: 100%;
+      max-width: 100%;
       min-height: auto;
       margin: 0;
-      padding: 0;
+      padding: 0 1mm;
       box-shadow: none;
       border: none;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    table.a4-table {
+      width: 99.6%;
+      max-width: 99.6%;
     }
   }
 </style>
@@ -794,7 +820,7 @@ export const MarkdownDocumentView: React.FC<FullDocViewProps> = ({
               </div>
             </div>
             <div
-              className="overflow-x-auto [&_.a4-sheet]:bg-white [&_.a4-sheet]:shadow-md [&_.a4-sheet]:border [&_.a4-sheet]:border-slate-300 [&_.a4-sheet]:mx-auto [&_.a4-sheet]:mb-6 [&_.a4-sheet]:p-6 sm:[&_.a4-sheet]:p-[12mm] [&_.a4-sheet]:max-w-[210mm] [&_.a4-sheet]:min-h-[297mm] print:[&_.a4-sheet]:shadow-none print:[&_.a4-sheet]:border-none print:[&_.a4-sheet]:m-0 print:[&_.a4-sheet]:p-0 [&_.moul]:font-khmer-moul [&_.a4-official-header]:flex [&_.a4-official-header]:justify-between [&_.a4-official-header]:items-start [&_.a4-official-header]:mb-3 [&_.a4-official-header]:text-xs [&_.header-right]:text-center [&_.a4-title]:font-khmer-moul [&_.a4-title]:text-base [&_.a4-title]:text-center [&_.a4-title]:mt-2 [&_.a4-subtitle]:font-khmer-moul [&_.a4-subtitle]:text-sm [&_.a4-subtitle]:text-center [&_.a4-subtitle]:mb-3 [&_h3]:font-khmer-moul [&_h3]:text-xs [&_h3]:mt-3 [&_h3]:mb-1.5 [&_h4]:font-bold [&_h4]:text-xs [&_h4]:mt-2 [&_h4]:mb-1 [&_.a4-meta-list]:list-none [&_.a4-meta-list]:pl-0 [&_.a4-meta-list]:mb-2 [&_.a4-meta-list]:text-xs [&_.a4-ordered-list]:list-decimal [&_.a4-ordered-list]:pl-5 [&_.a4-ordered-list]:text-xs [&_.a4-table]:w-full [&_.a4-table]:border-collapse [&_.a4-table]:my-2.5 [&_.a4-table]:text-xs [&_.a4-nowrap-table]:text-[11px] [&_.a4-nowrap-table_th]:whitespace-nowrap [&_.a4-nowrap-table_td]:whitespace-nowrap [&_.a4-nowrap-table_td]:text-center [&_.a4-weekly-table_td:nth-child(1)]:whitespace-nowrap [&_.a4-weekly-table_td:nth-child(1)]:text-center [&_.a4-weekly-table_td:nth-child(1)]:align-middle [&_.a4-weekly-table_td:nth-child(2)]:whitespace-nowrap [&_.a4-weekly-table_td:nth-child(2)]:text-center [&_.a4-weekly-table_td:nth-child(2)]:align-middle [&_.a4-weekly-table_td:nth-child(3)]:whitespace-nowrap [&_.a4-weekly-table_td:nth-child(3)]:text-center [&_.a4-weekly-table_td:nth-child(3)]:align-middle [&_th]:border [&_th]:border-black [&_th]:bg-slate-50 [&_th]:p-1.5 [&_th]:text-center [&_th]:font-bold [&_td]:border [&_td]:border-black [&_td]:p-1.5 [&_td]:align-top [&_.a4-official-signature]:flex [&_.a4-official-signature]:justify-between [&_.a4-official-signature]:items-start [&_.a4-official-signature]:mt-5 [&_.a4-official-signature]:text-xs [&_.sig-left]:text-center [&_.sig-left]:min-w-[44%] [&_.sig-right]:text-center [&_.sig-right]:min-w-[44%] [&_.sig-bold]:font-bold [&_.sig-space]:h-9"
+              className="overflow-x-auto [&_.a4-sheet]:bg-white [&_.a4-sheet]:shadow-md [&_.a4-sheet]:border [&_.a4-sheet]:border-slate-300 [&_.a4-sheet]:mx-auto [&_.a4-sheet]:mb-6 [&_.a4-sheet]:p-6 sm:[&_.a4-sheet]:p-[12mm] [&_.a4-sheet]:w-full [&_.a4-sheet]:max-w-[210mm] [&_.a4-sheet]:min-h-[297mm] [&_.a4-sheet]:box-border [&_.a4-sheet]:overflow-hidden print:[&_.a4-sheet]:shadow-none print:[&_.a4-sheet]:border-none print:[&_.a4-sheet]:m-0 print:[&_.a4-sheet]:p-0 [&_.moul]:font-khmer-moul [&_.a4-official-header]:flex [&_.a4-official-header]:justify-between [&_.a4-official-header]:items-start [&_.a4-official-header]:mb-3 [&_.a4-official-header]:text-xs [&_.header-right]:text-center [&_.a4-title]:font-khmer-moul [&_.a4-title]:text-base [&_.a4-title]:text-center [&_.a4-title]:mt-2 [&_.a4-subtitle]:font-khmer-moul [&_.a4-subtitle]:text-sm [&_.a4-subtitle]:text-center [&_.a4-subtitle]:mb-3 [&_h3]:font-khmer-moul [&_h3]:text-xs [&_h3]:mt-3 [&_h3]:mb-1.5 [&_h4]:font-bold [&_h4]:text-xs [&_h4]:mt-2 [&_h4]:mb-1 [&_.a4-meta-list]:list-none [&_.a4-meta-list]:pl-0 [&_.a4-meta-list]:mb-2 [&_.a4-meta-list]:text-xs [&_.a4-ordered-list]:list-decimal [&_.a4-ordered-list]:pl-5 [&_.a4-ordered-list]:text-xs [&_.a4-table]:w-[99.6%] [&_.a4-table]:max-w-[99.6%] [&_.a4-table]:mx-auto [&_.a4-table]:border-collapse [&_.a4-table]:my-2.5 [&_.a4-table]:text-xs [&_.a4-table]:break-words [&_.a4-nowrap-table]:text-[11px] [&_.a4-nowrap-table_td]:text-center [&_.a4-weekly-table_td:nth-child(1)]:whitespace-nowrap [&_.a4-weekly-table_td:nth-child(1)]:text-center [&_.a4-weekly-table_td:nth-child(1)]:align-middle [&_.a4-weekly-table_td:nth-child(2)]:whitespace-nowrap [&_.a4-weekly-table_td:nth-child(2)]:text-center [&_.a4-weekly-table_td:nth-child(2)]:align-middle [&_.a4-weekly-table_td:nth-child(3)]:whitespace-nowrap [&_.a4-weekly-table_td:nth-child(3)]:text-center [&_.a4-weekly-table_td:nth-child(3)]:align-middle [&_th]:border [&_th]:border-black [&_th]:bg-slate-50 [&_th]:p-1.5 [&_th]:text-center [&_th]:font-bold [&_td]:border [&_td]:border-black [&_td]:p-1.5 [&_td]:align-top [&_td]:break-words [&_.a4-official-signature]:flex [&_.a4-official-signature]:justify-between [&_.a4-official-signature]:items-start [&_.a4-official-signature]:mt-5 [&_.a4-official-signature]:text-xs [&_.sig-left]:text-center [&_.sig-left]:min-w-[44%] [&_.sig-right]:text-center [&_.sig-right]:min-w-[44%] [&_.sig-bold]:font-bold [&_.sig-space]:h-9"
               dangerouslySetInnerHTML={{ __html: cleanHtml }}
             />
           </div>
