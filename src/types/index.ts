@@ -346,6 +346,7 @@ export interface AppDatabaseState {
   academicTerms?: AcademicTerm[];
   currentTermId?: string;
   signatureDate?: SignatureDateConfig;
+  sheetSignatureDates?: Record<string, SignatureDateConfig>;
   performanceAgreementMeta?: PerformanceAgreementMeta;
   annualClassroomPlans?: Record<string, AnnualClassroomPlanSheet>;
   monthlyScoreConfigs?: AllMonthlyScoreConfigs;

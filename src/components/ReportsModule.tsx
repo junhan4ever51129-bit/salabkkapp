@@ -742,6 +742,7 @@ export const ReportsModule: React.FC<Props> = ({
             state={state}
             onUpdateState={onUpdateState}
             showPrincipalLeft={true}
+            sheetKey={`report_reflection_${selectedMonthId}`}
           />
         </div>
       )}
@@ -1130,6 +1131,7 @@ export const ReportsModule: React.FC<Props> = ({
               state={state}
               onUpdateState={onUpdateState}
               showPrincipalLeft={false}
+              sheetKey={`report_model_school_duty_${activeClass?.id}_${selectedMonthId}`}
             />
           </div>
         </div>

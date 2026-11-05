@@ -12,6 +12,7 @@ interface Props {
   onUpdateState: (updater: (prev: AppDatabaseState) => AppDatabaseState) => void;
   showPrincipalLeft?: boolean;
   compact?: boolean;
+  sheetKey?: string; // Optional unique key per sheet/document so each sheet can have its own independent signature date
 }
 
 export function formatSignatureLinesMarkdown(
@@ -40,12 +41,17 @@ export const SignatureDateEditor: React.FC<Props> = ({
   onUpdateState,
   showPrincipalLeft = true,
   compact = false,
+  sheetKey,
 }) => {
-  const sig: SignatureDateConfig = state.signatureDate || DEFAULT_SIGNATURE_DATE;
+  // If sheetKey is provided, use independent signature date for this specific sheet; fallback to global state.signatureDate
+  const sig: SignatureDateConfig =
+    (sheetKey && state.sheetSignatureDates?.[sheetKey]) ||
+    state.signatureDate ||
+    DEFAULT_SIGNATURE_DATE;
   const initialIso = parseSignatureGregorianToIso(sig) || '2026-11-02';
   const [selectedIsoDate, setSelectedIsoDate] = useState<string>(initialIso);
 
-  // Auto-heal any stale approximated lunar date (e.g. ចន្ទ ៨រោច ខែ កត្តិក for 02/11/2026) to the real Chhankitek date
+  // Keep selectedIsoDate in sync when sig changes
   useEffect(() => {
     const parsedIso = parseSignatureGregorianToIso(sig);
     if (parsedIso) {
@@ -56,27 +62,43 @@ export const SignatureDateEditor: React.FC<Props> = ({
         parsedIso === '2026-11-02'
       ) {
         const real = convertIsoDateToKhmerSignature(parsedIso);
-        onUpdateState((prev) => ({
-          ...prev,
-          signatureDate: {
-            ...(prev.signatureDate || DEFAULT_SIGNATURE_DATE),
+        onUpdateState((prev) => {
+          const updatedSig = {
+            ...sig,
             lunarDay: real.lunarDay,
             lunarMonth: real.lunarMonth,
             lunarYearEra: real.lunarYearEra,
-          },
-        }));
+          };
+          if (sheetKey) {
+            return {
+              ...prev,
+              sheetSignatureDates: {
+                ...(prev.sheetSignatureDates || {}),
+                [sheetKey]: updatedSig,
+              },
+            };
+          }
+          return {
+            ...prev,
+            signatureDate: updatedSig,
+          };
+        });
       }
+    } else {
+      setSelectedIsoDate('');
     }
-  }, [sig.gregorianDay, sig.gregorianMonth, sig.gregorianYear]);
+  }, [sig.gregorianDay, sig.gregorianMonth, sig.gregorianYear, sheetKey]);
 
   const updateSigField = (field: keyof SignatureDateConfig, value: string) => {
     onUpdateState((prev) => {
+      const current =
+        (sheetKey && prev.sheetSignatureDates?.[sheetKey]) ||
+        prev.signatureDate ||
+        DEFAULT_SIGNATURE_DATE;
       const nextSig: SignatureDateConfig = {
-        ...(prev.signatureDate || DEFAULT_SIGNATURE_DATE),
+        ...current,
         [field]: value,
       };
-      // If user edited a Gregorian date field (ថ្ងៃទី / ខែ / ឆ្នាំ) and it forms a valid Gregorian date,
-      // automatically calculate the authentic Chhankitek (ច័ន្ទគតិ) fields!
       if (
         field === 'gregorianDay' ||
         field === 'gregorianMonth' ||
@@ -90,6 +112,15 @@ export const SignatureDateEditor: React.FC<Props> = ({
           nextSig.lunarYearEra = converted.lunarYearEra;
         }
       }
+      if (sheetKey) {
+        return {
+          ...prev,
+          sheetSignatureDates: {
+            ...(prev.sheetSignatureDates || {}),
+            [sheetKey]: nextSig,
+          },
+        };
+      }
       return {
         ...prev,
         signatureDate: nextSig,
@@ -101,41 +132,66 @@ export const SignatureDateEditor: React.FC<Props> = ({
     setSelectedIsoDate(isoDate);
     if (!isoDate) return;
     const converted = convertIsoDateToKhmerSignature(isoDate);
-    onUpdateState((prev) => ({
-      ...prev,
-      signatureDate: {
-        lunarDay: converted.lunarDay,
-        lunarMonth: converted.lunarMonth,
-        lunarYearEra: converted.lunarYearEra,
-        gregorianLocation: converted.gregorianLocation,
-        gregorianDay: converted.gregorianDay,
-        gregorianMonth: converted.gregorianMonth,
-        gregorianYear: converted.gregorianYear,
-      },
-      weeklyLogMeta: prev.weeklyLogMeta
-        ? {
-            ...prev.weeklyLogMeta,
-            fridayDateStr: converted.ddMmYyyy,
-            lunarDate: converted.fullLunarString,
-            gregorianDate: converted.fullGregorianString,
-          }
-        : prev.weeklyLogMeta,
-    }));
+    const newSig: SignatureDateConfig = {
+      lunarDay: converted.lunarDay,
+      lunarMonth: converted.lunarMonth,
+      lunarYearEra: converted.lunarYearEra,
+      gregorianLocation: converted.gregorianLocation,
+      gregorianDay: converted.gregorianDay,
+      gregorianMonth: converted.gregorianMonth,
+      gregorianYear: converted.gregorianYear,
+    };
+    onUpdateState((prev) => {
+      if (sheetKey) {
+        return {
+          ...prev,
+          sheetSignatureDates: {
+            ...(prev.sheetSignatureDates || {}),
+            [sheetKey]: newSig,
+          },
+        };
+      }
+      return {
+        ...prev,
+        signatureDate: newSig,
+        weeklyLogMeta: prev.weeklyLogMeta
+          ? {
+              ...prev.weeklyLogMeta,
+              fridayDateStr: converted.ddMmYyyy,
+              lunarDate: converted.fullLunarString,
+              gregorianDate: converted.fullGregorianString,
+            }
+          : prev.weeklyLogMeta,
+      };
+    });
   };
 
   const handleClearToDots = () => {
-    onUpdateState((prev) => ({
-      ...prev,
-      signatureDate: {
-        lunarDay: '',
-        lunarMonth: '',
-        lunarYearEra: 'ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០',
-        gregorianLocation: 'រាជធានីភ្នំពេញ',
-        gregorianDay: '',
-        gregorianMonth: '',
-        gregorianYear: '២០២៦',
-      },
-    }));
+    setSelectedIsoDate('');
+    const emptySig: SignatureDateConfig = {
+      lunarDay: '',
+      lunarMonth: '',
+      lunarYearEra: 'ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០',
+      gregorianLocation: 'រាជធានីភ្នំពេញ',
+      gregorianDay: '',
+      gregorianMonth: '',
+      gregorianYear: '២០២៦',
+    };
+    onUpdateState((prev) => {
+      if (sheetKey) {
+        return {
+          ...prev,
+          sheetSignatureDates: {
+            ...(prev.sheetSignatureDates || {}),
+            [sheetKey]: emptySig,
+          },
+        };
+      }
+      return {
+        ...prev,
+        signatureDate: emptySig,
+      };
+    });
   };
 
   const handleGenerateRealLunarDate = () => {

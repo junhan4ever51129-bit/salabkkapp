@@ -63,10 +63,14 @@ export function getSignatureBlockMarkdown(
   state: AppDatabaseState,
   includePrincipal = true,
   customLunarDate?: string,
-  customGregorianDate?: string
+  customGregorianDate?: string,
+  sheetKey?: string
 ): string {
+  const specificSig =
+    (sheetKey && state.sheetSignatureDates?.[sheetKey]) ||
+    state.signatureDate;
   const sigLines = formatSignatureLinesMarkdown(
-    state.signatureDate,
+    specificSig,
     state.schoolInfo.teacherName
   );
   const lunarLine = customLunarDate || sigLines[0];
@@ -150,7 +154,9 @@ export function generateRosterAndScheduleMarkdown(
     });
   });
 
-  lines.push(getSignatureBlockMarkdown(state, true));
+  lines.push(
+    getSignatureBlockMarkdown(state, true, undefined, undefined, 'roster_schedule')
+  );
   return lines.join('\n');
 }
 
@@ -250,7 +256,15 @@ export function generateScoresMarkdown(
       );
     });
 
-    lines.push(getSignatureBlockMarkdown(state, true));
+    lines.push(
+      getSignatureBlockMarkdown(
+        state,
+        true,
+        undefined,
+        undefined,
+        `chinese_scores_${cls.id}_${activeMonth?.id}`
+      )
+    );
     return lines.join('\n');
   });
 
@@ -317,7 +331,15 @@ export function generateStudentStatsMarkdown(
       );
     });
 
-    lines.push(getSignatureBlockMarkdown(state, true));
+    lines.push(
+      getSignatureBlockMarkdown(
+        state,
+        true,
+        undefined,
+        undefined,
+        `skill_attitude_${cls.id}_${activeMonth?.id}`
+      )
+    );
     return lines.join('\n');
   });
 
@@ -369,7 +391,15 @@ export function generateTeacherChecklistMarkdown(
       );
     });
 
-    lines.push(getSignatureBlockMarkdown(state, true));
+    lines.push(
+      getSignatureBlockMarkdown(
+        state,
+        true,
+        undefined,
+        undefined,
+        `model_school_checklist_${cls.id}_${activeMonth?.id}`
+      )
+    );
     return lines.join('\n');
   });
 
@@ -453,7 +483,13 @@ export function generateAnnualClassroomPlanMarkdown(
       `- ${plan.scoreRange50Text || 'កម្រិតពិន្ទុ : Fក្រោមពិន្ទុ២៥ Eពី២៥ ទៅ២៩ពិន្ទុ Dពី៣០ ទៅ៣៤ពិន្ទុ Cពី៣៥ ទៅ៣៩ពិន្ទុ Bពី៤០ ទៅ ៤៤ពិន្ទុ Aពី៤៥ ទៅ ៥០ពិន្ទុ'}`,
       ``,
       tableHtml,
-      getSignatureBlockMarkdown(state, true),
+      getSignatureBlockMarkdown(
+        state,
+        true,
+        undefined,
+        undefined,
+        `annual_classroom_plan_${cls.id}`
+      ),
     ].join('\n');
   });
 
@@ -587,7 +623,13 @@ export function generateAttendanceMarkdown(
     lines.push(
       `  </tbody>`,
       `</table>`,
-      getSignatureBlockMarkdown(state, true)
+      getSignatureBlockMarkdown(
+        state,
+        true,
+        undefined,
+        undefined,
+        `attendance_${cls.id}_${activeMonth?.id}`
+      )
     );
     return lines.join('\n');
   });
@@ -683,7 +725,15 @@ export function generateHomeworkAndLessonMarkdown(
     });
   });
 
-  lines.push(getSignatureBlockMarkdown(state, true));
+  lines.push(
+    getSignatureBlockMarkdown(
+      state,
+      true,
+      undefined,
+      undefined,
+      `homework_${_selectedClassId || records[0]?.classId || ''}_${firstRec?.date || ''}`
+    )
+  );
   return lines.join('\n');
 }
 
@@ -712,7 +762,15 @@ export function generateCurriculumMarkdown(state: AppDatabaseState): string {
     );
   });
 
-  lines.push(getSignatureBlockMarkdown(state, true));
+  lines.push(
+    getSignatureBlockMarkdown(
+      state,
+      true,
+      undefined,
+      undefined,
+      'geip_curriculum_plan'
+    )
+  );
   return lines.join('\n');
 }
 
@@ -766,7 +824,8 @@ export function generateWeeklyLogMarkdown(state: AppDatabaseState): string {
       state,
       true,
       weeklyMeta.lunarDate,
-      weeklyMeta.gregorianDate
+      weeklyMeta.gregorianDate,
+      'geip_weekly_log'
     )
   );
   return lines.join('\n');
@@ -821,7 +880,15 @@ export function generateLessonPlanMarkdown(state: AppDatabaseState): string {
       });
     });
 
-    pageLines.push(getSignatureBlockMarkdown(state, true));
+    pageLines.push(
+      getSignatureBlockMarkdown(
+        state,
+        true,
+        undefined,
+        undefined,
+        `lesson_plan_${lp.id}`
+      )
+    );
     return pageLines.join('\n');
   });
 
@@ -904,7 +971,15 @@ export function generatePerformanceAndReflectionMarkdown(
     );
   });
 
-  lines.push(getSignatureBlockMarkdown(state, true));
+  lines.push(
+    getSignatureBlockMarkdown(
+      state,
+      true,
+      undefined,
+      undefined,
+      `report_reflection_${state.months[0]?.id || 'nov'}`
+    )
+  );
   return lines.join('\n');
 }
 
@@ -958,7 +1033,13 @@ export function generateModelSchoolDutyMarkdown(
       `- **សិស្សបានធ្វើកិច្ចការផ្ទះចំនួន ៖** **${taskReport.studentHomeworkCountOverride ?? checklistStats.homeworkCount}** នាក់ក្នុង១ខែ`,
       `- **សិស្សបានធ្វើផែនការសិក្សារៀនសូត្រចំនួន ៖** **${taskReport.studentStudyPlanCountOverride ?? checklistStats.studyPlanCount}** នាក់ (១ឆ្នាំ)`,
       `- **កំណត់សម្គាល់សិស្សជួបការលំបាក ៖** ${taskReport.vulnerableStudentsNote}`,
-      getSignatureBlockMarkdown(state, true),
+      getSignatureBlockMarkdown(
+        state,
+        true,
+        undefined,
+        undefined,
+        `report_model_school_duty_${cls.id}_${activeMonth?.id}`
+      ),
     ];
 
     return lines.join('\n');
@@ -1059,7 +1140,13 @@ export function generateMonthlyBreakdownAndPerformanceMarkdown(
     lines.push(
       `  </tbody>`,
       `</table>`,
-      getSignatureBlockMarkdown(state, true)
+      getSignatureBlockMarkdown(
+        state,
+        true,
+        undefined,
+        undefined,
+        `monthly_breakdown_${cls.id}_${activeMonth.id}`
+      )
     );
 
     return lines.join('\n');

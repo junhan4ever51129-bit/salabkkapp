@@ -817,6 +817,7 @@ export const AttendanceModule: React.FC<Props> = ({
             state={state}
             onUpdateState={onUpdateState}
             showPrincipalLeft={true}
+            sheetKey={`attendance_${activeClass?.id}_${activeMonth?.id}`}
           />
         </div>
       </div>

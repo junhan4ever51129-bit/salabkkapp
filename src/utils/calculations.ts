@@ -2270,12 +2270,12 @@ export function syncLessonPlansFromCurriculum(
             const nextSteps = hasStep3
               ? sess.steps.map((st) =>
                   st.stepTitle.includes('ជំហានទី៣')
-                    ? { ...st, lessonContent: parsed.bodyContent }
+                    ? { ...st, lessonContent: st.lessonContent || parsed.bodyContent }
                     : st
                 )
               : sess.steps.map((st, k) =>
                   k === Math.min(2, sess.steps.length - 1)
-                    ? { ...st, lessonContent: parsed.bodyContent }
+                    ? { ...st, lessonContent: st.lessonContent || parsed.bodyContent }
                     : st
                 );
             return {
@@ -2310,7 +2310,9 @@ export function syncLessonPlansFromCurriculum(
       knowledgeObjective:
         existing?.knowledgeObjective ||
         `សិស្សប្រើប្រាស់ត្រឹមត្រូវក្នុងការប្រាស្រ័យទាក់ទងគ្នាជាភាសាចិនក្នុងមេរៀន «${parsed.lessonTitle}» តាមរយៈការហ្វឹកហាត់ជាបុគ្គល និងដៃគូ។`,
-      skillObjective: `សិស្សចេះអាន និងសរសេរពាក្យថ្មី ទម្រង់ល្បះ និងគំនូសអក្សរចិន៖ ${parsed.bodyContent.replace(/\r?\n/g, ' · ')}`,
+      skillObjective:
+        existing?.skillObjective ||
+        `សិស្សចេះអាន និងសរសេរពាក្យថ្មី ទម្រង់ល្បះ និងគំនូសអក្សរចិន៖ ${parsed.bodyContent.replace(/\r?\n/g, ' · ')}`,
       attitudeObjective:
         existing?.attitudeObjective ||
         'សិស្សមានវិន័យល្អក្នុងការចូលរួម សហការណ៍ ក្នុងសកម្មភាពសិក្សា។',

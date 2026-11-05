@@ -1300,6 +1300,7 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
           state={state}
           onUpdateState={onUpdateState}
           showPrincipalLeft={false}
+          sheetKey={`homework_${selectedClassId}_${selectedDate}`}
         />
       </div>
     </div>

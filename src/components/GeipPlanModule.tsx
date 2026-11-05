@@ -155,7 +155,7 @@ export const GeipPlanModule: React.FC<Props> = ({
 }) => {
   const [docTab, setDocTab] = useState<DocTab>('curriculum');
   const [selectedLessonPlanId, setSelectedLessonPlanId] = useState<string>(
-    state.lessonPlans[0]?.id || 'lp-1'
+    state.lessonPlans[0]?.id || 'lp-0'
   );
   const [weekMondayDateInput, setWeekMondayDateInput] = useState('02/11/2026');
   const [pendingDeleteLessonPlan, setPendingDeleteLessonPlan] = useState<{
@@ -1439,6 +1439,7 @@ export const GeipPlanModule: React.FC<Props> = ({
               state={state}
               onUpdateState={onUpdateState}
               showPrincipalLeft={true}
+              sheetKey="geip_curriculum_plan"
             />
           </div>
         </div>
@@ -1788,6 +1789,7 @@ export const GeipPlanModule: React.FC<Props> = ({
                       onUpdateState={onUpdateState}
                       showPrincipalLeft={false}
                       compact={true}
+                      sheetKey="geip_weekly_log"
                     />
                   </td>
                 </tr>
@@ -2191,6 +2193,7 @@ export const GeipPlanModule: React.FC<Props> = ({
               state={state}
               onUpdateState={onUpdateState}
               showPrincipalLeft={true}
+              sheetKey={`homework_duty_${activeClass?.id}_${activeMonth?.id}`}
             />
           </div>
         </div>
@@ -2631,6 +2634,7 @@ export const GeipPlanModule: React.FC<Props> = ({
               state={state}
               onUpdateState={onUpdateState}
               showPrincipalLeft={true}
+              sheetKey={`lesson_plan_${activeLessonPlan.id}`}
             />
             <div className="pt-4 border-t-2 border-emerald-700 flex items-center justify-between text-xs text-slate-800">
               <div>រៀបរៀង និង បង្រៀនដោយ អ្នកគ្រូ {state.schoolInfo.teacherName}</div>

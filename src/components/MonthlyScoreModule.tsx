@@ -1700,6 +1700,7 @@ export const MonthlyScoreModule: React.FC<Props> = ({
               state={state}
               onUpdateState={onUpdateState}
               showPrincipalLeft={true}
+              sheetKey={`monthly_breakdown_${activeClass?.id}_${activeMonth?.id}`}
             />
           </div>
         </div>
@@ -1886,6 +1887,7 @@ export const MonthlyScoreModule: React.FC<Props> = ({
               state={state}
               onUpdateState={onUpdateState}
               showPrincipalLeft={true}
+              sheetKey={`chinese_scores_${activeClass?.id}_${activeMonth?.id}`}
             />
           </div>
         </div>
@@ -2108,6 +2110,7 @@ export const MonthlyScoreModule: React.FC<Props> = ({
               state={state}
               onUpdateState={onUpdateState}
               showPrincipalLeft={true}
+              sheetKey={`skill_attitude_${activeClass?.id}_${activeMonth?.id}`}
             />
           </div>
         </div>
@@ -2304,6 +2307,7 @@ export const MonthlyScoreModule: React.FC<Props> = ({
               state={state}
               onUpdateState={onUpdateState}
               showPrincipalLeft={true}
+              sheetKey={`model_school_checklist_${activeClass?.id}_${activeMonth?.id}`}
             />
           </div>
         </div>
@@ -2642,6 +2646,7 @@ export const MonthlyScoreModule: React.FC<Props> = ({
                     state={state}
                     onUpdateState={onUpdateState}
                     showPrincipalLeft={true}
+                    sheetKey={`annual_classroom_plan_${cls.id}`}
                   />
                 </div>
               </div>

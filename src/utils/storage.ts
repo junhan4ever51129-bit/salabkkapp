@@ -277,17 +277,25 @@ function mergeWithValidDefaultScores(
       }
     }
   }
-  mergedMonths = syncMonthsWithAcademicYear(mergedMonths, activeAcademicYear);
+  let mergedLessonPlans = loaded.lessonPlans && loaded.lessonPlans.length > 0
+    ? [...loaded.lessonPlans]
+    : [...defaults.lessonPlans];
+  // Ensure the Week 1 Pinyin review plan (lp-0) is included as the first lesson plan
+  if (!mergedLessonPlans.some((lp) => lp.id === 'lp-0')) {
+    mergedLessonPlans = [defaults.lessonPlans[0], ...mergedLessonPlans];
+  }
 
   return {
     ...defaults,
     ...loaded,
     months: mergedMonths,
+    lessonPlans: mergedLessonPlans,
     classes: finalClasses,
     students: sortedStudents,
     scores: mergedScores,
     standardEvaluations: healedEvaluations,
     signatureDate: healedSignatureDate,
+    sheetSignatureDates: loaded.sheetSignatureDates || defaults.sheetSignatureDates || {},
     annualClassroomPlans: healedPlans,
     performanceAgreementMeta:
       loaded.performanceAgreementMeta || defaults.performanceAgreementMeta,

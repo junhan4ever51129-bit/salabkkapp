@@ -755,6 +755,7 @@ export const MarkdownDocumentView: React.FC<FullDocViewProps> = ({
           state={state}
           onUpdateState={onUpdateState}
           showPrincipalLeft={true}
+          sheetKey={`markdown_view_${section}_${selectedClassId}_${selectedMonthId}`}
         />
       </div>
 
