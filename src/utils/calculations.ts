@@ -1536,6 +1536,23 @@ export function ddMmYyyyToIso(ddMmYyyy: string): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+export function addDaysToDdMmYyyy(baseStr: string, offsetDays: number): string {
+  const parts = (baseStr || '').split('/');
+  if (parts.length === 3) {
+    const d = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const y = parseInt(parts[2], 10);
+    const dt = new Date(y, m, d + offsetDays);
+    if (!Number.isNaN(dt.getTime())) {
+      const dd = String(dt.getDate()).padStart(2, '0');
+      const mm = String(dt.getMonth() + 1).padStart(2, '0');
+      const yyyy = dt.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    }
+  }
+  return baseStr;
+}
+
 /**
  * Parse a SignatureDateConfig's Gregorian fields (ថ្ងៃទី, ខែ, ឆ្នាំ) into an ISO date string (YYYY-MM-DD) if valid.
  */
@@ -2448,13 +2465,33 @@ export function syncWeeklyLogsFromDailyHomework(
       editedRec !== undefined && editedClassIndex >= 0 && idx >= editedClassIndex;
     const sourceRec = shouldPropagateFromEdited ? editedRec : rec || editedRec;
 
-    const weekdayShort = (cls.scheduleDayKh || existingLog?.weekdayKh || 'ចន្ទ')
-      .replace(/^ថ្ងៃ\s*/g, '')
-      .trim();
-    const dateStr = sourceRec?.date
-      ? isoToDdMmYyyy(sourceRec.date)
-      : existingLog?.dateStr ||
-        (activeDateIso ? isoToDdMmYyyy(activeDateIso) : '03/11/2026');
+    // Date priority: 1) manual date already in weeklyLog, 2) source record date, 3) active date fallback
+    const dateStr =
+      (existingLog?.dateStr && existingLog.dateStr.trim() !== '')
+        ? existingLog.dateStr
+        : sourceRec?.date
+        ? isoToDdMmYyyy(sourceRec.date)
+        : (activeDateIso ? isoToDdMmYyyy(activeDateIso) : '02/11/2026');
+
+    // Automatically derive Khmer weekday from dateStr if valid (e.g. 05/11/2026 -> ព្រហស្បតិ៍)
+    let autoWeekday = '';
+    if (dateStr && (dateStr.includes('/') || dateStr.includes('-'))) {
+      try {
+        const iso = ddMmYyyyToIso(dateStr);
+        if (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+          autoWeekday = convertIsoDateToKhmerSignature(iso).weekdayKh;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const resolvedWeekday =
+      (existingLog?.weekdayKh && existingLog.weekdayKh.trim() !== '')
+        ? existingLog.weekdayKh
+        : autoWeekday ||
+          (cls.scheduleDayKh ? cls.scheduleDayKh.replace(/^ថ្ងៃ\s*/g, '').trim() : '') ||
+          'ចន្ទ';
 
     const unitTitle =
       (shouldPropagateFromEdited ? sourceRec?.lessonUnitTitle : existingLog?.unitTitle || sourceRec?.lessonUnitTitle) ||
@@ -2481,8 +2518,8 @@ export function syncWeeklyLogsFromDailyHomework(
       id: resolvedId,
       weekLabel: existingLog?.weekLabel || `សប្តាហ៍ (${dateStr})`,
       dateStr,
-      weekdayKh: weekdayShort,
-      timeRange: existingLog?.timeRange || cls.scheduleTime || '13:00-14:30',
+      weekdayKh: resolvedWeekday,
+      timeRange: (cls.scheduleTime && cls.scheduleTime.trim()) || existingLog?.timeRange || '13:00-14:30',
       classId: existingLog?.classId || cleanCode,
       unitTitle,
       lessonTitle,
@@ -2566,6 +2603,7 @@ export function syncDailyHomeworkFromWeeklyLogs(
         const oldRec = nextRecords[rIdx];
         nextRecords[rIdx] = {
           ...oldRec,
+          date: isoDate,
           lessonUnitTitle: log.unitTitle,
           lessonTitle: log.lessonTitle,
           lessonContentDetails: lessonDetails || oldRec.lessonContentDetails,

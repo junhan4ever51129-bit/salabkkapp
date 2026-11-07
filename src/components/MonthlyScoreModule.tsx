@@ -1431,7 +1431,7 @@ export const MonthlyScoreModule: React.FC<Props> = ({
                             <button
                               type="button"
                               onClick={() => handleBatchFillSessionMark(sIdx, 'good')}
-                              title="ដាក់ ✓ ទាំងអស់ក្នុងជួរឈរនេះ"
+                              title="ដាក់ ✓ ទាំងអស់ក្នុងជួរឈរនេះ (ពេញពិន្ទុ)"
                               className="px-1 py-0 rounded bg-emerald-100 text-emerald-800 hover:bg-emerald-200 text-[9px] font-bold cursor-pointer"
                             >
                               全✓
@@ -1439,10 +1439,18 @@ export const MonthlyScoreModule: React.FC<Props> = ({
                             <button
                               type="button"
                               onClick={() => handleBatchFillSessionMark(sIdx, 'half')}
-                              title="ដាក់ ○ ទាំងអស់ក្នុងជួរឈរនេះ"
+                              title="ដាក់ ○ ទាំងអស់ក្នុងជួរឈរនេះ (មធ្យម=ពាក់កណ្តាលពិន្ទុ)"
                               className="px-1 py-0 rounded bg-amber-100 text-amber-800 hover:bg-amber-200 text-[9px] font-bold cursor-pointer"
                             >
                               全○
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleBatchFillSessionMark(sIdx, 'bad')}
+                              title="ដាក់ ✗ ទាំងអស់ក្នុងជួរឈរនេះ (ខ្សោយ=០ពិន្ទុ)"
+                              className="px-1 py-0 rounded bg-rose-100 text-rose-800 hover:bg-rose-200 text-[9px] font-bold cursor-pointer"
+                            >
+                              全✗
                             </button>
                           </div>
                         </th>

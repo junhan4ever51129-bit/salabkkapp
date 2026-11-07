@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { AcademicTerm, AppDatabaseState, ClassGroup } from '../types';
 import {
+  cleanClassDisplayCode,
   formatNumeral as formatNum,
   syncMonthsWithAcademicYear,
 } from '../utils/calculations';
@@ -41,7 +42,7 @@ export const TermAndClassBar: React.FC<Props> = ({
   const [newClassName, setNewClassName] = useState('');
   const [newClassGrade, setNewClassGrade] = useState<number>(8);
   const [newClassDay, setNewClassDay] = useState('ថ្ងៃចន្ទ');
-  const [newClassTime, setNewClassTime] = useState('15:00-16:30');
+  const [newClassTime, setNewClassTime] = useState('13:00-14:30');
 
   const [showEditClassModal, setShowEditClassModal] = useState(false);
   const [pendingDeleteClass, setPendingDeleteClass] = useState<ClassGroup | null>(
@@ -295,21 +296,50 @@ export const TermAndClassBar: React.FC<Props> = ({
       currentClass.gradeLevel
     );
 
-    onUpdateState((prev) => ({
-      ...prev,
-      classes: prev.classes.map((c) =>
+    const newScheduleTime = editClassTime.trim() || currentClass.scheduleTime || '13:00-14:30';
+    const newScheduleDayKh = editClassDay.trim() || currentClass.scheduleDayKh || 'ថ្ងៃចន្ទ';
+    const newWeekdayShort = newScheduleDayKh.replace(/^ថ្ងៃ\s*/g, '').trim();
+    const targetOldCode = cleanClassDisplayCode(currentClass.name || oldId);
+    const targetNewCode = cleanClassDisplayCode(cleanName || newNormCode);
+
+    onUpdateState((prev) => {
+      const updatedClasses = prev.classes.map((c) =>
         c.id === oldId
           ? {
               ...c,
               name: cleanName || c.name,
               gradeLevel: inferredGrade,
-              scheduleDayKh: editClassDay.trim() || c.scheduleDayKh,
-              scheduleTime: editClassTime.trim() || c.scheduleTime,
+              scheduleDayKh: newScheduleDayKh,
+              scheduleTime: newScheduleTime,
               termId: editClassTermId,
             }
           : c
-      ),
-    }));
+      );
+
+      const updatedWeeklyLogs = (prev.weeklyLogs || []).map((w) => {
+        const wCode = cleanClassDisplayCode(w.classId);
+        if (
+          wCode === targetOldCode ||
+          wCode === targetNewCode ||
+          w.classId === oldId ||
+          cleanClassDisplayCode(w.classId) === cleanClassDisplayCode(oldId)
+        ) {
+          return {
+            ...w,
+            classId: cleanName || w.classId,
+            timeRange: newScheduleTime,
+            weekdayKh: newWeekdayShort || w.weekdayKh,
+          };
+        }
+        return w;
+      });
+
+      return {
+        ...prev,
+        classes: updatedClasses,
+        weeklyLogs: updatedWeeklyLogs,
+      };
+    });
     setShowEditClassModal(false);
   };
 

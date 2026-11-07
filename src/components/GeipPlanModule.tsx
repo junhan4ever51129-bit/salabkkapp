@@ -9,6 +9,7 @@ import {
   WeeklyLogSignatureMeta,
 } from '../types';
 import {
+  addDaysToDdMmYyyy,
   calculateModelSchoolChecklistStats,
   cleanClassDisplayCode,
   convertIsoDateToKhmerSignature,
@@ -22,13 +23,20 @@ import {
   syncLessonPlansFromCurriculum,
   syncWeeklyLogsFromDailyHomework,
 } from '../utils/calculations';
+import {
+  DEFAULT_WEEKLY_LOG_META,
+  DEFAULT_WEEKLY_LOGS,
+  generateDefaultDailyHomeworkRecords,
+} from '../data/defaultData';
 import { AiGeneratorBar } from './AiGeneratorBar';
 import { MarkdownCopyBar } from './MarkdownDocumentView';
 import { SignatureDateEditor } from './SignatureDateEditor';
 import {
   AlertTriangle,
   BookMarked,
+  Calendar,
   CalendarDays,
+  ChevronDown,
   ClipboardList,
   ClipboardPaste,
   Copy,
@@ -389,6 +397,26 @@ export const GeipPlanModule: React.FC<Props> = ({
 
       const nextWeeklyLogs = baseLogs.map((w, idx) => {
         if (w.id === id) {
+          if (field === 'dateStr') {
+            let clean = value.trim();
+            // Prevent 5+ digit year typos (e.g. 02/11/20262 -> 02/11/2026)
+            clean = clean.replace(/^(\d{1,2}[\/\-\.])(\d{1,2}[\/\-\.])(\d{4})\d+$/, '$1$2$3');
+            let autoWk = w.weekdayKh;
+            if (clean.includes('/') || clean.includes('-')) {
+              try {
+                const iso = ddMmYyyyToIso(clean);
+                if (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+                  const conv = convertIsoDateToKhmerSignature(iso);
+                  if (conv?.weekdayKh) {
+                    autoWk = conv.weekdayKh;
+                  }
+                }
+              } catch {
+                // ignore
+              }
+            }
+            return { ...w, dateStr: clean, weekdayKh: autoWk };
+          }
           return { ...w, [field]: value };
         }
         // When autoPropagateWeeklyLogs is enabled, editing lesson content in e.g. 10C (period 1) automatically updates 10B (period 2) and subsequent classes
@@ -397,6 +425,85 @@ export const GeipPlanModule: React.FC<Props> = ({
         }
         return w;
       });
+      const editedLog = baseLogs[editedIdx];
+
+      // If timeRange or weekdayKh was changed directly in the weekly log row, also update the matching class in prev.classes
+      let nextClasses = prev.classes;
+      if (editedLog && (field === 'timeRange' || field === 'weekdayKh')) {
+        const targetCleanCode = cleanClassDisplayCode(editedLog.classId);
+        if (targetCleanCode) {
+          nextClasses = prev.classes.map((c) => {
+            const cCode = cleanClassDisplayCode(c.name || c.id);
+            if (cCode === targetCleanCode) {
+              return {
+                ...c,
+                ...(field === 'timeRange' ? { scheduleTime: value.trim() } : {}),
+                ...(field === 'weekdayKh'
+                  ? {
+                      scheduleDayKh: value.trim().startsWith('ថ្ងៃ')
+                        ? value.trim()
+                        : `ថ្ងៃ${value.trim()}`,
+                    }
+                  : {}),
+              };
+            }
+            return c;
+          });
+        }
+      }
+
+      const nextDailyRecords = syncDailyHomeworkFromWeeklyLogs(
+        nextWeeklyLogs,
+        nextClasses,
+        prev.dailyHomeworkRecords || []
+      );
+      return {
+        ...prev,
+        classes: nextClasses,
+        weeklyLogs: nextWeeklyLogs,
+        dailyHomeworkRecords: nextDailyRecords,
+      };
+    });
+  };
+
+  const handleWeeklyLogDatePick = (
+    id: string,
+    pickedDate: string,
+    explicitWeekdayKh?: string
+  ) => {
+    if (!pickedDate) return;
+    let ddMmYyyy = pickedDate;
+    let weekdayKh = explicitWeekdayKh || '';
+
+    if (pickedDate.includes('-') && /^\d{4}-\d{2}-\d{2}$/.test(pickedDate)) {
+      const converted = convertIsoDateToKhmerSignature(pickedDate);
+      ddMmYyyy = converted.ddMmYyyy;
+      if (!weekdayKh) weekdayKh = converted.weekdayKh;
+    } else if (!weekdayKh && pickedDate.includes('/')) {
+      try {
+        const iso = ddMmYyyyToIso(pickedDate);
+        const converted = convertIsoDateToKhmerSignature(iso);
+        if (converted?.weekdayKh) weekdayKh = converted.weekdayKh;
+      } catch {
+        // ignore
+      }
+    }
+
+    onUpdateState((prev) => {
+      const baseLogs = syncWeeklyLogsFromDailyHomework(
+        prev.classes,
+        prev.dailyHomeworkRecords || [],
+        prev.weeklyLogs
+      );
+      const nextWeeklyLogs = baseLogs.map((w) =>
+        w.id === id
+          ? {
+              ...w,
+              dateStr: ddMmYyyy,
+              weekdayKh: weekdayKh || w.weekdayKh || 'ចន្ទ',
+            }
+          : w
+      );
       const nextDailyRecords = syncDailyHomeworkFromWeeklyLogs(
         nextWeeklyLogs,
         prev.classes,
@@ -408,6 +515,62 @@ export const GeipPlanModule: React.FC<Props> = ({
         dailyHomeworkRecords: nextDailyRecords,
       };
     });
+  };
+
+  const handleAutoFillWeekDatesByClassSchedule = () => {
+    onUpdateState((prev) => {
+      const baseLogs = syncWeeklyLogsFromDailyHomework(
+        prev.classes,
+        prev.dailyHomeworkRecords || [],
+        prev.weeklyLogs
+      );
+
+      const dayOffsetMap: Record<string, number> = {
+        ចន្ទ: 0,
+        អង្គារ: 1,
+        ពុធ: 2,
+        ព្រហស្បតិ៍: 3,
+        សុក្រ: 4,
+        សៅរ៍: 5,
+      };
+
+      const nextWeeklyLogs = baseLogs.map((w, idx) => {
+        const cleanCode = cleanClassDisplayCode(w.classId);
+        const matchedClass = prev.classes.find(
+          (c) =>
+            cleanClassDisplayCode(c.name || c.id) === cleanCode ||
+            c.id === w.classId
+        );
+        const dayShort = (matchedClass?.scheduleDayKh || w.weekdayKh || 'ចន្ទ')
+          .replace(/^ថ្ងៃ\s*/g, '')
+          .trim();
+        const offset = dayOffsetMap[dayShort] ?? Math.min(idx, 4);
+        const resolvedDate = addDaysToDdMmYyyy(weekMondayDateInput, offset);
+
+        return {
+          ...w,
+          dateStr: resolvedDate,
+          weekdayKh: dayShort,
+        };
+      });
+
+      const nextDailyRecords = syncDailyHomeworkFromWeeklyLogs(
+        nextWeeklyLogs,
+        prev.classes,
+        prev.dailyHomeworkRecords || []
+      );
+
+      return {
+        ...prev,
+        weeklyLogs: nextWeeklyLogs,
+        dailyHomeworkRecords: nextDailyRecords,
+      };
+    });
+
+    setWeeklySyncNotice(
+      '✓ បានផ្គូផ្គង និងបំពេញកាលបរិច្ឆេទសប្តាហ៍ស្វ័យប្រវត្តិតាមថ្ងៃបង្រៀនរបស់ថ្នាក់នីមួយៗរួចរាល់! (已按各班排课日期自动填充整周日期)'
+    );
+    window.setTimeout(() => setWeeklySyncNotice(null), 5000);
   };
 
   const handleCopyWeeklyLogRow = (log: WeeklyLessonLogItem, rowIndex?: number) => {
@@ -599,6 +762,62 @@ export const GeipPlanModule: React.FC<Props> = ({
       `✓ បានបំពេញ និងចម្លងមេរៀនបន្តបន្ទាប់គ្នាទៅគ្រប់ថ្នាក់រួចរាល់! (已连续复制并生成到后续所有班级)`
     );
     window.setTimeout(() => setWeeklySyncNotice(null), 4000);
+  };
+
+  const handleGenerateWeek1PinyinReview = () => {
+    onUpdateState((prev) => {
+      const currentTerm = prev.currentTermId || 'term-2026-2027';
+      const termClasses = prev.classes.filter(
+        (c) => (c.termId || 'term-2025-2026') === currentTerm
+      );
+      const targetClasses = termClasses.length > 0 ? termClasses : prev.classes;
+
+      const pinyinContent =
+        '1. រំលឹកព្យញ្ជនៈទាំង ២៣ (២៣ 声母) ៖ b, p, m, f, d, t, n, l, g, k, h, j, q, x, zh, ch, sh, r, z, c, s, y, w\n2. រំលឹកស្រៈទាំង ២៤ (២៤ 韵母) ៖ a, o, e, i, u, ü, ai, ei, ui, ao, ou, iu, ie, üe, er, an, en, in, un, ün, ang, eng, ing, ong\n3. ហាត់អាន បញ្ចេញសំឡេង និងសរសេរឱ្យបានត្រឹមត្រូវ (会读会记 会正确拼读与书写)\nកិច្ចការផ្ទះ (作业) ៖ ចម្លងព្យញ្ជនៈ (声母) ២៣ និង ស្រៈ (韵母) ២៤ ចំនួន ៥ដង ប្រគល់នៅសប្តាហ៍ក្រោយ។ (抄写声母和韵母各5遍，下周交)';
+
+      const dayOffsetMap: Record<string, number> = {
+        ចន្ទ: 0,
+        អង្គារ: 1,
+        ពុធ: 2,
+        ព្រហស្បតិ៍: 3,
+        សុក្រ: 4,
+        សៅរ៍: 5,
+      };
+
+      const updatedWeeklyLogs: WeeklyLessonLogItem[] = targetClasses.map((cls, idx) => {
+        const cleanCode = cleanClassDisplayCode(cls.name || cls.id) || cls.name || cls.id;
+        const dayShort = (cls.scheduleDayKh || 'ចន្ទ').replace(/^ថ្ងៃ\s*/g, '').trim();
+        const offset = dayOffsetMap[dayShort] ?? Math.min(idx, 3);
+        const resolvedDate = addDaysToDdMmYyyy('02/11/2026', offset);
+        return {
+          id: `wlog-week1-${cls.id || cleanCode}-${idx}`,
+          weekLabel: 'សប្តាហ៍ទី១ (០២-០៦ វិច្ឆិកា ២០២៦)',
+          dateStr: resolvedDate,
+          weekdayKh: dayShort,
+          timeRange: cls.scheduleTime?.trim() || (idx % 2 === 0 ? '13:00-14:30' : '15:00-16:30'),
+          classId: cleanCode,
+          unitTitle: '汉语基础（复习）· មូលដ្ឋានគ្រឹះភាសាចិន (រំលឹកមេរៀន)',
+          lessonTitle: '复习拼音：声母与韵母 · រំលឹកភីនអ៊ីន (ព្យញ្ជនៈ ២៣ និង ស្រៈ ២៤)',
+          contentDetails: pinyinContent,
+        };
+      });
+
+      const updatedDailyRecords = generateDefaultDailyHomeworkRecords(
+        prev.classes,
+        prev.students
+      );
+
+      return {
+        ...prev,
+        weeklyLogs: updatedWeeklyLogs,
+        dailyHomeworkRecords: updatedDailyRecords,
+        weeklyLogMeta: DEFAULT_WEEKLY_LOG_META,
+      };
+    });
+    setWeeklySyncNotice(
+      '✓ បានកំណត់សប្តាហ៍ទី១ (ចន្ទ ដល់ ព្រហស្បតិ៍) រំលឹកភីនអ៊ីន (声母២៣ & 韵母២៤) និងកិច្ចការផ្ទះចម្លង ៥ដង សម្រាប់គ្រប់ថ្នាក់រួចរាល់! (已一键按真实课程时间生成第1周所有班级拼音复习与作业)'
+    );
+    window.setTimeout(() => setWeeklySyncNotice(null), 5000);
   };
 
   const handleConfirmDeleteLessonPlan = () => {
@@ -1468,6 +1687,24 @@ export const GeipPlanModule: React.FC<Props> = ({
                 </label>
                 <button
                   type="button"
+                  onClick={handleGenerateWeek1PinyinReview}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-600 text-white font-bold hover:bg-amber-700 shadow-2xs cursor-pointer"
+                  title="កំណត់សប្តាហ៍ទី១ (ចន្ទ-ព្រហស្បតិ៍) រំលឹកភីនអ៊ីន ២៣聲母 & ២៤韻母 និងកិច្ចការផ្ទះចម្លង ៥ដង"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>កំណត់សប្តាហ៍ទី១ រំលឹកភីនអ៊ីន & កិច្ចការផ្ទះ (一键生成第1周全周拼音复习与作业)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAutoFillWeekDatesByClassSchedule}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-2xs cursor-pointer"
+                  title="ផ្គូផ្គង និងបំពេញកាលបរិច្ឆេទសប្តាហ៍ស្វ័យប្រវត្តិតាមថ្ងៃបង្រៀនរបស់ថ្នាក់នីមួយៗ (按各班排课日期自动填充整周日期)"
+                >
+                  <CalendarDays className="w-3.5 h-3.5" />
+                  <span>បំពេញកាលបរិច្ឆេទតាមម៉ោងបង្រៀន (一键按班级排课自动填充日期)</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => handlePropagateWeeklyLogToSubsequent(0)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-600 text-white font-bold hover:bg-emerald-700 shadow-2xs cursor-pointer"
                 >
@@ -1542,7 +1779,7 @@ export const GeipPlanModule: React.FC<Props> = ({
             <table className="w-full text-left border-collapse border border-slate-900 text-xs font-khmer-battambang">
               <thead>
                 <tr className="bg-slate-100 text-slate-950 font-bold">
-                  <th className="border border-slate-900 py-2 px-2 text-center w-28">
+                  <th className="border border-slate-900 py-2 px-1 text-center w-36">
                     កាលបរិច្ឆេទ
                   </th>
                   <th className="border border-slate-900 py-2 px-2 text-center w-24">ម៉ោង</th>
@@ -1554,59 +1791,146 @@ export const GeipPlanModule: React.FC<Props> = ({
                 {displayedWeeklyLogs.map((log, logIdx) => (
                   <tr key={log.id} className="align-top group">
                     <td className="border border-slate-900 py-2 px-1.5 text-center">
-                      <input
-                        type="date"
-                        value={ddMmYyyyToIso(log.dateStr)}
-                        onChange={(e) => {
-                          const picked = e.target.value;
-                          if (!picked) return;
-                          const converted = convertIsoDateToKhmerSignature(picked);
-                          onUpdateState((prev) => {
-                            const baseLogs = syncWeeklyLogsFromDailyHomework(
-                              prev.classes,
-                              prev.dailyHomeworkRecords || [],
-                              prev.weeklyLogs
+                      <div className="flex flex-col items-center gap-1.5">
+                        {/* Date Input with Pull-down dropdown and calendar picker */}
+                        <div className="relative flex items-center justify-center w-full">
+                          <input
+                            type="text"
+                            value={log.dateStr}
+                            placeholder="DD/MM/YYYY"
+                            onChange={(e) =>
+                              handleWeeklyLogChange(log.id, 'dateStr', e.target.value)
+                            }
+                            className="w-full text-center font-mono text-xs py-1 px-1 pr-12 rounded bg-slate-50 border border-slate-200 hover:border-indigo-300 focus:border-indigo-500 focus:bg-white focus:outline-none transition-colors"
+                            title="អ្នកអាចវាយបញ្ចូលកាលបរិច្ឆេទដោយផ្ទាល់ (可直接手动输入日期，如 02/11/2026)"
+                          />
+
+                          {/* Pull-down Dropdown (拉下自动点击填充) */}
+                          <div className="absolute right-6 flex items-center no-print">
+                            <label
+                              className="cursor-pointer p-0.5 text-slate-400 hover:text-indigo-600 transition-colors"
+                              title="ចុចទាញចុះជ្រើសរើសកាលបរិច្ឆេទ (下拉点击填充日期)"
+                            >
+                              <ChevronDown className="w-3.5 h-3.5" />
+                              <select
+                                value=""
+                                onChange={(e) => {
+                                  if (!e.target.value) return;
+                                  const [dStr, wkKh] = e.target.value.split('|');
+                                  handleWeeklyLogDatePick(log.id, dStr, wkKh);
+                                }}
+                                className="sr-only"
+                                tabIndex={-1}
+                              >
+                                <option value="">-- ជ្រើសរើសកាលបរិច្ឆេទ (下拉选择日期) --</option>
+                                <optgroup label="📅 សប្តាហ៍ទី១ (第1周 02/11 ~ 06/11)">
+                                  <option value="02/11/2026|ចន្ទ">02/11/2026 (ចន្ទ · 星期一)</option>
+                                  <option value="03/11/2026|អង្គារ">03/11/2026 (អង្គារ · 星期二)</option>
+                                  <option value="04/11/2026|ពុធ">04/11/2026 (ពុធ · 星期三)</option>
+                                  <option value="05/11/2026|ព្រហស្បតិ៍">05/11/2026 (ព្រហស្បតិ៍ · 星期四)</option>
+                                  <option value="06/11/2026|សុក្រ">06/11/2026 (សុក្រ · 星期五)</option>
+                                </optgroup>
+                                <optgroup label="📅 សប្តាហ៍ទី២ (第2周 09/11 ~ 13/11)">
+                                  <option value="09/11/2026|ចន្ទ">09/11/2026 (ចន្ទ · 星期一)</option>
+                                  <option value="10/11/2026|អង្គារ">10/11/2026 (អង្គារ · 星期二)</option>
+                                  <option value="11/11/2026|ពុធ">11/11/2026 (ពុធ · 星期三)</option>
+                                  <option value="12/11/2026|ព្រហស្បតិ៍">12/11/2026 (ព្រហស្បតិ៍ · 星期四)</option>
+                                  <option value="13/11/2026|សុក្រ">13/11/2026 (សុក្រ · 星期五)</option>
+                                </optgroup>
+                                <optgroup label="📅 សប្តាហ៍ទី៣ (第3周 16/11 ~ 20/11)">
+                                  <option value="16/11/2026|ចន្ទ">16/11/2026 (ចន្ទ · 星期一)</option>
+                                  <option value="17/11/2026|អង្គារ">17/11/2026 (អង្គារ · 星期二)</option>
+                                  <option value="18/11/2026|ពុធ">18/11/2026 (ពុធ · 星期三)</option>
+                                  <option value="19/11/2026|ព្រហស្បតិ៍">19/11/2026 (ព្រហស្បតិ៍ · 星期四)</option>
+                                  <option value="20/11/2026|សុក្រ">20/11/2026 (សុក្រ · 星期五)</option>
+                                </optgroup>
+                                <optgroup label="📅 សប្តាហ៍ទី៤ (第4周 23/11 ~ 27/11)">
+                                  <option value="23/11/2026|ចន្ទ">23/11/2026 (ចន្ទ · 星期一)</option>
+                                  <option value="24/11/2026|អង្គារ">24/11/2026 (អង្គារ · 星期二)</option>
+                                  <option value="25/11/2026|ពុធ">25/11/2026 (ពុធ · 星期三)</option>
+                                  <option value="26/11/2026|ព្រហស្បតិ៍">26/11/2026 (ព្រហស្បតិ៍ · 星期四)</option>
+                                  <option value="27/11/2026|សុក្រ">27/11/2026 (សុក្រ · 星期五)</option>
+                                </optgroup>
+                              </select>
+                            </label>
+                          </div>
+
+                          {/* Calendar Icon Button */}
+                          <label
+                            className="absolute right-1 cursor-pointer text-slate-400 hover:text-indigo-600 no-print p-0.5"
+                            title="ចុចជ្រើសរើសពីប្រតិទិន (点击日历选择)"
+                          >
+                            <Calendar className="w-3.5 h-3.5" />
+                            <input
+                              type="date"
+                              value={ddMmYyyyToIso(log.dateStr)}
+                              onChange={(e) =>
+                                handleWeeklyLogDatePick(log.id, e.target.value)
+                              }
+                              className="sr-only"
+                              tabIndex={-1}
+                            />
+                          </label>
+                        </div>
+
+                        {/* Quick-click Chips for Current Week (自动点击填充快捷按钮) */}
+                        <div className="flex flex-wrap items-center justify-center gap-0.5 no-print text-[9px] font-sans">
+                          {[
+                            { offset: 0, dayKh: 'ចន្ទ', label: 'ចន្ទ ០២' },
+                            { offset: 1, dayKh: 'អង្គារ', label: 'អង្គារ ០៣' },
+                            { offset: 2, dayKh: 'ពុធ', label: 'ពុធ ០៤' },
+                            { offset: 3, dayKh: 'ព្រហ', dayKhFull: 'ព្រហស្បតិ៍', label: 'ព្រហ ០៥' },
+                            { offset: 4, dayKh: 'សុក្រ', label: 'សុក្រ ០៦' },
+                          ].map((item) => {
+                            const itemDate = addDaysToDdMmYyyy(weekMondayDateInput, item.offset);
+                            const isActive = log.dateStr === itemDate;
+                            return (
+                              <button
+                                key={item.offset}
+                                type="button"
+                                onClick={() =>
+                                  handleWeeklyLogDatePick(
+                                    log.id,
+                                    itemDate,
+                                    item.dayKhFull || item.dayKh
+                                  )
+                                }
+                                className={`px-1 py-0.5 rounded text-[9px] font-bold transition-all cursor-pointer ${
+                                  isActive
+                                    ? 'bg-indigo-600 text-white shadow-xs'
+                                    : 'bg-slate-100 text-slate-700 hover:bg-indigo-100 hover:text-indigo-900 border border-slate-200'
+                                }`}
+                                title={`ចុចដើម្បីបំពេញ ${itemDate} (${item.dayKhFull || item.dayKh}) ស្វ័យប្រវត្តិ`}
+                              >
+                                {item.label}
+                              </button>
                             );
-                            const nextWeeklyLogs = baseLogs.map((w) =>
-                              w.id === log.id
-                                ? {
-                                    ...w,
-                                    dateStr: converted.ddMmYyyy,
-                                    weekdayKh: converted.weekdayKh,
-                                  }
-                                : w
-                            );
-                            const nextDailyRecords = syncDailyHomeworkFromWeeklyLogs(
-                              nextWeeklyLogs,
-                              prev.classes,
-                              prev.dailyHomeworkRecords || []
-                            );
-                            return {
-                              ...prev,
-                              weeklyLogs: nextWeeklyLogs,
-                              dailyHomeworkRecords: nextDailyRecords,
-                            };
-                          });
-                        }}
-                        className="w-full px-1 py-0.5 mb-0.5 bg-slate-50 border border-slate-300 rounded text-[10px] font-bold cursor-pointer no-print"
-                        title="ចុចជ្រើសរើសថ្ងៃ/ខែពីប្រតិទិន"
-                      />
-                      <input
-                        type="text"
-                        value={log.dateStr}
-                        onChange={(e) =>
-                          handleWeeklyLogChange(log.id, 'dateStr', e.target.value)
-                        }
-                        className="w-full text-center font-mono text-xs bg-transparent focus:outline-none focus:bg-indigo-50/40"
-                      />
-                      <input
-                        type="text"
-                        value={log.weekdayKh}
-                        onChange={(e) =>
-                          handleWeeklyLogChange(log.id, 'weekdayKh', e.target.value)
-                        }
-                        className="w-full text-center font-khmer-battambang text-xs text-slate-900 mt-0.5 bg-transparent focus:outline-none focus:bg-indigo-50/40"
-                      />
+                          })}
+                        </div>
+
+                        {/* Weekday Input with quick datalist suggestions */}
+                        <div className="w-full">
+                          <input
+                            type="text"
+                            value={log.weekdayKh}
+                            placeholder="ថ្ងៃ"
+                            list={`weekday-list-${log.id}`}
+                            onChange={(e) =>
+                              handleWeeklyLogChange(log.id, 'weekdayKh', e.target.value)
+                            }
+                            className="w-full text-center font-khmer-battambang text-xs font-bold text-slate-800 bg-transparent hover:bg-slate-100/70 focus:bg-indigo-50/50 rounded py-0.5 focus:outline-none"
+                            title="ថ្ងៃនៃសប្តាហ៍ (可手动修改，如 ព្រហស្បតិ៍)"
+                          />
+                          <datalist id={`weekday-list-${log.id}`}>
+                            <option value="ចន្ទ">ចន្ទ (星期一)</option>
+                            <option value="អង្គារ">អង្គារ (星期二)</option>
+                            <option value="ពុធ">ពុធ (星期三)</option>
+                            <option value="ព្រហស្បតិ៍">ព្រហស្បតិ៍ (星期四)</option>
+                            <option value="សុក្រ">សុក្រ (星期五)</option>
+                            <option value="សៅរ៍">សៅរ៍ (星期六)</option>
+                          </datalist>
+                        </div>
+                      </div>
                     </td>
                     <td className="border border-slate-900 py-2 px-2 text-center">
                       <input

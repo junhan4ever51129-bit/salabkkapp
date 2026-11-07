@@ -53,7 +53,7 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [quickClassCode, setQuickClassCode] = useState('');
   const [quickClassDay, setQuickClassDay] = useState('ថ្ងៃចន្ទ');
-  const [quickClassTime, setQuickClassTime] = useState('15:00-16:30');
+  const [quickClassTime, setQuickClassTime] = useState('13:00-14:30');
 
   // Load initial state from browser IndexedDB on mount, or fallback to Cloud Sync if fresh environment
   useEffect(() => {

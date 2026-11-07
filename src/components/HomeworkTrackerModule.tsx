@@ -13,6 +13,7 @@ import {
   Copy,
   ClipboardPaste,
   Share2,
+  Sparkles,
 } from 'lucide-react';
 import {
   AppDatabaseState,
@@ -21,13 +22,19 @@ import {
   Language,
 } from '../types';
 import {
+  addDaysToDdMmYyyy,
+  cleanClassDisplayCode,
   ddMmYyyyToIso,
   formatNumeral as formatNum,
   sortStudentsByKhmerName,
   syncWeeklyLogsFromDailyHomework,
 } from '../utils/calculations';
 import { AiGeneratorBar } from './AiGeneratorBar';
-import { generateDefaultDailyHomeworkRecords } from '../data/defaultData';
+import {
+  DEFAULT_WEEKLY_LOG_META,
+  DEFAULT_WEEKLY_LOGS,
+  generateDefaultDailyHomeworkRecords,
+} from '../data/defaultData';
 import { SignatureDateEditor } from './SignatureDateEditor';
 import { MarkdownCopyBar } from './MarkdownDocumentView';
 
@@ -576,6 +583,62 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
     window.setTimeout(() => setSyncMessage(null), 4000);
   };
 
+  const handleSetWeek1PinyinReviewForAllClasses = () => {
+    onUpdateState((prev) => {
+      const currentTerm = prev.currentTermId || 'term-2026-2027';
+      const termClasses = prev.classes.filter(
+        (c) => (c.termId || 'term-2025-2026') === currentTerm
+      );
+      const targetClasses = termClasses.length > 0 ? termClasses : prev.classes;
+
+      const updatedDailyRecords = generateDefaultDailyHomeworkRecords(
+        prev.classes,
+        prev.students
+      );
+
+      const pinyinContent =
+        '1. រំលឹកព្យញ្ជនៈទាំង ២៣ (២៣ 声母) ៖ b, p, m, f, d, t, n, l, g, k, h, j, q, x, zh, ch, sh, r, z, c, s, y, w\n2. រំលឹកស្រៈទាំង ២៤ (២៤ 韵母) ៖ a, o, e, i, u, ü, ai, ei, ui, ao, ou, iu, ie, üe, er, an, en, in, un, ün, ang, eng, ing, ong\n3. ហាត់អាន បញ្ចេញសំឡេង និងសរសេរឱ្យបានត្រឹមត្រូវ (会读会记 会正确拼读与书写)\nកិច្ចការផ្ទះ (作业) ៖ ចម្លងព្យញ្ជនៈ (声母) ២៣ និង ស្រៈ (韵母) ២៤ ចំនួន ៥ដង ប្រគល់នៅសប្តាហ៍ក្រោយ។ (抄写声母和韵母各5遍，下周交)';
+
+      const dayOffsetMap: Record<string, number> = {
+        ចន្ទ: 0,
+        អង្គារ: 1,
+        ពុធ: 2,
+        ព្រហស្បតិ៍: 3,
+        សុក្រ: 4,
+        សៅរ៍: 5,
+      };
+
+      const updatedWeeklyLogs = targetClasses.map((cls, idx) => {
+        const cleanCode = cleanClassDisplayCode(cls.name || cls.id) || cls.name || cls.id;
+        const dayShort = (cls.scheduleDayKh || 'ចន្ទ').replace(/^ថ្ងៃ\s*/g, '').trim();
+        const offset = dayOffsetMap[dayShort] ?? Math.min(idx, 3);
+        const resolvedDate = addDaysToDdMmYyyy('02/11/2026', offset);
+        return {
+          id: `wlog-week1-${cls.id || cleanCode}-${idx}`,
+          weekLabel: 'សប្តាហ៍ទី១ (០២-០៦ វិច្ឆិកា ២០២៦)',
+          dateStr: resolvedDate,
+          weekdayKh: dayShort,
+          timeRange: cls.scheduleTime?.trim() || (idx % 2 === 0 ? '13:00-14:30' : '15:00-16:30'),
+          classId: cleanCode,
+          unitTitle: '汉语基础（复习）· មូលដ្ឋានគ្រឹះភាសាចិន (រំលឹកមេរៀន)',
+          lessonTitle: '复习拼音：声母与韵母 · រំលឹកភីនអ៊ីន (ព្យញ្ជនៈ ២៣ និង ស្រៈ ២៤)',
+          contentDetails: pinyinContent,
+        };
+      });
+
+      return {
+        ...prev,
+        dailyHomeworkRecords: updatedDailyRecords,
+        weeklyLogs: updatedWeeklyLogs,
+        weeklyLogMeta: DEFAULT_WEEKLY_LOG_META,
+      };
+    });
+    setSyncMessage(
+      'បានកំណត់សប្តាហ៍ទី១ (ចន្ទ ដល់ ព្រហស្បតិ៍) រំលឹកភីនអ៊ីន (声母២៣ & 韵母២៤) និងកិច្ចការផ្ទះចម្លង ៥ដង សម្រាប់គ្រប់ថ្នាក់រួចរាល់! (已一键生成第1周所有班级拼音复习与作业)'
+    );
+    window.setTimeout(() => setSyncMessage(null), 5000);
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Action & Date Bar */}
@@ -606,6 +669,16 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
                 className="bg-white px-2 py-0.5 rounded border border-slate-300 text-xs font-bold"
               />
             </div>
+
+            <button
+              type="button"
+              onClick={handleSetWeek1PinyinReviewForAllClasses}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer shadow-2xs"
+              title="កំណត់សប្តាហ៍ទី១ រំលឹកភីនអ៊ីន (声母 & 韵母) និងកិច្ចការផ្ទះចម្លង ៥ដង គ្រប់ថ្នាក់"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>កំណត់សប្តាហ៍ទី១ រំលឹកភីនអ៊ីន (一键生成第1周所有班级拼音复习与作业)</span>
+            </button>
 
             <button
               type="button"

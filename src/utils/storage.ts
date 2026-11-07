@@ -1,8 +1,12 @@
 import * as XLSX from 'xlsx';
 import { AppDatabaseState, ScoreValue, Student } from '../types';
-import { createInitialAppDatabaseState } from '../data/defaultData';
+import {
+  createInitialAppDatabaseState,
+  generateDefaultDailyHomeworkRecords,
+} from '../data/defaultData';
 import {
   calculateClassChineseResults,
+  cleanClassDisplayCode,
   convertIsoDateToKhmerSignature,
   parseSignatureGregorianToIso,
   sortAllStudentsInDatabase,
@@ -285,11 +289,66 @@ function mergeWithValidDefaultScores(
     mergedLessonPlans = [defaults.lessonPlans[0], ...mergedLessonPlans];
   }
 
+  // Ensure weeklyLogs are updated to Week 1 Pinyin review if containing legacy 2025 dates or non-pinyin week 1
+  let mergedWeeklyLogs = loaded.weeklyLogs && loaded.weeklyLogs.length > 0
+    ? [...loaded.weeklyLogs]
+    : [...defaults.weeklyLogs];
+  if (
+    mergedWeeklyLogs.some(
+      (w) =>
+        w.dateStr.includes('2025') ||
+        w.unitTitle.includes('买东西') ||
+        w.lessonTitle.includes('你是谁') ||
+        w.lessonTitle.includes('你好')
+    )
+  ) {
+    mergedWeeklyLogs = [...defaults.weeklyLogs];
+  }
+
+  // Synchronize teaching hours in weeklyLogs with each class's real scheduleTime
+  mergedWeeklyLogs = mergedWeeklyLogs.map((log) => {
+    const matchedClass = finalClasses.find(
+      (c) =>
+        cleanClassDisplayCode(c.name || c.id) === cleanClassDisplayCode(log.classId) ||
+        c.id === log.classId
+    );
+    if (matchedClass && matchedClass.scheduleTime) {
+      return {
+        ...log,
+        timeRange: matchedClass.scheduleTime,
+      };
+    }
+    return log;
+  });
+
+  let mergedDailyHomework = loaded.dailyHomeworkRecords && loaded.dailyHomeworkRecords.length > 0
+    ? [...loaded.dailyHomeworkRecords]
+    : [...(defaults.dailyHomeworkRecords || [])];
+  if (
+    mergedDailyHomework.some(
+      (r) =>
+        Boolean(r.date?.includes('2025')) ||
+        Boolean(r.lessonTitle?.includes('我的家')) ||
+        Boolean(r.lessonTitle?.includes('多少钱')) ||
+        Boolean(r.lessonTitle?.includes('今天几月几号'))
+    )
+  ) {
+    mergedDailyHomework = generateDefaultDailyHomeworkRecords(finalClasses, sortedStudents);
+  }
+
+  let healedWeeklyLogMeta = loaded.weeklyLogMeta || defaults.weeklyLogMeta;
+  if (!healedWeeklyLogMeta || healedWeeklyLogMeta.fridayDateStr?.includes('2025')) {
+    healedWeeklyLogMeta = defaults.weeklyLogMeta;
+  }
+
   return {
     ...defaults,
     ...loaded,
     months: mergedMonths,
     lessonPlans: mergedLessonPlans,
+    weeklyLogs: mergedWeeklyLogs,
+    weeklyLogMeta: healedWeeklyLogMeta,
+    dailyHomeworkRecords: mergedDailyHomework,
     classes: finalClasses,
     students: sortedStudents,
     scores: mergedScores,

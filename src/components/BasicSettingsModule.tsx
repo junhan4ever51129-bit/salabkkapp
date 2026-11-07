@@ -11,6 +11,7 @@ import {
 } from '../types';
 import { t } from '../utils/i18n';
 import {
+  cleanClassDisplayCode,
   convertIsoDateToKhmerSignature,
   ddMmYyyyToIso,
   formatNumeral,
@@ -274,10 +275,37 @@ export const BasicSettingsModule: React.FC<Props> = ({
     field: keyof ClassGroup,
     value: string | number
   ) => {
-    onUpdateState((prev) => ({
-      ...prev,
-      classes: prev.classes.map((c) => (c.id === id ? { ...c, [field]: value } : c)),
-    }));
+    onUpdateState((prev) => {
+      const updatedClasses = prev.classes.map((c) => (c.id === id ? { ...c, [field]: value } : c));
+      let updatedWeeklyLogs = prev.weeklyLogs;
+      if (field === 'scheduleTime' || field === 'scheduleDayKh' || field === 'name') {
+        const targetClass = prev.classes.find((c) => c.id === id);
+        const targetOldCode = cleanClassDisplayCode(targetClass?.name || id);
+        const newTime = field === 'scheduleTime' ? String(value).trim() : targetClass?.scheduleTime;
+        const newDay = field === 'scheduleDayKh' ? String(value).trim() : targetClass?.scheduleDayKh;
+        const newDayShort = newDay ? newDay.replace(/^ថ្ងៃ\s*/g, '').trim() : undefined;
+        const newName = field === 'name' ? String(value).trim() : targetClass?.name;
+        const targetNewCode = cleanClassDisplayCode(newName);
+
+        updatedWeeklyLogs = (prev.weeklyLogs || []).map((w) => {
+          const wCode = cleanClassDisplayCode(w.classId);
+          if (wCode === targetOldCode || wCode === targetNewCode || w.classId === id) {
+            return {
+              ...w,
+              ...(newTime ? { timeRange: newTime } : {}),
+              ...(newDayShort ? { weekdayKh: newDayShort } : {}),
+              ...(newName ? { classId: newName } : {}),
+            };
+          }
+          return w;
+        });
+      }
+      return {
+        ...prev,
+        classes: updatedClasses,
+        weeklyLogs: updatedWeeklyLogs,
+      };
+    });
   };
 
   const handleAddClass = () => {
