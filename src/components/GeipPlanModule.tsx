@@ -26,7 +26,13 @@ import {
 import {
   DEFAULT_WEEKLY_LOG_META,
   DEFAULT_WEEKLY_LOGS,
+  DEFAULT_WEEK1_WEEKLY_LOG_META,
+  DEFAULT_WEEK2_WEEKLY_LOG_META,
+  DEFAULT_WEEK2_WEEKLY_LOGS,
+  DEFAULT_WEEK1_WEEKLY_LOGS,
+  LESSON_7_VOCAB_CONTENT_DETAILS,
   generateDefaultDailyHomeworkRecords,
+  generateWeek2DailyHomeworkRecords,
 } from '../data/defaultData';
 import { AiGeneratorBar } from './AiGeneratorBar';
 import { MarkdownCopyBar } from './MarkdownDocumentView';
@@ -165,7 +171,8 @@ export const GeipPlanModule: React.FC<Props> = ({
   const [selectedLessonPlanId, setSelectedLessonPlanId] = useState<string>(
     state.lessonPlans[0]?.id || 'lp-0'
   );
-  const [weekMondayDateInput, setWeekMondayDateInput] = useState('02/11/2026');
+  const [selectedWeekFilter, setSelectedWeekFilter] = useState<'week2' | 'week1' | 'all'>('week2');
+  const [weekMondayDateInput, setWeekMondayDateInput] = useState('09/11/2026');
   const [pendingDeleteLessonPlan, setPendingDeleteLessonPlan] = useState<{
     id: string;
     linkedCurriculumId?: string;
@@ -207,7 +214,7 @@ export const GeipPlanModule: React.FC<Props> = ({
     effectiveLessonPlans[0];
 
   // Sequential weekly logs synced with active term classes & daily homework/lesson records
-  const displayedWeeklyLogs = useMemo(
+  const allWeeklyLogs = useMemo(
     () =>
       syncWeeklyLogsFromDailyHomework(
         state.classes,
@@ -217,12 +224,45 @@ export const GeipPlanModule: React.FC<Props> = ({
     [state.classes, state.dailyHomeworkRecords, state.weeklyLogs]
   );
 
-  const weeklyMeta: WeeklyLogSignatureMeta = state.weeklyLogMeta || {
-    fridayDateStr: '06/11/2026',
-    lunarDate: 'ថ្ងៃសុក្រ ១២រោច ខែកត្តិក ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០',
-    gregorianDate: 'រាជធានីភ្នំពេញ, ថ្ងៃទី០៦ ខែវិច្ឆិកា ឆ្នាំ២០២៦',
-    textbookTitle: '快乐汉语（第二册）ភាសាចិនរីករាយ (កំរិត២)',
-  };
+  const displayedWeeklyLogs = useMemo(() => {
+    if (selectedWeekFilter === 'week2') {
+      const w2 = allWeeklyLogs.filter(
+        (w) =>
+          w.weekLabel?.includes('សប្តាហ៍ទី២') ||
+          (w.dateStr &&
+            (w.dateStr.includes('/11/2026') || w.dateStr.includes('-11-2026')) &&
+            parseInt(w.dateStr.slice(0, 2), 10) >= 8 &&
+            parseInt(w.dateStr.slice(0, 2), 10) <= 15) ||
+          w.lessonTitle?.includes('你买什么')
+      );
+      return w2.length > 0 ? w2 : allWeeklyLogs;
+    }
+    if (selectedWeekFilter === 'week1') {
+      const w1 = allWeeklyLogs.filter(
+        (w) =>
+          w.weekLabel?.includes('សប្តាហ៍ទី១') ||
+          (w.dateStr &&
+            (w.dateStr.includes('/11/2026') || w.dateStr.includes('-11-2026')) &&
+            parseInt(w.dateStr.slice(0, 2), 10) >= 1 &&
+            parseInt(w.dateStr.slice(0, 2), 10) <= 7) ||
+          w.lessonTitle?.includes('拼音')
+      );
+      return w1.length > 0 ? w1 : allWeeklyLogs;
+    }
+    return allWeeklyLogs;
+  }, [allWeeklyLogs, selectedWeekFilter]);
+
+  const weeklyMeta: WeeklyLogSignatureMeta = useMemo(() => {
+    if (selectedWeekFilter === 'week1') {
+      return DEFAULT_WEEK1_WEEKLY_LOG_META;
+    }
+    if (selectedWeekFilter === 'week2') {
+      return state.weeklyLogMeta?.fridayDateStr === '13/11/2026'
+        ? state.weeklyLogMeta
+        : DEFAULT_WEEK2_WEEKLY_LOG_META;
+    }
+    return state.weeklyLogMeta || DEFAULT_WEEK2_WEEKLY_LOG_META;
+  }, [selectedWeekFilter, state.weeklyLogMeta]);
 
   const activeClassStudents = useMemo(
     () => state.students.filter((s) => s.classId === activeClass?.id),
@@ -764,6 +804,80 @@ export const GeipPlanModule: React.FC<Props> = ({
     window.setTimeout(() => setWeeklySyncNotice(null), 4000);
   };
 
+  const handleGenerateWeek2Lesson7Vocab = () => {
+    onUpdateState((prev) => {
+      const currentTerm = prev.currentTermId || 'term-2026-2027';
+      const termClasses = prev.classes.filter(
+        (c) => (c.termId || 'term-2025-2026') === currentTerm
+      );
+      const targetClasses = termClasses.length > 0 ? termClasses : prev.classes;
+
+      const dayOffsetMap: Record<string, number> = {
+        ចន្ទ: 0,
+        អង្គារ: 1,
+        ពុធ: 2,
+        ព្រហស្បតិ៍: 3,
+        សុក្រ: 4,
+        សៅរ៍: 5,
+      };
+
+      const updatedWeek2Logs: WeeklyLessonLogItem[] = targetClasses.map((cls, idx) => {
+        const cleanCode = cleanClassDisplayCode(cls.name || cls.id) || cls.name || cls.id;
+        const dayShort = (cls.scheduleDayKh || 'ចន្ទ').replace(/^ថ្ងៃ\s*/g, '').trim();
+        // Monday 09/11/2026 is Independence Day holiday, shift Monday classes directly to Tuesday 10/11/2026
+        const isMondayClass = dayShort === 'ចន្ទ' || cleanCode === '10C' || cleanCode === '10B';
+        const offset = isMondayClass ? 1 : (dayOffsetMap[dayShort] ?? Math.min(idx, 3));
+        const resolvedDate = addDaysToDdMmYyyy('09/11/2026', offset);
+        const resolvedDayShort = isMondayClass ? 'អង្គារ' : dayShort;
+        return {
+          id: `wlog-week2-${cls.id || cleanCode}-${idx}`,
+          weekLabel: 'សប្តាហ៍ទី២ (០៩-១៣ វិច្ឆិកា ២០២៦)',
+          dateStr: resolvedDate,
+          weekdayKh: resolvedDayShort,
+          timeRange: cls.scheduleTime?.trim() || (idx % 2 === 0 ? '13:00-14:30' : '15:00-16:30'),
+          classId: cleanCode,
+          unitTitle: '第三单元 购物 · ជំពូកទី៣ ការទិញទំនិញ',
+          lessonTitle: '第七课 你买什么？ · មេរៀនទី៧ តើអ្នកទិញអ្វី？ (生词)',
+          contentDetails: LESSON_7_VOCAB_CONTENT_DETAILS,
+        };
+      });
+
+      // Keep week 1 logs so they are never lost
+      const otherLogs = (prev.weeklyLogs || []).filter(
+        (w) =>
+          !w.weekLabel?.includes('សប្តាហ៍ទី២') &&
+          !w.id.startsWith('wlog-week2-') &&
+          !w.id.startsWith('wlog-w2-')
+      );
+
+      const week2Homework = generateWeek2DailyHomeworkRecords(
+        prev.classes,
+        prev.students
+      );
+      const existingOtherHw = (prev.dailyHomeworkRecords || []).filter(
+        (r) =>
+          r.date !== '2026-11-09' &&
+          r.date !== '2026-11-10' &&
+          r.date !== '2026-11-11' &&
+          r.date !== '2026-11-12' &&
+          r.date !== '2026-11-13'
+      );
+
+      return {
+        ...prev,
+        weeklyLogs: [...updatedWeek2Logs, ...otherLogs],
+        dailyHomeworkRecords: [...week2Homework, ...existingOtherHw],
+        weeklyLogMeta: DEFAULT_WEEK2_WEEKLY_LOG_META,
+      };
+    });
+    setWeekMondayDateInput('09/11/2026');
+    setSelectedWeekFilter('week2');
+    setWeeklySyncNotice(
+      '✓ បានកំណត់សប្តាហ៍ទី២ (០៩-១៣ វិច្ឆិកា) មេរៀនទី៧ អ្នកទិញអ្វី？ (ពាក្យថ្មីទាំង ១១ ពាក្យ) និងកិច្ចការផ្ទះចម្លង ៥ដង សម្រាប់គ្រប់ថ្នាក់រួចរាល់! (已一键生成第2周所有班级第七课生词周志与作业)'
+    );
+    window.setTimeout(() => setWeeklySyncNotice(null), 5000);
+  };
+
   const handleGenerateWeek1PinyinReview = () => {
     onUpdateState((prev) => {
       const currentTerm = prev.currentTermId || 'term-2026-2027';
@@ -802,6 +916,22 @@ export const GeipPlanModule: React.FC<Props> = ({
         };
       });
 
+      // Keep week 2 logs so they are never lost
+      const otherLogs = (prev.weeklyLogs || []).filter(
+        (w) =>
+          !w.weekLabel?.includes('សប្តាហ៍ទី១') &&
+          !w.id.startsWith('wlog-week1-') &&
+          !w.id.startsWith('wlog-w1-') &&
+          w.id !== 'wlog-1' &&
+          w.id !== 'wlog-2' &&
+          w.id !== 'wlog-3' &&
+          w.id !== 'wlog-4' &&
+          w.id !== 'wlog-5' &&
+          w.id !== 'wlog-6' &&
+          w.id !== 'wlog-7' &&
+          w.id !== 'wlog-8'
+      );
+
       const updatedDailyRecords = generateDefaultDailyHomeworkRecords(
         prev.classes,
         prev.students
@@ -809,11 +939,13 @@ export const GeipPlanModule: React.FC<Props> = ({
 
       return {
         ...prev,
-        weeklyLogs: updatedWeeklyLogs,
+        weeklyLogs: [...otherLogs, ...updatedWeeklyLogs],
         dailyHomeworkRecords: updatedDailyRecords,
-        weeklyLogMeta: DEFAULT_WEEKLY_LOG_META,
+        weeklyLogMeta: DEFAULT_WEEK1_WEEKLY_LOG_META,
       };
     });
+    setWeekMondayDateInput('02/11/2026');
+    setSelectedWeekFilter('week1');
     setWeeklySyncNotice(
       '✓ បានកំណត់សប្តាហ៍ទី១ (ចន្ទ ដល់ ព្រហស្បតិ៍) រំលឹកភីនអ៊ីន (声母២៣ & 韵母២៤) និងកិច្ចការផ្ទះចម្លង ៥ដង សម្រាប់គ្រប់ថ្នាក់រួចរាល់! (已一键按真实课程时间生成第1周所有班级拼音复习与作业)'
     );
@@ -1687,12 +1819,21 @@ export const GeipPlanModule: React.FC<Props> = ({
                 </label>
                 <button
                   type="button"
+                  onClick={handleGenerateWeek2Lesson7Vocab}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-indigo-600 text-white font-bold hover:bg-indigo-700 shadow-2xs cursor-pointer ring-2 ring-indigo-300"
+                  title="កំណត់សប្តាហ៍ទី២ (០៩-១៣ វិច្ឆិកា) មេរៀនទី៧ អ្នកទិញអ្វី？ (ពាក្យថ្មី ១១ពាក្យ) និងកិច្ចការផ្ទះចម្លង ៥ដង (ថ្ងៃចន្ទឈប់សម្រាក បង្កើតនៅថ្ងៃអង្គារ)"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>+ បំពេញសប្តាហ៍ទី២ មេរៀនទី៧ ពាក្យថ្មី (一键生成第2周第七课生词周志)</span>
+                </button>
+                <button
+                  type="button"
                   onClick={handleGenerateWeek1PinyinReview}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-600 text-white font-bold hover:bg-amber-700 shadow-2xs cursor-pointer"
                   title="កំណត់សប្តាហ៍ទី១ (ចន្ទ-ព្រហស្បតិ៍) រំលឹកភីនអ៊ីន ២៣聲母 & ២៤韻母 និងកិច្ចការផ្ទះចម្លង ៥ដង"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>កំណត់សប្តាហ៍ទី១ រំលឹកភីនអ៊ីន & កិច្ចការផ្ទះ (一键生成第1周全周拼音复习与作业)</span>
+                  <span>កំណត់សប្តាហ៍ទី១ រំលឹកភីនអ៊ីន (一键生成第1周全周拼音复习)</span>
                 </button>
                 <button
                   type="button"
@@ -1723,6 +1864,60 @@ export const GeipPlanModule: React.FC<Props> = ({
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
+              </div>
+            )}
+          </div>
+
+          {/* Week Selector & Holiday Notice Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-slate-300 rounded-lg p-3 text-xs shadow-2xs no-print">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-bold text-slate-800">ជ្រើសរើសសប្តាហ៍ (选择教学周) ៖</span>
+              <div className="inline-flex rounded-lg p-0.5 bg-slate-100 border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedWeekFilter('week2');
+                    setWeekMondayDateInput('09/11/2026');
+                  }}
+                  className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                    selectedWeekFilter === 'week2'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-700 hover:text-indigo-800'
+                  }`}
+                >
+                  ⭐ សប្តាហ៍ទី២ (០៩-១៣ វិច្ឆិកា · មេរៀនទី៧ ពាក្យថ្មី)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedWeekFilter('week1');
+                    setWeekMondayDateInput('02/11/2026');
+                  }}
+                  className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                    selectedWeekFilter === 'week1'
+                      ? 'bg-amber-600 text-white shadow-xs'
+                      : 'text-slate-700 hover:text-amber-800'
+                  }`}
+                >
+                  សប្តាហ៍ទី១ (០២-០៦ វិច្ឆិកា · រំលឹកភីនអ៊ីន)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedWeekFilter('all')}
+                  className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                    selectedWeekFilter === 'all'
+                      ? 'bg-slate-700 text-white shadow-xs'
+                      : 'text-slate-700 hover:text-slate-900'
+                  }`}
+                >
+                  បង្ហាញទាំងអស់ ({allWeeklyLogs.length} ជួរ)
+                </button>
+              </div>
+            </div>
+
+            {selectedWeekFilter === 'week2' && (
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-300 text-amber-900 font-bold text-[11px]">
+                <span>🎉 ថ្ងៃចន្ទ ០៩/១១ បុណ្យឯករាជ្យជាតិ (សាលាឈប់សម្រាក) ៖ ថ្នាក់ ១០C និង ១០B បង្កើតនៅថ្ងៃអង្គារ ១០/១១/២០២៦ (周一放假，周一班级直接在周二生成)</span>
               </div>
             )}
           </div>
@@ -1876,13 +2071,16 @@ export const GeipPlanModule: React.FC<Props> = ({
                         {/* Quick-click Chips for Current Week (自动点击填充快捷按钮) */}
                         <div className="flex flex-wrap items-center justify-center gap-0.5 no-print text-[9px] font-sans">
                           {[
-                            { offset: 0, dayKh: 'ចន្ទ', label: 'ចន្ទ ០២' },
-                            { offset: 1, dayKh: 'អង្គារ', label: 'អង្គារ ០៣' },
-                            { offset: 2, dayKh: 'ពុធ', label: 'ពុធ ០៤' },
-                            { offset: 3, dayKh: 'ព្រហ', dayKhFull: 'ព្រហស្បតិ៍', label: 'ព្រហ ០៥' },
-                            { offset: 4, dayKh: 'សុក្រ', label: 'សុក្រ ០៦' },
+                            { offset: 0, dayKh: 'ចន្ទ' },
+                            { offset: 1, dayKh: 'អង្គារ' },
+                            { offset: 2, dayKh: 'ពុធ' },
+                            { offset: 3, dayKh: 'ព្រហ', dayKhFull: 'ព្រហស្បតិ៍' },
+                            { offset: 4, dayKh: 'សុក្រ' },
                           ].map((item) => {
                             const itemDate = addDaysToDdMmYyyy(weekMondayDateInput, item.offset);
+                            const dayNum = itemDate.slice(0, 2);
+                            const isHoliday = weekMondayDateInput === '09/11/2026' && item.offset === 0;
+                            const chipLabel = isHoliday ? `ចន្ទ ${dayNum} (សម្រាក)` : `${item.dayKh} ${dayNum}`;
                             const isActive = log.dateStr === itemDate;
                             return (
                               <button
@@ -1898,11 +2096,17 @@ export const GeipPlanModule: React.FC<Props> = ({
                                 className={`px-1 py-0.5 rounded text-[9px] font-bold transition-all cursor-pointer ${
                                   isActive
                                     ? 'bg-indigo-600 text-white shadow-xs'
+                                    : isHoliday
+                                    ? 'bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200'
                                     : 'bg-slate-100 text-slate-700 hover:bg-indigo-100 hover:text-indigo-900 border border-slate-200'
                                 }`}
-                                title={`ចុចដើម្បីបំពេញ ${itemDate} (${item.dayKhFull || item.dayKh}) ស្វ័យប្រវត្តិ`}
+                                title={
+                                  isHoliday
+                                    ? `${itemDate} បុណ្យឯករាជ្យជាតិ (សាលាឈប់សម្រាក) — ថ្នាក់ចន្ទចូលរៀនថ្ងៃអង្គារ`
+                                    : `ចុចដើម្បីបំពេញ ${itemDate} (${item.dayKhFull || item.dayKh}) ស្វ័យប្រវត្តិ`
+                                }
                               >
-                                {item.label}
+                                {chipLabel}
                               </button>
                             );
                           })}

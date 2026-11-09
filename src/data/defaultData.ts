@@ -25,7 +25,7 @@ import {
   WeeklyLessonLogItem,
   WeeklyLogSignatureMeta,
 } from '../types';
-import { sortAllStudentsInDatabase } from '../utils/calculations';
+import { cleanClassDisplayCode, sortAllStudentsInDatabase } from '../utils/calculations';
 
 export const DEFAULT_SCHOOL_INFO: SchoolInfo = {
   provinceKh: 'រាជធានីភ្នំពេញ',
@@ -972,15 +972,130 @@ function generateDefaultTeacherTaskReports(): AllTeacherTaskReports {
   return reports;
 }
 
-export const DEFAULT_WEEKLY_LOG_META: WeeklyLogSignatureMeta = {
+export const DEFAULT_WEEK1_WEEKLY_LOG_META: WeeklyLogSignatureMeta = {
   fridayDateStr: '06/11/2026',
   lunarDate: 'ថ្ងៃសុក្រ ១២រោច ខែកត្តិក ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០',
   gregorianDate: 'រាជធានីភ្នំពេញ, ថ្ងៃទី០៦ ខែវិច្ឆិកា ឆ្នាំ២០២៦',
   textbookTitle: '快乐汉语（第一册 & 第二册）ភាសាចិនរីករាយ (កំរិត១ និង កំរិត២)',
 };
 
+export const DEFAULT_WEEK2_WEEKLY_LOG_META: WeeklyLogSignatureMeta = {
+  fridayDateStr: '13/11/2026',
+  lunarDate: 'ថ្ងៃសុក្រ ៥កើត ខែកត្តិក ឆ្នាំមមី អដ្ឋស័ក ព.ស.២៥៧០',
+  gregorianDate: 'រាជធានីភ្នំពេញ, ថ្ងៃទី១៣ ខែវិច្ឆិកា ឆ្នាំ២០២៦',
+  textbookTitle: '快乐汉语（第二册）ភាសាចិនរីករាយ (កំរិត២)',
+};
+
+export const DEFAULT_WEEKLY_LOG_META: WeeklyLogSignatureMeta = DEFAULT_WEEK2_WEEKLY_LOG_META;
+
+export const LESSON_7_VOCAB_CONTENT_DETAILS =
+  '1. 生词 (ពាក្យថ្មីទាំង ១១ ពាក្យ) ៖ 1.买 (mǎi : ទិញ) 2.和 (hé : និង/ជាមួយ) 3.点心 (diǎnxin : នំចំណី) 4.还 (hái : នៅ...ទៀត) 5.要 (yào : ចង់បាន/យក) 6.瓶 (píng : ដប) 7.斤 (jīn : គីឡូកន្លះ/៥០០ក្រាម) 8.东西 (dōngxi : របស់របរ/អីវ៉ាន់) 9.水 (shuǐ : ទឹក) 10.酒 (jiǔ : ស្រា) 11.蛋糕 (dàngāo : នំខេក)\n2. 词组搭配与认读 (ការផ្សំពាក្យ និងអាន) ៖ 买东西、一瓶水、一斤苹果、喝水、吃点心、买蛋糕、还要什么\n3. 笔顺与拼音发音 (ហាត់សរសេរតាមលំដាប់លំដោយកម្រងអក្សរ និងបញ្ចេញសំឡេង)\nកិច្ចការផ្ទះ (作业) ៖ ចម្លងពាក្យថ្មីដែលបានរៀនទាំង ១១ ពាក្យ ក្នុង១ពាក្យ ៥ដង ប្រគល់នៅសប្តាហ៍ក្រោយ។ (抄写所学11个生词各5遍，下周交)';
+
+// Weekly Lesson Log for Week 2 (Tuesday 10/11/2026 to Thursday 12/11/2026: Lesson 7 What do you buy? - 11 Vocabulary words + copy 5 times. NOTE: Monday 09/11/2026 is Independence Day holiday, Monday classes generated on Tuesday)
+export const DEFAULT_WEEK2_WEEKLY_LOGS: WeeklyLessonLogItem[] = [
+  {
+    id: 'wlog-w2-1',
+    weekLabel: 'សប្តាហ៍ទី២ (០៩-១៣ វិច្ឆិកា ២០២៦)',
+    dateStr: '10/11/2026',
+    weekdayKh: 'អង្គារ',
+    timeRange: '13:00-14:30',
+    classId: '10C',
+    unitTitle: '第三单元 购物 · ជំពូកទី៣ ការទិញទំនិញ',
+    lessonTitle: '第七课 你买什么？ · មេរៀនទី៧ តើអ្នកទិញអ្វី？ (生词)',
+    contentDetails: LESSON_7_VOCAB_CONTENT_DETAILS,
+  },
+  {
+    id: 'wlog-w2-2',
+    weekLabel: 'សប្តាហ៍ទី២ (០៩-១៣ វិច្ឆិកា ២០២៦)',
+    dateStr: '10/11/2026',
+    weekdayKh: 'អង្គារ',
+    timeRange: '15:00-16:30',
+    classId: '10B',
+    unitTitle: '第三单元 购物 · ជំពូកទី៣ ការទិញទំនិញ',
+    lessonTitle: '第七课 你买什么？ · មេរៀនទី៧ តើអ្នកទិញអ្វី？ (生词)',
+    contentDetails: LESSON_7_VOCAB_CONTENT_DETAILS,
+  },
+  {
+    id: 'wlog-w2-3',
+    weekLabel: 'សប្តាហ៍ទី២ (០៩-១៣ វិច្ឆិកា ២០២៦)',
+    dateStr: '10/11/2026',
+    weekdayKh: 'អង្គារ',
+    timeRange: '13:00-14:30',
+    classId: '9C',
+    unitTitle: '第三单元 购物 · ជំពូកទី៣ ការទិញទំនិញ',
+    lessonTitle: '第七课 你买什么？ · មេរៀនទី៧ តើអ្នកទិញអ្វី？ (生词)',
+    contentDetails: LESSON_7_VOCAB_CONTENT_DETAILS,
+  },
+  {
+    id: 'wlog-w2-4',
+    weekLabel: 'សប្តាហ៍ទី២ (០៩-១៣ វិច្ឆិកា ២០២៦)',
+    dateStr: '10/11/2026',
+    weekdayKh: 'អង្គារ',
+    timeRange: '13:00-14:30',
+    classId: '8C',
+    unitTitle: '第三单元 购物 · ជំពូកទី៣ ការទិញទំនិញ',
+    lessonTitle: '第七课 你买什么？ · មេរៀនទី៧ តើអ្នកទិញអ្វី？ (生词)',
+    contentDetails: LESSON_7_VOCAB_CONTENT_DETAILS,
+  },
+  {
+    id: 'wlog-w2-5',
+    weekLabel: 'សប្តាហ៍ទី២ (០៩-១៣ វិច្ឆិកា ២០២៦)',
+    dateStr: '10/11/2026',
+    weekdayKh: 'អង្គារ',
+    timeRange: '15:00-16:30',
+    classId: '8A',
+    unitTitle: '第三单元 购物 · ជំពូកទី៣ ការទិញទំនិញ',
+    lessonTitle: '第七课 你买什么？ · មេរៀនទី៧ តើអ្នកទិញអ្វី？ (生词)',
+    contentDetails: LESSON_7_VOCAB_CONTENT_DETAILS,
+  },
+  {
+    id: 'wlog-w2-6',
+    weekLabel: 'សប្តាហ៍ទី២ (០៩-១៣ វិច្ឆិកា ២០២៦)',
+    dateStr: '11/11/2026',
+    weekdayKh: 'ពុធ',
+    timeRange: '15:00-16:30',
+    classId: '9A',
+    unitTitle: '第三单元 购物 · ជំពូកទី៣ ការទិញទំនិញ',
+    lessonTitle: '第七课 你买什么？ · មេរៀនទី៧ តើអ្នកទិញអ្វី？ (生词)',
+    contentDetails: LESSON_7_VOCAB_CONTENT_DETAILS,
+  },
+  {
+    id: 'wlog-w2-7',
+    weekLabel: 'សប្តាហ៍ទី២ (០៩-១៣ វិច្ឆិកា ២០២៦)',
+    dateStr: '11/11/2026',
+    weekdayKh: 'ពុធ',
+    timeRange: '13:00-14:30',
+    classId: '10A',
+    unitTitle: '第三单元 购物 · ជំពូកទី៣ ការទិញទំនិញ',
+    lessonTitle: '第七课 你买什么？ · មេរៀនទី៧ តើអ្នកទិញអ្វី？ (生词)',
+    contentDetails: LESSON_7_VOCAB_CONTENT_DETAILS,
+  },
+  {
+    id: 'wlog-w2-8',
+    weekLabel: 'សប្តាហ៍ទី២ (០៩-១៣ វិច្ឆិកា ២០២៦)',
+    dateStr: '12/11/2026',
+    weekdayKh: 'ព្រហស្បតិ៍',
+    timeRange: '13:00-14:30',
+    classId: '9B',
+    unitTitle: '第三单元 购物 · ជំពូកទី៣ ការទិញទំនិញ',
+    lessonTitle: '第七课 你买什么？ · មេរៀនទី៧ តើអ្នកទិញអ្វី？ (生词)',
+    contentDetails: LESSON_7_VOCAB_CONTENT_DETAILS,
+  },
+  {
+    id: 'wlog-w2-9',
+    weekLabel: 'សប្តាហ៍ទី២ (០៩-១៣ វិច្ឆិកា ២០២៦)',
+    dateStr: '12/11/2026',
+    weekdayKh: 'ព្រហស្បតិ៍',
+    timeRange: '15:00-16:30',
+    classId: '8B',
+    unitTitle: '第三单元 购物 · ជំពូកទី៣ ការទិញទំនិញ',
+    lessonTitle: '第七课 你买什么？ · មេរៀនទី៧ តើអ្នកទិញអ្វី？ (生词)',
+    contentDetails: LESSON_7_VOCAB_CONTENT_DETAILS,
+  },
+];
+
 // Exact Weekly Lesson Log for Week 1 (Monday to Thursday: Review Pinyin 23 initials & 24 finals + homework copy 5 times)
-export const DEFAULT_WEEKLY_LOGS: WeeklyLessonLogItem[] = [
+export const DEFAULT_WEEK1_WEEKLY_LOGS: WeeklyLessonLogItem[] = [
   {
     id: 'wlog-1',
     weekLabel: 'សប្តាហ៍ទី១ (០២-០៦ វិច្ឆិកា ២០២៦)',
@@ -1079,6 +1194,11 @@ export const DEFAULT_WEEKLY_LOGS: WeeklyLessonLogItem[] = [
   },
 ];
 
+export const DEFAULT_WEEKLY_LOGS: WeeklyLessonLogItem[] = [
+  ...DEFAULT_WEEK2_WEEKLY_LOGS,
+  ...DEFAULT_WEEK1_WEEKLY_LOGS,
+];
+
 // Exact Annual Chinese Curriculum Plan from PDF 3 (កម្មវិធីសិក្សាភាសាចិន កំរិត២ ឆ្នាំសិក្សា ២០២៥ ~ ២០២៦)
 export const DEFAULT_CURRICULUM_PLAN: CurriculumPlanItem[] = [
   {
@@ -1096,10 +1216,10 @@ export const DEFAULT_CURRICULUM_PLAN: CurriculumPlanItem[] = [
     monthNameKh: 'វិច្ឆិកា',
     weekNumber: '២',
     lessonContent:
-      '第一单元 我和朋友 · 第一课 他是谁 (មេរៀនទី១ តើគាត់គឺជានរណា)\n1. 生词 ពាក្យថ្មី៖ 姓、名字、多、朋友、谁、欢迎、地方、国家、号码\n2. 句型 ទម្រង់ល្បះ៖ ①你姓什么？ ②叫什么名字？ ③我姓马，我叫马丽丽。 ④他是谁？',
-    pageNumber: 'សៀ.សិស្ស ៣',
+      '第三单元 购物 · 第七课 你买什么？ (មេរៀនទី៧ តើអ្នកទិញអ្វី? — 第一周只教生词)\n一. 生词 (ពាក្យថ្មីទាំង ១១ ពាក្យ) ៖ 1.买 (mǎi) 2.和 (hé) 3.点心 (diǎnxin) 4.还 (hái) 5.要 (yào) 6.瓶 (píng) 7.斤 (jīn) 8.东西 (dōngxi) 9.水 (shuǐ) 10.酒 (jiǔ) 11.蛋糕 (dàngāo)\n二. 词组与搭配 (ឃ្លា និងការផ្គុំពាក្យ) ៖ 买东西、一瓶水、一斤苹果、喝水、喝酒、吃点心、买蛋糕\n三. 作业 (កិច្ចការផ្ទះ) ៖ 抄写所学11个生词各5遍 (ចម្លងពាក្យថ្មីដែលបានរៀនទាំង ១១ ពាក្យ ក្នុង១ពាក្យ ៥ដង)',
+    pageNumber: 'សៀ.សិស្ស (២៨-២៩)',
     hours: 1.5,
-    note: '',
+    note: 'សប្តាហ៍ទី២ (រៀនតែពាក្យថ្មី)',
   },
   {
     id: 'cur-3',
@@ -1252,6 +1372,109 @@ export const DEFAULT_LESSON_PLANS: ChineseLessonPlan[] = [
             teacherActivity: '១. ដាក់កិច្ចការផ្ទះឱ្យសិស្សហាត់សរសេរ និងទន្ទេញ\n២. ណែនាំសិស្សឱ្យស្វ័យសិក្សា និងរៀបចំសម្រាប់មេរៀនទី១ សប្តាហ៍ក្រោយ',
             lessonContent: '作业 (កិច្ចការផ្ទះ)៖ ចូរប្អូនៗចម្លងព្យញ្ជនៈ (声母) ២៣ តួ និងស្រៈ (韵母) ២៤ តួ ម្នាក់ ៣ ចប់ និងទន្ទេញឱ្យចាំមាត់។',
             studentActivity: 'សិស្សកត់ត្រាកិច្ចការផ្ទះចូលក្នុងសៀវភៅ និងស្តាប់ការណែនាំរបស់គ្រូដោយយកចិត្តទុកដាក់',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'lp-week2-shopping',
+    linkedCurriculumId: 'cur-2',
+    dateWeekday: 'ចន្ទ',
+    dateDay: '០៩',
+    dateMonth: 'វិច្ឆិកា',
+    dateYear: '២០២៦',
+    isoDate: '2026-11-09',
+    chapterTitle: '第三单元 购物 · ជំពូកទី៣ ការទិញទំនិញ',
+    lessonTitle: '第七课 你买什么？ · មេរៀនទី៧ តើអ្នកទិញអ្វី？ (第一周只教生词)',
+    durationLabel: '១.៥ ម៉ោងសិក្សា (១ម៉ោងសិក្សា មាន៩០នាទី)',
+    pagesLabel: 'ទំព័រទី២៨ ដល់ ទំព័រទី២៩ (សៀវភៅពុម្ព 生词表)',
+    textbookSource: 'សៀវភៅសិក្សាគោល ភាសាចិនរីករាយ 快乐汉语 (第一册) KUAILE HANYU',
+    knowledgeObjective:
+      'សិស្សស្គាល់ ចងចាំ និងយល់អត្ថន័យយ៉ាងច្បាស់លាស់នូវពាក្យថ្មីទាំង ១១ ពាក្យក្នុងមេរៀនទី៧ រួមមាន៖ 1.买 (mǎi - ទិញ), 2.和 (hé - និង/ជាមួយ), 3.点心 (diǎnxin - នំចំណី/អាហារសម្រន់), 4.还 (hái - នៅ...ទៀត/ថែមទាំង), 5.要 (yào - ចង់បាន/យក), 6.瓶 (píng - ដប), 7.斤 (jīn - គីឡូកន្លះ/៥០០ក្រាម), 8.东西 (dōngxi - របស់របរ/អីវ៉ាន់), 9.水 (shuǐ - ទឹក), 10.酒 (jiǔ - ស្រា), 11.蛋糕 (dàngāo - នំខេក) តាមរយៈការបញ្ចេញសំឡេងភីនអ៊ីន ការពន្យល់របស់គ្រូ និងប័ណ្ណរូបភាព។',
+    skillObjective:
+      'សិស្សមានសមត្ថភាពអាន បញ្ចេញសំឡេងភីនអ៊ីនបានត្រឹមត្រូវ ច្បាស់លាស់ ស្គាល់ទម្រង់តួអក្សរចិន ចេះសរសេរពាក្យថ្មីទាំង ១១ ពាក្យតាមលំដាប់លំដោយគំនូសអក្សរចិនត្រឹមត្រូវ និងចេះផ្សំផ្គុំជាឃ្លាខ្លីៗដែលទាក់ទងនឹងជីវភាពរស់នៅ (ឧ. 买东西, 一瓶水, 买点心, 喝水, 吃蛋糕)។',
+    attitudeObjective:
+      'សិស្សមានវិន័យល្អ យកចិត្តទុកដាក់ខ្ពស់ ចូលរួមអានពាក្យថ្មីដោយស្វាហាប់ និងសហការជាមួយមិត្តភក្តិក្នុងការអនុវត្តសរសេរពាក្យចិន។',
+    teachingMaterialsTeacher:
+      'សៀវភៅសម្រាប់គ្រូ កិច្ចតែងការបង្រៀន ប័ណ្ណពាក្យរូបភាព (Flashcards វត្ថុពិត/រូបភាព៖ ទឹក ដប នំខេក នំចំណី ស្រា របស់របរ) កាតពាក្យភីនអ៊ីន និងស្លាយបង្ហាញលំដាប់គំនូសអក្សរចិន',
+    teachingMaterialsStudent:
+      'សៀវភៅគោលសម្រាប់សិស្ស (快乐汉语 第一册) សៀវភៅកត់ត្រា ប៊ិច និងបន្ទះអនុវត្តសរសេរអក្សរចិន',
+    sessions: [
+      {
+        sessionTitle: 'ម៉ោងសិក្សាទី១ — រៀនពាក្យថ្មីទាំង ១១ ពាក្យ (第一课时：学习第七课11个生词与拼音认读)',
+        steps: [
+          {
+            stepTitle: 'ជំហានទី១ លំនឹងថ្នាក់ (៥នាទី)',
+            teacherActivity: '១. ស្វាគមន៍សិស្សក្នុងថ្នាក់រៀន\n២. ត្រួតពិនិត្យអនាម័យ សណ្តាប់ធ្នាប់ ឯកសណ្ឋាន និងវត្តមានសិស្ស',
+            lessonContent: 'ពង្រឹងវិន័យ សណ្តាប់ធ្នាប់ បង្កើតបរិយាកាសរីករាយ និងពិនិត្យវត្តមានសិស្ស',
+            studentActivity: 'សិស្សក្រោកឈរជម្រាបសួរគ្រូ ស្លៀកពាក់ត្រឹមត្រូវ អង្គុយត្រង់ ប្រធានថ្នាក់រាយការណ៍វត្តមាន',
+          },
+          {
+            stepTitle: 'ជំហានទី២ រំលឹកមេរៀនចាស់ (១០នាទី)',
+            teacherActivity: 'សួរសំណួររំលឹកព្យញ្ជនៈ ស្រៈភីនអ៊ីន និងសូរសំឡេងទាំង៤ ដើម្បីត្រៀមប្រកបអានពាក្យថ្មី',
+            lessonContent: 'រំលឹកមូលដ្ឋានគ្រឹះភីនអ៊ីន (声母与韵母) ដើម្បីជួយសិស្សប្រកបអានពាក្យថ្មីបានត្រឹមត្រូវ',
+            studentActivity: 'សិស្សលើកដៃឆ្លើយសំណួរគ្រូ និងបញ្ចេញសំឡេងភីនអ៊ីនដោយភាពជឿជាក់',
+          },
+          {
+            stepTitle: 'ជំហានទី៣ ខ្លឹមសារមេរៀន (៦០នាទី)',
+            teacherActivity:
+              '១. សរសេរចំណងជើង «第三单元 购物 · 第七课 你买什么？(第一周只教生词)» លើក្តារខៀន\n២. បង្ហាញរូបភាព និងប័ណ្ណពាក្យ បង្រៀនពាក្យថ្មីទាំង ១១ ពាក្យម្តងមួយៗ (1.买 2.和 3.点心 4.还 5.要 6.瓶 7.斤 8.东西 9.水 10.酒 11.蛋糕) ដោយពន្យល់ពីអត្ថន័យ ភីនអ៊ីន និងប្រភេទពាក្យ (កិរិយាសព្ទ, នាម, ឈ្នាប់, រនាប់)\n៣. បង្វឹកសិស្សអានបញ្ចេញសំឡេងភីនអ៊ីនឱ្យបានត្រឹមត្រូវ ជាពិសេសសំឡេងទី៣ (mǎi, shuǐ, jiǔ) និងសូរសំឡេងស្រាល (diǎnxin, dōngxi)\n៤. ណែនាំឃ្លាផ្គុំខ្លីៗ ៖ 买东西 (ទិញអីវ៉ាន់), 一瓶水 (ទឹកមួយដប), 一斤苹果 (ផ្លែប៉ោមមួយជីន), 吃点心 (ញ៉ាំនំចំណី), 买蛋糕 (ទិញនំខេក)\n៥. ហៅសិស្សអានជាក្រុម អានជាជួរ និងអានម្នាក់ម្តងៗ រួចកែតម្រង់ការបញ្ចេញសំឡេង',
+            lessonContent:
+              '第三单元 购物 · 第七课 你买什么？ (第一周只教生词)\n\n一. 生词 (ពាក្យថ្មីទាំង ១១ ពាក្យ) ៖\n1. 买 (mǎi) ៖ [កិ.] ទិញ (to buy)\n2. 和 (hé) ៖ [ឈ្នាប់] និង, ជាមួយ (and, with)\n3. 点心 (diǎnxin) ៖ [ន.] នំចំណី, អាហារសម្រន់ (dim sum, pastry, snack)\n4. 还 (hái) ៖ [គុ.កិ.] នៅ...ទៀត, ថែមទាំង (still, also, in addition)\n5. 要 (yào) ៖ [កិ.] ចង់បាន, ត្រូវការ, យក (to want, to need)\n6. 瓶 (píng) ៖ [រនាប់] ដប (bottle) — ឧ. 一瓶水 ទឹកមួយដប, 一瓶酒 ស្រាមួយដប\n7. 斤 (jīn) ៖ [រនាប់] គីឡូកន្លះ, ជីន = 500ក្រាម (half kilo / catty) — ឧ. 一斤 មួយជីន\n8. 东西 (dōngxi) ៖ [ន.] របស់របរ, អីវ៉ាន់ (things, stuff) — ឧ. 买东西 ទិញអីវ៉ាន់\n9. 水 (shuǐ) ៖ [ន.] ទឹក (water) — ឧ. 喝水 ផឹកទឹក, 矿泉水 ទឹកបរិសុទ្ធ\n10. 酒 (jiǔ) ៖ [ន.] ស្រា (wine, liquor, alcohol) — ឧ. 啤酒 ស្រាបៀរ, 红酒 ស្រាក្រហម\n11. 蛋糕 (dàngāo) ៖ [ន.] នំខេក (cake) — ឧ. 生日蛋糕 នំខេកថ្ងៃកំណើត\n\n二. 词组搭配 (ការផ្គុំពាក្យជាឃ្លាខ្លីៗ) ៖\n• 买东西 (ទិញអីវ៉ាន់) · 买点心 (ទិញនំចំណី) · 买蛋糕 (ទិញនំខេក)\n• 一瓶水 (ទឹកមួយដប) · 一瓶酒 (ស្រាមួយដប) · 一斤东西 (របស់មួយជីន)\n• 喝水 (ផឹកទឹក) · 要水 (យកទឹក) · 还要 (នៅយក...ទៀត)',
+            studentActivity:
+              'សិស្សផ្ចង់អារម្មណ៍ស្តាប់គ្រូពន្យល់ សង្កេតរូបភាព និងប័ណ្ណពាក្យ អានតាមគ្រូជាក្រុមនិងម្នាក់ៗ ហាត់បញ្ចេញសំឡេងភីនអ៊ីនឱ្យបានត្រឹមត្រូវ និងចម្លងពាក្យថ្មីទាំង ១១ ចូលសៀវភៅកត់ត្រាឱ្យបានស្អាត។',
+          },
+          {
+            stepTitle: 'ជំហានទី៤ ពង្រឹងពុទ្ធិ (១០នាទី)',
+            teacherActivity:
+              '១. ចង្អុលបង្ហាញរូបភាព (ទឹក ដប នំខេក នំចំណី ស្រា របស់របរ) ឱ្យសិស្សឆ្លើយពាក្យចិនភ្លាមៗ\n២. គ្រូអានភីនអ៊ីន ឱ្យសិស្សរកតួអក្សរចិន និងប្រាប់អត្ថន័យ',
+            lessonContent: 'ពង្រឹងការចងចាំពាក្យថ្មីទាំង ១១ ពាក្យ (会读会记 会正确发音)',
+            studentActivity: 'សិស្សឆ្លើយសំណួរគ្រូ និងប្រកួតប្រជែងអានពាក្យថ្មីដោយភាពរស់រវើក',
+          },
+          {
+            stepTitle: 'ជំហានទី៥ បណ្តាំផ្ញើ និងកិច្ចការផ្ទះ (៥នាទី)',
+            teacherActivity: '១. ដាក់កិច្ចការផ្ទះឱ្យសិស្សចម្លងពាក្យថ្មីដែលបានរៀន ៥ដង\n២. ណែនាំសិស្សឱ្យទន្ទេញពាក្យថ្មីឱ្យចាំមាត់',
+            lessonContent: '作业 (កិច្ចការផ្ទះ)៖ ចូរប្អូនៗចម្លងពាក្យថ្មីដែលបានរៀនទាំង ១១ ពាក្យ (1.买 2.和 3.点心 4.还 5.要 6.瓶 7.斤 8.东西 9.水 10.酒 11.蛋糕) ក្នុងមួយពាក្យសរសេរចំនួន ៥ដង (抄写所学的生词写5遍) ព្រមទាំងភីនអ៊ីន និងអត្ថន័យខ្មែរ រួចទន្ទេញឱ្យចាំមាត់ ប្រគល់នៅសប្តាហ៍ក្រោយ។',
+            studentActivity: 'សិស្សកត់ត្រាកិច្ចការផ្ទះចូលក្នុងសៀវភៅ និងស្តាប់ការណែនាំរបស់គ្រូដោយយកចិត្តទុកដាក់',
+          },
+        ],
+      },
+      {
+        sessionTitle: 'ម៉ោងសិក្សាទី២ — ហ្វឹកហាត់អាន ស្គាល់អក្សរ និងសរសេរពាក្យថ្មី (第二课时：生词认读拓展与汉字书写)',
+        steps: [
+          {
+            stepTitle: 'ជំហានទី១ លំនឹងថ្នាក់ (៥នាទី)',
+            teacherActivity: 'ត្រួតពិនិត្យវត្តមាន អនាម័យ និងសណ្តាប់ធ្នាប់សិស្សក្នុងថ្នាក់',
+            lessonContent: 'ពង្រឹងវិន័យ និងត្រួតពិនិត្យវត្តមានសិស្ស',
+            studentActivity: 'សិស្សរៀបចំសៀវភៅ ប៊ិច និងត្រៀមរៀន',
+          },
+          {
+            stepTitle: 'ជំហានទី២ រំលឹកមេរៀនចាស់ (១០នាទី)',
+            teacherActivity: 'ហៅសិស្ស ៣ នាក់ឡើងក្តារខៀន សរសេរភីនអ៊ីន និងអានពាក្យថ្មី 买, 东西, 水, 蛋糕, 瓶, 酒',
+            lessonContent: 'រំលឹកពាក្យថ្មីទាំង ១១ ពាក្យដែលបានរៀនក្នុងម៉ោងសិក្សាទី១',
+            studentActivity: 'សិស្សឡើងអាន និងសរសេរលើក្តារខៀន សិស្សឯទៀតផ្ទៀងផ្ទាត់ក្នុងសៀវភៅ',
+          },
+          {
+            stepTitle: 'ជំហានទី៣ ខ្លឹមសារមេរៀន (៦០នាទី)',
+            teacherActivity:
+              '១. ដឹកនាំសិស្សលេងល្បែងផ្គូផ្គងពាក្យថ្មី (生词配对游戏 ៖ 买+东西, 一瓶+水, 一瓶+酒, 一斤+点心)\n២. បង្រៀនគំនូស និងលំដាប់គំនូសអក្សរចិននៃពាក្យថ្មីលើក្តារខៀន ៖\n• 买 (6 画) ៖ 横撇、点、点、撇、点、撇\n• 水 (4 画) ៖ 竖钩、横撇、撇、捺\n• 和 (8 画) ៖ 禾字旁 (5 画) + 口 (3 画)\n• 东 (5 画), 西 (6 画) ៖ 东西\n• 蛋 (11 画), 糕 (16 画) ៖ 蛋糕\n៣. ណែនាំសិស្សឱ្យហាត់សរសេរតាមលំដាប់លំដោយគំនូសអក្សរចិនត្រឹមត្រូវ',
+            lessonContent:
+              '一. 生词认读与词组 (ការអាន និងផ្សំផ្គុំពាក្យថ្មី) ៖\n• 买 (买东西, 买点心, 买蛋糕)\n• 要 (要水, 还要, 要一瓶水)\n• 和 (水和酒, 点心和蛋糕)\n\n二. 汉字笔画笔顺 (គំនូស និងលំដាប់គំនូសអក្សរចិន) ៖\n1. 买 (6 画) ៖ 横撇、点、点、撇、点、撇\n2. 水 (4 画) ៖ 竖钩、横撇、撇、捺\n3. 和 (8 画) ៖ 禾 (5 画) + 口 (3 画)\n4. 东西 ៖ 东 (5 画: 横、撇折、竖钩、撇、点) + 西 (6 画: 横、竖、横折、撇、竖弯、横)',
+            studentActivity:
+              'សិស្សសង្កេតគំនូសលើក្តារខៀន យកម្រាមដៃគូសវាសលើខ្យល់តាមគ្រូ ហាត់សរសេរអក្សរចិន 买, 水, 和, 东西 ក្នុងសៀវភៅលំហាត់ និងលេងល្បែងផ្គូផ្គងពាក្យថ្មី។',
+          },
+          {
+            stepTitle: 'ជំហានទី៤ ពង្រឹងពុទ្ធិ (១០នាទី)',
+            teacherActivity: 'ហៅសិស្ស ២ នាក់ឡើងសរសេរអក្សរ 买 និង 水 លើក្តារខៀន រួចឱ្យថ្នាក់ទាំងមូលផ្ទៀងផ្ទាត់',
+            lessonContent: 'ពង្រឹងការសរសេរអក្សរចិន និងការចងចាំពាក្យថ្មី',
+            studentActivity: 'សិស្សឡើងសរសេរលើក្តារខៀន និងអានពាក្យឱ្យបានច្បាស់ៗ',
+          },
+          {
+            stepTitle: 'ជំហានទី៥ បណ្តាំផ្ញើ និងកិច្ចការផ្ទះ (៥នាទី)',
+            teacherActivity: 'រំលឹកកិច្ចការផ្ទះឱ្យសិស្សចម្លងពាក្យថ្មីដែលបានរៀន ៥ដង និងទន្ទេញឱ្យចាំមាត់',
+            lessonContent: '作业 (កិច្ចការផ្ទះ)៖ 抄写所学生词写5遍 — ចម្លងពាក្យថ្មីដែលបានរៀនទាំង ១១ ពាក្យ ក្នុង១ពាក្យ ៥ដង (买, 和, 点心, 还, 要, 瓶, 斤, 东西, 水, 酒, 蛋糕) ព្រមទាំងភីនអ៊ីន និងអត្ថន័យ រួចទន្ទេញឱ្យចាំមាត់។',
+            studentActivity: 'សិស្សកត់ត្រាកិច្ចការផ្ទះ និងស្តាប់ការផ្តាំផ្ញើរបស់គ្រូ',
           },
         ],
       },
@@ -2044,10 +2267,10 @@ export function generateDefaultDailyHomeworkRecords(
   const defaultPinyinReviewTopic = {
     assigned: true,
     unitTitle: '汉语基础（复习）· មូលដ្ឋានគ្រឹះភាសាចិន (រំលឹកមេរៀន)',
-    lessonTitle: '复习拼音：23个声母和24个韵母 · រំលឹកភីនអ៊ីន (ព្យញ្ជនៈ និងស្រៈ)',
+    lessonTitle: '复习拼音：声母与韵母 · រំលឹកភីនអ៊ីន (ព្យញ្ជនៈ ២៣ និង ស្រៈ ២៤)',
     lessonContent:
-      '1. រំលឹកព្យញ្ជនៈទាំង ២៣ (២៣ 声母) ៖ b, p, m, f, d, t, n, l, g, k, h, j, q, x, zh, ch, sh, r, z, c, s, y, w\n2. រំលឹកស្រៈទាំង ២៤ (២៤ 韵母) ៖ a, o, e, i, u, ü, ai, ei, ui, ao, ou, iu, ie, üe, er, an, en, in, un, ün, ang, eng, ing, ong\n3. ហាត់អាន បញ្ចេញសំឡេង និងសរសេរ (会读会记 会正确发音与书写)',
-    title: '抄写声母和韵母5遍 (ចម្លងព្យញ្ជនៈ និងស្រៈ ៥ដង)',
+      '1. រំលឹកព្យញ្ជនៈទាំង ២៣ (២៣ 声母) ៖ b, p, m, f, d, t, n, l, g, k, h, j, q, x, zh, ch, sh, r, z, c, s, y, w\n2. រំលឹកស្រៈទាំង ២៤ (២៤ 韵母) ៖ a, o, e, i, u, ü, ai, ei, ui, ao, ou, iu, ie, üe, er, an, en, in, un, ün, ang, eng, ing, ong\n3. ហាត់អាន បញ្ចេញសំឡេង និងសរសេរឱ្យបានត្រឹមត្រូវ (会读会记 会正确拼读与书写)',
+    title: 'ចម្លងភីនអ៊ីន ៥ដង (抄写声母和韵母各5遍)',
     detail:
       'ចម្លងព្យញ្ជនៈ (声母) ២៣ និង ស្រៈ (韵母) ២៤ ចំនួន ៥ដង ប្រគល់នៅសប្តាហ៍ក្រោយ។ (抄写声母和韵母各5遍，下周交)',
     dueDate: 'សប្តាហ៍ក្រោយ (下周交)',
@@ -2072,32 +2295,35 @@ export function generateDefaultDailyHomeworkRecords(
     '9B': { ...defaultPinyinReviewTopic },
     '9C': { ...defaultPinyinReviewTopic },
     '10A': { ...defaultPinyinReviewTopic },
+    '10B': { ...defaultPinyinReviewTopic },
     '10C': { ...defaultPinyinReviewTopic },
   };
 
   const novFirstDates: Record<string, string> = {
+    '10C': '2026-11-02',
+    '10B': '2026-11-02',
     '9A': '2026-11-02',
     '9C': '2026-11-02',
     '8C': '2026-11-03',
     '8A': '2026-11-03',
     '10A': '2026-11-04',
-    '10C': '2026-11-04',
     '9B': '2026-11-05',
     '8B': '2026-11-05',
   };
 
   return classes.map((cls) => {
     const classStudents = students.filter((s) => s.classId === cls.id);
-    const hwDate = novFirstDates[cls.id] || todayIso;
-    const cfg = defaultTopics[cls.id] || {
-      assigned: true,
-      unitTitle: '第一单元 · ជំពូកទី១',
-      lessonTitle: 'មេរៀនភាសាចិនប្រចាំសប្តាហ៍',
-      lessonContent: '1. ពាក្យថ្មី និងឃ្លាសន្ទនាប្រចាំថ្ងៃ',
-      title: 'កិច្ចការផ្ទះភាសាចិនប្រចាំថ្ងៃ (日常汉语作业)',
-      detail: 'ហាត់សរសេរពាក្យថ្មី និងធ្វើលំហាត់ក្នុងសៀវភៅពុម្ព។',
-      dueDate: 'សប្តាហ៍ក្រោយ',
-    };
+    const cleanCode = cleanClassDisplayCode(cls.name || cls.id) || cls.name || cls.id;
+    const dayShort = (cls.scheduleDayKh || '').replace(/^ថ្ងៃ\s*/g, '').trim();
+
+    let hwDate = novFirstDates[cleanCode] || novFirstDates[cls.id] || todayIso;
+    if (dayShort === 'ចន្ទ') hwDate = '2026-11-02';
+    else if (dayShort === 'អង្គារ') hwDate = '2026-11-03';
+    else if (dayShort === 'ពុធ') hwDate = '2026-11-04';
+    else if (dayShort === 'ព្រហស្បតិ៍') hwDate = '2026-11-05';
+    else if (dayShort === 'សុក្រ') hwDate = '2026-11-06';
+
+    const cfg = defaultTopics[cleanCode] || defaultTopics[cls.id] || defaultPinyinReviewTopic;
     const submissions: Record<string, 'submitted' | 'missing'> = {};
     const notes: Record<string, string> = {};
     classStudents.forEach((stu, idx) => {
@@ -2120,6 +2346,73 @@ export function generateDefaultDailyHomeworkRecords(
       homeworkTitle: cfg.title,
       homeworkDetail: cfg.detail,
       dueDate: cfg.dueDate,
+      submissions,
+      notes,
+    };
+  });
+}
+
+export function generateWeek2DailyHomeworkRecords(
+  classes: ClassGroup[] = DEFAULT_CLASSES,
+  students: Student[] = DEFAULT_STUDENTS
+): DailyHomeworkRecord[] {
+  const week2Topic = {
+    assigned: true,
+    unitTitle: '第三单元 购物 · ជំពូកទី៣ ការទិញទំនិញ',
+    lessonTitle: '第七课 你买什么？ · មេរៀនទី៧ តើអ្នកទិញអ្វី？ (生词)',
+    lessonContent: LESSON_7_VOCAB_CONTENT_DETAILS,
+    title: 'ចម្លងពាក្យថ្មី ៥ដង (抄写生词5遍)',
+    detail:
+      'ចម្លងពាក្យថ្មីដែលបានរៀនទាំង ១១ ពាក្យ ក្នុង១ពាក្យ ៥ដង ប្រគល់នៅសប្តាហ៍ក្រោយ។ (抄写所学11个生词各5遍，下周交)',
+    dueDate: 'សប្តាហ៍ក្រោយ (下周交)',
+  };
+
+  const week2Dates: Record<string, string> = {
+    '10C': '2026-11-10', // 星期一放假，排在星期二
+    '10B': '2026-11-10', // 星期一放假，排在星期二
+    '9A': '2026-11-11',
+    '9C': '2026-11-10',
+    '8C': '2026-11-10',
+    '8A': '2026-11-10',
+    '10A': '2026-11-11',
+    '9B': '2026-11-12',
+    '8B': '2026-11-12',
+  };
+
+  return classes.map((cls) => {
+    const classStudents = students.filter((s) => s.classId === cls.id);
+    const cleanCode = cleanClassDisplayCode(cls.name || cls.id) || cls.name || cls.id;
+    const dayShort = (cls.scheduleDayKh || '').replace(/^ថ្ងៃ\s*/g, '').trim();
+
+    let hwDate = week2Dates[cleanCode] || week2Dates[cls.id] || '2026-11-10';
+    if (dayShort === 'ចន្ទ') hwDate = '2026-11-10'; // 星期一放假，排在星期二
+    else if (dayShort === 'អង្គារ') hwDate = '2026-11-10';
+    else if (dayShort === 'ពុធ') hwDate = '2026-11-11';
+    else if (dayShort === 'ព្រហស្បតិ៍') hwDate = '2026-11-12';
+    else if (dayShort === 'សុក្រ') hwDate = '2026-11-13';
+
+    const submissions: Record<string, 'submitted' | 'missing'> = {};
+    const notes: Record<string, string> = {};
+    classStudents.forEach((stu, idx) => {
+      const isNeverPresent =
+        stu.status === 'dropped' || (stu.note || '').includes('មិនដែលមករៀន');
+      const isMissing = isNeverPresent || idx % 6 === 4;
+      submissions[stu.id] = isMissing ? 'missing' : 'submitted';
+      notes[stu.id] = isMissing ? 'មិនទាន់ប្រគល់សៀវភៅ' : '';
+    });
+
+    return {
+      id: `hw-${cls.id}-${hwDate}`,
+      classId: cls.id,
+      date: hwDate,
+      assigned: week2Topic.assigned,
+      lessonUnitTitle: week2Topic.unitTitle,
+      lessonTitle: week2Topic.lessonTitle,
+      lessonContentDetails: week2Topic.lessonContent,
+      syncedToWeeklyLog: true,
+      homeworkTitle: week2Topic.title,
+      homeworkDetail: week2Topic.detail,
+      dueDate: week2Topic.dueDate,
       submissions,
       notes,
     };

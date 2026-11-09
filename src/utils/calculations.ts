@@ -2297,7 +2297,7 @@ export function syncLessonPlansFromCurriculum(
                 );
             return {
               ...sess,
-              sessionTitle: `ម៉ោងសិក្សាទី១ — ${parsed.lessonTitle}`,
+              sessionTitle: sess.sessionTitle || `ម៉ោងសិក្សាទី១ — ${parsed.lessonTitle}`,
               steps: nextSteps,
             };
           })
@@ -2317,8 +2317,8 @@ export function syncLessonPlansFromCurriculum(
       dateMonth: existing?.dateMonth || item.monthNameKh,
       dateYear: existing?.dateYear,
       isoDate: existing?.isoDate,
-      chapterTitle: parsed.chapterTitle,
-      lessonTitle: parsed.lessonTitle,
+      chapterTitle: existing?.chapterTitle || parsed.chapterTitle,
+      lessonTitle: existing?.lessonTitle || parsed.lessonTitle,
       durationLabel,
       pagesLabel,
       textbookSource:
@@ -2494,13 +2494,17 @@ export function syncWeeklyLogsFromDailyHomework(
           'ចន្ទ';
 
     const unitTitle =
-      (shouldPropagateFromEdited ? sourceRec?.lessonUnitTitle : existingLog?.unitTitle || sourceRec?.lessonUnitTitle) ||
-      '第一单元 · ជំពូកទី១';
+      (shouldPropagateFromEdited ? sourceRec?.lessonUnitTitle : (existingLog?.unitTitle && !existingLog.unitTitle.includes('第一单元') ? existingLog.unitTitle : sourceRec?.lessonUnitTitle)) ||
+      '汉语基础（复习）· មូលដ្ឋានគ្រឹះភាសាចិន (រំលឹកមេរៀន)';
+    const cleanExistingLessonTitle =
+      existingLog?.lessonTitle && !existingLog.lessonTitle.includes('មេរៀនប្រចាំសប្តាហ៍') && !existingLog.lessonTitle.includes('មេរៀនភាសាចិនប្រចាំសប្តាហ៍')
+        ? existingLog.lessonTitle
+        : '';
     const lessonTitle =
       (shouldPropagateFromEdited
         ? sourceRec?.lessonTitle || sourceRec?.homeworkTitle
-        : existingLog?.lessonTitle || sourceRec?.lessonTitle || sourceRec?.homeworkTitle) ||
-      'មេរៀនប្រចាំសប្តាហ៍';
+        : cleanExistingLessonTitle || sourceRec?.lessonTitle || sourceRec?.homeworkTitle) ||
+      '复习拼音：声母与韵母 · រំលឹកភីនអ៊ីន (ព្យញ្ជនៈ ២៣ និង ស្រៈ ២៤)';
 
     const combinedDetails = [
       sourceRec?.lessonContentDetails || '',

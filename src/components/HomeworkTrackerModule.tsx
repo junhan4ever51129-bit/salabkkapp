@@ -33,7 +33,11 @@ import { AiGeneratorBar } from './AiGeneratorBar';
 import {
   DEFAULT_WEEKLY_LOG_META,
   DEFAULT_WEEKLY_LOGS,
+  DEFAULT_WEEK2_WEEKLY_LOGS,
+  DEFAULT_WEEK2_WEEKLY_LOG_META,
+  LESSON_7_VOCAB_CONTENT_DETAILS,
   generateDefaultDailyHomeworkRecords,
+  generateWeek2DailyHomeworkRecords,
 } from '../data/defaultData';
 import { SignatureDateEditor } from './SignatureDateEditor';
 import { MarkdownCopyBar } from './MarkdownDocumentView';
@@ -104,9 +108,9 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
   const dateRecordsByClass = useMemo(() => {
     const map: Record<string, DailyHomeworkRecord> = {};
     for (const cls of state.classes) {
-      const found = allRecords.find(
-        (r) => r.classId === cls.id && r.date === selectedDate
-      );
+      const found =
+        allRecords.find((r) => r.classId === cls.id && r.date === selectedDate) ||
+        allRecords.find((r) => r.classId === cls.id);
       if (found) {
         map[cls.id] = found;
       }
@@ -188,13 +192,15 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
           classId,
           date: selectedDate,
           assigned: true,
-          lessonUnitTitle: 'ជំពូកទី២ គ្រួសារ និងសាលារៀន (第二单元)',
-          lessonTitle: 'មេរៀនទី៤ គ្រួសាររបស់ខ្ញុំ (第四课 我的家)',
-          lessonContentDetails: '1. ពាក្យថ្មី និងល្បះសន្ទនាប្រចាំថ្ងៃ',
+          lessonUnitTitle: '汉语基础（复习）· មូលដ្ឋានគ្រឹះភាសាចិន (រំលឹកមេរៀន)',
+          lessonTitle: '复习拼音：声母与韵母 · រំលឹកភីនអ៊ីន (ព្យញ្ជនៈ ២៣ និង ស្រៈ ២៤)',
+          lessonContentDetails:
+            '1. រំលឹកព្យញ្ជនៈទាំង ២៣ (២៣ 声母) ៖ b, p, m, f, d, t, n, l, g, k, h, j, q, x, zh, ch, sh, r, z, c, s, y, w\n2. រំលឹកស្រៈទាំង ២៤ (២៤ 韵母) ៖ a, o, e, i, u, ü, ai, ei, ui, ao, ou, iu, ie, üe, er, an, en, in, un, ün, ang, eng, ing, ong\n3. ហាត់អាន បញ្ចេញសំឡេង និងសរសេរឱ្យបានត្រឹមត្រូវ (会读会记 会正确拼读与书写)',
           syncedToWeeklyLog: true,
-          homeworkTitle: 'កិច្ចការផ្ទះភាសាចិនប្រចាំថ្ងៃ',
-          homeworkDetail: '',
-          dueDate: 'សប្តាហ៍ក្រោយ',
+          homeworkTitle: 'ចម្លងភីនអ៊ីន ៥ដង (抄写声母和韵母各5遍)',
+          homeworkDetail:
+            'ចម្លងព្យញ្ជនៈ (声母) ២៣ និង ស្រៈ (韵母) ២៤ ចំនួន ៥ដង ប្រគល់នៅសប្តាហ៍ក្រោយ។ (抄写声母和韵母各5遍，下周交)',
+          dueDate: 'សប្តាហ៍ក្រោយ (下周交)',
           submissions: {},
           notes: {},
         };
@@ -583,6 +589,79 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
     window.setTimeout(() => setSyncMessage(null), 4000);
   };
 
+  const handleSetWeek2Lesson7VocabForAllClasses = () => {
+    onUpdateState((prev) => {
+      const currentTerm = prev.currentTermId || 'term-2026-2027';
+      const termClasses = prev.classes.filter(
+        (c) => (c.termId || 'term-2025-2026') === currentTerm
+      );
+      const targetClasses = termClasses.length > 0 ? termClasses : prev.classes;
+
+      const updatedDailyRecords = generateWeek2DailyHomeworkRecords(
+        prev.classes,
+        prev.students
+      );
+
+      const dayOffsetMap: Record<string, number> = {
+        ចន្ទ: 0,
+        អង្គារ: 1,
+        ពុធ: 2,
+        ព្រហស្បតិ៍: 3,
+        សុក្រ: 4,
+        សៅរ៍: 5,
+      };
+
+      const updatedWeeklyLogs = targetClasses.map((cls, idx) => {
+        const cleanCode = cleanClassDisplayCode(cls.name || cls.id) || cls.name || cls.id;
+        const dayShort = (cls.scheduleDayKh || 'ចន្ទ').replace(/^ថ្ងៃ\s*/g, '').trim();
+        // Monday holiday: Monday classes shift to Tuesday 10/11/2026
+        const isMondayClass = dayShort === 'ចន្ទ' || cleanCode === '10C' || cleanCode === '10B';
+        const offset = isMondayClass ? 1 : (dayOffsetMap[dayShort] ?? Math.min(idx, 3));
+        const resolvedDate = addDaysToDdMmYyyy('09/11/2026', offset);
+        const resolvedDayShort = isMondayClass ? 'អង្គារ' : dayShort;
+        return {
+          id: `wlog-week2-${cls.id || cleanCode}-${idx}`,
+          weekLabel: 'សប្តាហ៍ទី២ (០៩-១៣ វិច្ឆិកា ២០២៦)',
+          dateStr: resolvedDate,
+          weekdayKh: resolvedDayShort,
+          timeRange: cls.scheduleTime?.trim() || (idx % 2 === 0 ? '13:00-14:30' : '15:00-16:30'),
+          classId: cleanCode,
+          unitTitle: '第三单元 购物 · ជំពូកទី៣ ការទិញទំនិញ',
+          lessonTitle: '第七课 你买什么？ · មេរៀនទី៧ តើអ្នកទិញអ្វី？ (生词)',
+          contentDetails: LESSON_7_VOCAB_CONTENT_DETAILS,
+        };
+      });
+
+      const existingOtherHw = (prev.dailyHomeworkRecords || []).filter(
+        (r) =>
+          r.date !== '2026-11-09' &&
+          r.date !== '2026-11-10' &&
+          r.date !== '2026-11-11' &&
+          r.date !== '2026-11-12' &&
+          r.date !== '2026-11-13'
+      );
+
+      const otherLogs = (prev.weeklyLogs || []).filter(
+        (w) =>
+          !w.weekLabel?.includes('សប្តាហ៍ទី២') &&
+          !w.id.startsWith('wlog-week2-') &&
+          !w.id.startsWith('wlog-w2-')
+      );
+
+      return {
+        ...prev,
+        dailyHomeworkRecords: [...updatedDailyRecords, ...existingOtherHw],
+        weeklyLogs: [...updatedWeeklyLogs, ...otherLogs],
+        weeklyLogMeta: DEFAULT_WEEK2_WEEKLY_LOG_META,
+      };
+    });
+    setSelectedDate('2026-11-10');
+    setSyncMessage(
+      'បានកំណត់សប្តាហ៍ទី២ (មេរៀនទី៧ ពាក្យថ្មីទាំង ១១ ពាក្យ និងកិច្ចការផ្ទះចម្លង ៥ដង) គ្រប់ថ្នាក់រួចរាល់! ថ្ងៃចន្ទឈប់សម្រាក បានបង្កើតនៅថ្ងៃអង្គារ ១០/១១/២០២៦។ (已一键生成第2周第七课生词作业与周志，周一放假转周二生成)'
+    );
+    window.setTimeout(() => setSyncMessage(null), 5000);
+  };
+
   const handleSetWeek1PinyinReviewForAllClasses = () => {
     onUpdateState((prev) => {
       const currentTerm = prev.currentTermId || 'term-2026-2027';
@@ -672,12 +751,22 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
 
             <button
               type="button"
+              onClick={handleSetWeek2Lesson7VocabForAllClasses}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer shadow-2xs ring-2 ring-indigo-300"
+              title="កំណត់សប្តាហ៍ទី២ មេរៀនទី៧ អ្នកទិញអ្វី？ (ពាក្យថ្មី ១១ពាក្យ) និងកិច្ចការផ្ទះចម្លង ៥ដង គ្រប់ថ្នាក់ (ថ្ងៃចន្ទឈប់សម្រាក បង្កើតនៅថ្ងៃអង្គារ)"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>+ កំណត់សប្តាហ៍ទី២ មេរៀនទី៧ ពាក្យថ្មី (第2周第七课生词与作业)</span>
+            </button>
+
+            <button
+              type="button"
               onClick={handleSetWeek1PinyinReviewForAllClasses}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer shadow-2xs"
               title="កំណត់សប្តាហ៍ទី១ រំលឹកភីនអ៊ីន (声母 & 韵母) និងកិច្ចការផ្ទះចម្លង ៥ដង គ្រប់ថ្នាក់"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>កំណត់សប្តាហ៍ទី១ រំលឹកភីនអ៊ីន (一键生成第1周所有班级拼音复习与作业)</span>
+              <span>កំណត់សប្តាហ៍ទី១ រំលឹកភីនអ៊ីន (第1周全周拼音复习)</span>
             </button>
 
             <button
@@ -788,14 +877,30 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
                       </button>
                     </div>
                   </div>
-                  <p className="text-xs text-slate-700 truncate mb-1">
-                    មេរៀន៖ {rec?.lessonTitle || rec?.homeworkTitle || '-'}
+                  {/* Lesson Title (ចំណងជើងមេរៀន) */}
+                  <p className="text-xs text-slate-800 truncate mb-1" title={rec?.lessonTitle || '复习拼音：声母与韵母 · រំលឹកភីនអ៊ីន (ព្យញ្ជនៈ ២៣ និង ស្រៈ ២៤)'}>
+                    <span className="font-bold text-slate-900">មេរៀន៖</span>{' '}
+                    <span className="font-semibold text-slate-700">
+                      {rec?.lessonTitle || '复习拼音：声母与韵母 · រំលឹកភីនអ៊ីន (ព្យញ្ជនៈ ២៣ និង ស្រៈ ២៤)'}
+                    </span>
                   </p>
+
+                  {/* Homework Title (ចំណងជើងកិច្ចការផ្ទះ ៖ ចម្លងភីនអ៊ីន ៥ដង) */}
+                  <div
+                    className="flex items-center gap-1.5 text-xs text-amber-900 font-bold bg-amber-50/90 px-2 py-1 rounded-md border border-amber-200/80 mb-2 truncate"
+                    title={rec?.homeworkTitle || 'ចម្លងភីនអ៊ីន ៥ដង (抄写声母和韵母各5遍)'}
+                  >
+                    <span className="shrink-0 text-amber-700 font-extrabold">កិច្ចការផ្ទះ៖</span>
+                    <span className="truncate">
+                      {rec?.homeworkTitle || 'ចម្លងភីនអ៊ីន ៥ដង (抄写声母和韵母各5遍)'}
+                    </span>
+                  </div>
+
                   <div className="flex items-center justify-between text-[11px] font-semibold">
-                    <span>
+                    <span className="text-emerald-700 font-bold">
                       បានប្រគល់: {formatNum(subCount, state.useKhmerNumerals)} នាក់
                     </span>
-                    <span>
+                    <span className="text-rose-700 font-bold">
                       មិនទាន់ប្រគល់: {formatNum(missCount, state.useKhmerNumerals)} នាក់
                     </span>
                   </div>
@@ -1054,9 +1159,26 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
                       lessonTitle: e.target.value,
                     }))
                   }
-                  placeholder="ឧ. 第四课 我的家 · មេរៀនទី៤ គ្រួសាររបស់ខ្ញុំ"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm"
+                  placeholder="ឧ. 复习拼音：声母与韵母 · រំលឹកភីនអ៊ីន (ព្យញ្ជនៈ ២៣ និង ស្រៈ ២៤)"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm font-semibold"
                 />
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      upsertRecord(currentClass.id, (rec) => ({
+                        ...rec,
+                        lessonUnitTitle: '汉语基础（复习）· មូលដ្ឋានគ្រឹះភាសាចិន (រំលឹកមេរៀន)',
+                        lessonTitle: '复习拼音：声母与韵母 · រំលឹកភីនអ៊ីន (ព្យញ្ជនៈ ២៣ និង ស្រៈ ២៤)',
+                        lessonContentDetails:
+                          '1. រំលឹកព្យញ្ជនៈទាំង ២៣ (២៣ 声母) ៖ b, p, m, f, d, t, n, l, g, k, h, j, q, x, zh, ch, sh, r, z, c, s, y, w\n2. រំលឹកស្រៈទាំង ២៤ (២៤ 韵母) ៖ a, o, e, i, u, ü, ai, ei, ui, ao, ou, iu, ie, üe, er, an, en, in, un, ün, ang, eng, ing, ong\n3. ហាត់អាន បញ្ចេញសំឡេង និងសរសេរឱ្យបានត្រឹមត្រូវ (会读会记 会正确拼读与书写)',
+                      }))
+                    }
+                    className="text-[11px] px-2 py-0.5 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-800 font-bold border border-indigo-200 cursor-pointer"
+                  >
+                    + រំលឹកភីនអ៊ីន (复习拼音)
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-bold mb-1">
@@ -1071,7 +1193,7 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
                       lessonContentDetails: e.target.value,
                     }))
                   }
-                  placeholder="ឧ. 1. 生词 ពាក្យថ្មី៖ 爸爸, 妈妈 · 2. 句型 ល្បះ..."
+                  placeholder="ឧ. 1. រំលឹកព្យញ្ជនៈ ២៣ (b, p, m...) · 2. ស្រៈ ២៤ (a, o, e...)"
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm"
                 />
               </div>
@@ -1086,7 +1208,7 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-bold mb-1">
-                  ប្រធានបទកិច្ចការផ្ទះ
+                  ប្រធានបទកិច្ចការផ្ទះ (ចំណងជើងកិច្ចការផ្ទះ)
                 </label>
                 <input
                   type="text"
@@ -1097,8 +1219,40 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
                       homeworkTitle: e.target.value,
                     }))
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm"
+                  placeholder="ឧ. ចម្លងភីនអ៊ីន ៥ដង (抄写声母和韵母各5遍)"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-amber-950"
                 />
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      upsertRecord(currentClass.id, (rec) => ({
+                        ...rec,
+                        homeworkTitle: 'ចម្លងភីនអ៊ីន ៥ដង (抄写声母和韵母各5遍)',
+                        homeworkDetail:
+                          'ចម្លងព្យញ្ជនៈ (声母) ២៣ និង ស្រៈ (韵母) ២៤ ចំនួន ៥ដង ប្រគល់នៅសប្តាហ៍ក្រោយ។ (抄写声母和韵母各5遍，下周交)',
+                        dueDate: 'សប្តាហ៍ក្រោយ (下周交)',
+                      }))
+                    }
+                    className="text-[11px] px-2 py-0.5 rounded bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold border border-amber-300 cursor-pointer"
+                  >
+                    + ចម្លងភីនអ៊ីន ៥ដង (抄写拼音5遍)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      upsertRecord(currentClass.id, (rec) => ({
+                        ...rec,
+                        homeworkTitle: 'ហាត់សរសេរពាក្យថ្មី ៥ដង (抄写生词5遍)',
+                        homeworkDetail: 'ហាត់សរសេរពាក្យថ្មីក្នុងមេរៀនចំនួន ៥ដង និងហាត់អានឱ្យស្ទាត់។',
+                        dueDate: 'សប្តាហ៍ក្រោយ (下周交)',
+                      }))
+                    }
+                    className="text-[11px] px-2 py-0.5 rounded bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold border border-slate-300 cursor-pointer"
+                  >
+                    + សរសេរពាក្យថ្មី ៥ដង
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-bold mb-1">

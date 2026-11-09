@@ -288,8 +288,46 @@ function mergeWithValidDefaultScores(
   if (!mergedLessonPlans.some((lp) => lp.id === 'lp-0')) {
     mergedLessonPlans = [defaults.lessonPlans[0], ...mergedLessonPlans];
   }
+  // Ensure the Week 2 Shopping lesson plan (lp-week2-shopping) is included and up-to-date
+  const defaultWeek2Plan = defaults.lessonPlans.find(
+    (lp) => lp.id === 'lp-week2-shopping' || lp.linkedCurriculumId === 'cur-2'
+  );
+  if (defaultWeek2Plan) {
+    const existingWeek2Index = mergedLessonPlans.findIndex(
+      (lp) => lp.id === 'lp-week2-shopping' || lp.linkedCurriculumId === 'cur-2'
+    );
+    if (existingWeek2Index >= 0) {
+      if (
+        !mergedLessonPlans[existingWeek2Index].lessonTitle.includes('你买什么') ||
+        !mergedLessonPlans[existingWeek2Index].lessonTitle.includes('只教生词')
+      ) {
+        mergedLessonPlans[existingWeek2Index] = defaultWeek2Plan;
+      }
+    } else {
+      mergedLessonPlans.splice(1, 0, defaultWeek2Plan);
+    }
+  }
 
-  // Ensure weeklyLogs are updated to Week 1 Pinyin review if containing legacy 2025 dates or non-pinyin week 1
+  // Ensure curriculumPlan has Week 2 updated to Unit 3 Lesson 7 你买什么？ (第一周只教生词)
+  let mergedCurriculum = loaded.curriculumPlan && loaded.curriculumPlan.length > 0
+    ? [...loaded.curriculumPlan]
+    : [...defaults.curriculumPlan];
+  const cur2Index = mergedCurriculum.findIndex((c) => c.id === 'cur-2');
+  const defaultCur2 = defaults.curriculumPlan.find((c) => c.id === 'cur-2');
+  if (defaultCur2) {
+    if (cur2Index >= 0) {
+      if (
+        !mergedCurriculum[cur2Index].lessonContent.includes('你买什么') ||
+        !mergedCurriculum[cur2Index].lessonContent.includes('只教生词')
+      ) {
+        mergedCurriculum[cur2Index] = defaultCur2;
+      }
+    } else {
+      mergedCurriculum.splice(1, 0, defaultCur2);
+    }
+  }
+
+  // Ensure weeklyLogs are loaded and contain Week 2 Lesson 7 vocabulary logs
   let mergedWeeklyLogs = loaded.weeklyLogs && loaded.weeklyLogs.length > 0
     ? [...loaded.weeklyLogs]
     : [...defaults.weeklyLogs];
@@ -297,13 +335,42 @@ function mergeWithValidDefaultScores(
     mergedWeeklyLogs.some(
       (w) =>
         w.dateStr.includes('2025') ||
-        w.unitTitle.includes('买东西') ||
+        (w.unitTitle.includes('买东西') && !w.lessonTitle.includes('你买什么')) ||
         w.lessonTitle.includes('你是谁') ||
         w.lessonTitle.includes('你好')
     )
   ) {
     mergedWeeklyLogs = [...defaults.weeklyLogs];
   }
+
+  // If user only had week 1 logs previously, include Week 2 Lesson 7 vocabulary logs at the top
+  const hasWeek2Vocab = mergedWeeklyLogs.some(
+    (w) =>
+      (w.weekLabel && w.weekLabel.includes('សប្តាហ៍ទី២')) ||
+      (w.lessonTitle && w.lessonTitle.includes('你买什么')) ||
+      (w.contentDetails && (w.contentDetails.includes('买 (mǎi') || w.contentDetails.includes('1.买')))
+  );
+  if (!hasWeek2Vocab) {
+    const week2Defaults = defaults.weeklyLogs.filter(
+      (w) => w.weekLabel?.includes('សប្តាហ៍ទី២') || w.id.startsWith('wlog-w2-')
+    );
+    mergedWeeklyLogs = [...week2Defaults, ...mergedWeeklyLogs];
+  }
+
+  // Adjust Week 2 Monday holiday: Monday 09/11/2026 classes generate on Tuesday 10/11/2026
+  mergedWeeklyLogs = mergedWeeklyLogs.map((log) => {
+    if (
+      (log.weekLabel?.includes('សប្តាហ៍ទី២') || log.lessonTitle?.includes('你买什么')) &&
+      (log.dateStr === '09/11/2026' || log.weekdayKh === 'ចន្ទ')
+    ) {
+      return {
+        ...log,
+        dateStr: '10/11/2026',
+        weekdayKh: 'អង្គារ',
+      };
+    }
+    return log;
+  });
 
   // Synchronize teaching hours in weeklyLogs with each class's real scheduleTime
   mergedWeeklyLogs = mergedWeeklyLogs.map((log) => {
@@ -324,15 +391,46 @@ function mergeWithValidDefaultScores(
   let mergedDailyHomework = loaded.dailyHomeworkRecords && loaded.dailyHomeworkRecords.length > 0
     ? [...loaded.dailyHomeworkRecords]
     : [...(defaults.dailyHomeworkRecords || [])];
-  if (
-    mergedDailyHomework.some(
-      (r) =>
-        Boolean(r.date?.includes('2025')) ||
-        Boolean(r.lessonTitle?.includes('我的家')) ||
-        Boolean(r.lessonTitle?.includes('多少钱')) ||
-        Boolean(r.lessonTitle?.includes('今天几月几号'))
-    )
-  ) {
+
+  // Heal any homework records that have generic placeholders or missing pinyin assignments
+  mergedDailyHomework = mergedDailyHomework.map((r) => {
+    const isGenericLesson =
+      !r.lessonTitle ||
+      r.lessonTitle.includes('មេរៀនភាសាចិនប្រចាំសប្តាហ៍') ||
+      r.lessonTitle.includes('មេរៀនប្រចាំសប្តាហ៍') ||
+      r.lessonTitle.includes('我的家') ||
+      r.lessonTitle.includes('多少钱') ||
+      r.lessonTitle.includes('今天几月几号');
+
+    const isGenericHomework =
+      !r.homeworkTitle ||
+      r.homeworkTitle.includes('កិច្ចការផ្ទះភាសាចិនប្រចាំថ្ងៃ') ||
+      r.homeworkTitle.includes('日常汉语作业') ||
+      r.homeworkTitle.trim() === '';
+
+    if (isGenericLesson || isGenericHomework) {
+      return {
+        ...r,
+        assigned: true,
+        lessonUnitTitle: r.lessonUnitTitle || '汉语基础（复习）· មូលដ្ឋានគ្រឹះភាសាចិន (រំលឹកមេរៀន)',
+        lessonTitle: isGenericLesson
+          ? '复习拼音：声母与韵母 · រំលឹកភីនអ៊ីន (ព្យញ្ជនៈ ២៣ និង ស្រៈ ២៤)'
+          : r.lessonTitle,
+        homeworkTitle: isGenericHomework
+          ? 'ចម្លងភីនអ៊ីន ៥ដង (抄写声母和韵母各5遍)'
+          : r.homeworkTitle,
+        homeworkDetail:
+          !r.homeworkDetail || r.homeworkDetail.includes('ហាត់សរសេរពាក្យថ្មី')
+            ? 'ចម្លងព្យញ្ជនៈ (声母) ២៣ និង ស្រៈ (韵母) ២៤ ចំនួន ៥ដង ប្រគល់នៅសប្តាហ៍ក្រោយ។ (抄写声母和韵母各5遍，下周交)'
+            : r.homeworkDetail,
+        dueDate: !r.dueDate || r.dueDate === 'សប្តាហ៍ក្រោយ' ? 'សប្តាហ៍ក្រោយ (下周交)' : r.dueDate,
+        syncedToWeeklyLog: true,
+      };
+    }
+    return r;
+  });
+
+  if (mergedDailyHomework.length === 0) {
     mergedDailyHomework = generateDefaultDailyHomeworkRecords(finalClasses, sortedStudents);
   }
 
@@ -346,6 +444,7 @@ function mergeWithValidDefaultScores(
     ...loaded,
     months: mergedMonths,
     lessonPlans: mergedLessonPlans,
+    curriculumPlan: mergedCurriculum,
     weeklyLogs: mergedWeeklyLogs,
     weeklyLogMeta: healedWeeklyLogMeta,
     dailyHomeworkRecords: mergedDailyHomework,
