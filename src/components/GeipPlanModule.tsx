@@ -1574,51 +1574,235 @@ export const GeipPlanModule: React.FC<Props> = ({
         )}
 
         {docTab === 'lesson_plan' && (
-          <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-slate-100 text-xs">
-            <span className="text-slate-500">ជ្រើសរើសមេរៀន ({effectiveLessonPlans.length})៖</span>
-            {effectiveLessonPlans.map((lp, idx) => {
-              const isSelected = activeLessonPlan?.id === lp.id;
-              return (
-                <div
-                  key={lp.id}
-                  className={`inline-flex items-center rounded-md font-medium transition-colors border ${
-                    isSelected
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
-                      : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
-                  }`}
-                >
+          <div className="space-y-2 pt-2.5 border-t border-slate-100 text-xs">
+            {/* Quick jump for Lesson 7 weeks */}
+            <div className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-lg bg-indigo-50/70 border border-indigo-100">
+              <span className="text-[11px] font-bold text-indigo-900 shrink-0">
+                មេរៀនទី៧ 你买什么？ (ខែវិច្ឆិកា) ៖
+              </span>
+              {[
+                { label: 'សប្តាហ៍ទី២ (09/11 生词)', curId: 'cur-2', planId: 'lp-week2-shopping' },
+                { label: 'សប្តាហ៍ទី៣ (16/11 句型)', curId: 'cur-3', planId: 'lp-week3-shopping-sentences' },
+                { label: 'សប្តាហ៍ទី៤ (23/11 对话)', curId: 'cur-4', planId: 'lp-week4-shopping-dialogues' },
+                { label: 'សប្តាហ៍ទី៥ (30/11 练习)', curId: 'cur-5', planId: 'lp-week5-shopping-exercises' },
+              ].map((wItem) => {
+                const targetPlan = effectiveLessonPlans.find(
+                  (p) => p.id === wItem.planId || p.linkedCurriculumId === wItem.curId
+                );
+                if (!targetPlan) return null;
+                const isCurActive = activeLessonPlan?.id === targetPlan.id;
+                return (
                   <button
+                    key={wItem.curId}
                     type="button"
-                    onClick={() => setSelectedLessonPlanId(lp.id)}
-                    className="px-2.5 py-1.5 cursor-pointer text-left"
+                    onClick={() => setSelectedLessonPlanId(targetPlan.id)}
+                    className={`px-2.5 py-1 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                      isCurActive
+                        ? 'bg-indigo-600 text-white shadow-xs ring-2 ring-indigo-300'
+                        : 'bg-white text-indigo-700 hover:bg-indigo-100 border border-indigo-200'
+                    }`}
                   >
-                    {idx + 1}. {lp.lessonTitle}
+                    {wItem.label}
                   </button>
-                  {effectiveLessonPlans.length > 1 && (
+                );
+              })}
+            </div>
+
+            {/* Quick jump for Lesson 8 weeks (December) */}
+            <div className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-lg bg-emerald-50/70 border border-emerald-100">
+              <span className="text-[11px] font-bold text-emerald-900 shrink-0">
+                មេរៀនទី៨ 苹果多少钱一斤？ (ខែធ្នូ) ៖
+              </span>
+              {[
+                { label: 'សប្តាហ៍ទី១ (07/12 生词)', curId: 'cur-6', planId: 'lp-week6-apple-vocab' },
+                { label: 'សប្តាហ៍ទី២ (14/12 句型)', curId: 'cur-7', planId: 'lp-week7-apple-sentences' },
+                { label: 'សប្តាហ៍ទី៣ (21/12 对话)', curId: 'cur-8', planId: 'lp-week8-apple-dialogues' },
+                { label: 'សប្តាហ៍ទី៤ (28/12 练习)', curId: 'cur-9', planId: 'lp-week9-apple-exercises' },
+              ].map((wItem) => {
+                const targetPlan = effectiveLessonPlans.find(
+                  (p) => p.id === wItem.planId || p.linkedCurriculumId === wItem.curId
+                );
+                if (!targetPlan) return null;
+                const isCurActive = activeLessonPlan?.id === targetPlan.id;
+                return (
+                  <button
+                    key={wItem.curId}
+                    type="button"
+                    onClick={() => setSelectedLessonPlanId(targetPlan.id)}
+                    className={`px-2.5 py-1 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                      isCurActive
+                        ? 'bg-emerald-600 text-white shadow-xs ring-2 ring-emerald-300'
+                        : 'bg-white text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                    }`}
+                  >
+                    {wItem.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Quick jump for Lesson 9 weeks (January 2027) */}
+            <div className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-lg bg-sky-50/80 border border-sky-150">
+              <span className="text-[11px] font-bold text-sky-950 shrink-0">
+                មេរៀនទី៩ 这件衣服比那件贵一点儿 (ខែមករា ២០២៧) ៖
+              </span>
+              {[
+                { label: 'សប្តាហ៍ទី១ (04/01 生词)', curId: 'cur-10', planId: 'lp-week10-clothes-vocab' },
+                { label: 'សប្តាហ៍ទី២ (11/01 句型)', curId: 'cur-11', planId: 'lp-week11-clothes-sentences' },
+                { label: 'សប្តាហ៍ទី៣ (18/01 对话)', curId: 'cur-12', planId: 'lp-week12-clothes-dialogues' },
+                { label: 'សប្តាហ៍ទី៤ (25/01 练习)', curId: 'cur-13', planId: 'lp-week13-clothes-exercises' },
+              ].map((wItem) => {
+                const targetPlan = effectiveLessonPlans.find(
+                  (p) => p.id === wItem.planId || p.linkedCurriculumId === wItem.curId
+                );
+                if (!targetPlan) return null;
+                const isCurActive = activeLessonPlan?.id === targetPlan.id;
+                return (
+                  <button
+                    key={wItem.curId}
+                    type="button"
+                    onClick={() => setSelectedLessonPlanId(targetPlan.id)}
+                    className={`px-2.5 py-1 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                      isCurActive
+                        ? 'bg-sky-600 text-white shadow-xs ring-2 ring-sky-300'
+                        : 'bg-white text-sky-800 hover:bg-sky-100 border border-sky-200'
+                    }`}
+                  >
+                    {wItem.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Quick jump for Lesson 10 weeks (February 2027) */}
+            <div className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-lg bg-violet-50/80 border border-violet-200">
+              <span className="text-[11px] font-bold text-violet-950 shrink-0">
+                មេរៀនទី១០ 你今天上了什么课 (ខែកុម្ភៈ ២០២៧) ៖
+              </span>
+              {[
+                { label: 'សប្តាហ៍ទី១ (01/02 生词)', curId: 'cur-14', planId: 'lp-week14-schedule-vocab' },
+                { label: 'សប្តាហ៍ទី២ (08/02 句型)', curId: 'cur-15', planId: 'lp-week15-schedule-sentences' },
+                { label: 'សប្តាហ៍ទី៣ (15/02 对话)', curId: 'cur-16', planId: 'lp-week16-schedule-dialogues' },
+                { label: 'សប្តាហ៍ទី៤ (22/02 练习)', curId: 'cur-17', planId: 'lp-week17-schedule-exercises' },
+              ].map((wItem) => {
+                const targetPlan = effectiveLessonPlans.find(
+                  (p) => p.id === wItem.planId || p.linkedCurriculumId === wItem.curId
+                );
+                if (!targetPlan) return null;
+                const isCurActive = activeLessonPlan?.id === targetPlan.id;
+                return (
+                  <button
+                    key={wItem.curId}
+                    type="button"
+                    onClick={() => setSelectedLessonPlanId(targetPlan.id)}
+                    className={`px-2.5 py-1 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                      isCurActive
+                        ? 'bg-violet-600 text-white shadow-xs ring-2 ring-violet-300'
+                        : 'bg-white text-violet-800 hover:bg-violet-100 border border-violet-200'
+                    }`}
+                  >
+                    {wItem.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Quick jump for Lesson 11 weeks (March 2027) */}
+            <div className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-lg bg-rose-50/80 border border-rose-200">
+              <span className="text-[11px] font-bold text-rose-950 shrink-0">
+                មេរៀនទី១១ 汉语难不难 (ខែមីនា ២០២៧) ៖
+              </span>
+              {[
+                { label: 'សប្តាហ៍ទី១ (01/03 生词)', curId: 'cur-18', planId: 'lp-week18-hard-vocab' },
+                { label: 'សប្តាហ៍ទី២ (08/03 句型)', curId: 'cur-19', planId: 'lp-week19-hard-sentences' },
+                { label: 'សប្តាហ៍ទី៣ (15/03 对话)', curId: 'cur-20', planId: 'lp-week20-hard-dialogues' },
+                { label: 'សប្តាហ៍ទី៤ (22/03 练习)', curId: 'cur-21', planId: 'lp-week21-hard-exercises' },
+              ].map((wItem) => {
+                const targetPlan = effectiveLessonPlans.find(
+                  (p) => p.id === wItem.planId || p.linkedCurriculumId === wItem.curId
+                );
+                if (!targetPlan) return null;
+                const isCurActive = activeLessonPlan?.id === targetPlan.id;
+                return (
+                  <button
+                    key={wItem.curId}
+                    type="button"
+                    onClick={() => setSelectedLessonPlanId(targetPlan.id)}
+                    className={`px-2.5 py-1 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                      isCurActive
+                        ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-300'
+                        : 'bg-white text-rose-800 hover:bg-rose-100 border border-rose-200'
+                    }`}
+                  >
+                    {wItem.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-slate-500 font-medium">មេរៀនទាំងអស់ ({effectiveLessonPlans.length})៖</span>
+              {effectiveLessonPlans.map((lp, idx) => {
+                const isSelected = activeLessonPlan?.id === lp.id;
+                const dateDisplay = lp.dateDay && lp.dateMonth
+                  ? `${lp.dateDay}/${lp.dateMonth}`
+                  : lp.isoDate
+                  ? lp.isoDate.slice(5)
+                  : '';
+                return (
+                  <div
+                    key={lp.id}
+                    className={`inline-flex items-center rounded-md font-medium transition-colors border ${
+                      isSelected
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                        : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                    }`}
+                  >
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPendingDeleteLessonPlan({
-                          id: lp.id,
-                          linkedCurriculumId: lp.linkedCurriculumId,
-                          index: idx,
-                          title: `${idx + 1}. ${lp.lessonTitle}`,
-                        });
-                      }}
-                      className={`px-1.5 py-1.5 mr-0.5 rounded-r-md transition-colors cursor-pointer ${
-                        isSelected
-                          ? 'text-indigo-100 hover:bg-indigo-700 hover:text-white'
-                          : 'text-slate-400 hover:bg-rose-100 hover:text-rose-600'
-                      }`}
-                      title="លុបមេរៀននេះ (删除此课程)"
+                      onClick={() => setSelectedLessonPlanId(lp.id)}
+                      className="px-2.5 py-1.5 cursor-pointer text-left flex items-center gap-1.5"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <span className="font-bold">{idx + 1}.</span>
+                      {dateDisplay && (
+                        <span
+                          className={`px-1 py-0.2 rounded text-[10px] font-mono ${
+                            isSelected
+                              ? 'bg-indigo-700 text-indigo-100'
+                              : 'bg-slate-200 text-slate-600'
+                          }`}
+                        >
+                          {dateDisplay}
+                        </span>
+                      )}
+                      <span className="max-w-[200px] truncate">{lp.lessonTitle}</span>
                     </button>
-                  )}
-                </div>
-              );
-            })}
+                    {effectiveLessonPlans.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPendingDeleteLessonPlan({
+                            id: lp.id,
+                            linkedCurriculumId: lp.linkedCurriculumId,
+                            index: idx,
+                            title: `${idx + 1}. ${lp.lessonTitle}`,
+                          });
+                        }}
+                        className={`px-1.5 py-1.5 mr-0.5 rounded-r-md transition-colors cursor-pointer ${
+                          isSelected
+                            ? 'text-indigo-100 hover:bg-indigo-700 hover:text-white'
+                            : 'text-slate-400 hover:bg-rose-100 hover:text-rose-600'
+                        }`}
+                        title="លុបមេរៀននេះ (删除此课程)"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

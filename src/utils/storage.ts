@@ -308,7 +308,88 @@ function mergeWithValidDefaultScores(
     }
   }
 
-  // Ensure curriculumPlan has Week 2 updated to Unit 3 Lesson 7 你买什么？ (第一周只教生词)
+  // Ensure the Week 3 Shopping Sentences lesson plan (lp-week3-shopping-sentences) is included and up-to-date
+  const defaultWeek3Plan = defaults.lessonPlans.find(
+    (lp) => lp.id === 'lp-week3-shopping-sentences' || lp.linkedCurriculumId === 'cur-3'
+  );
+  if (defaultWeek3Plan) {
+    const existingWeek3Index = mergedLessonPlans.findIndex(
+      (lp) => lp.id === 'lp-week3-shopping-sentences' || lp.linkedCurriculumId === 'cur-3'
+    );
+    if (existingWeek3Index >= 0) {
+      if (
+        !mergedLessonPlans[existingWeek3Index].lessonTitle.includes('句型') ||
+        !mergedLessonPlans[existingWeek3Index].lessonTitle.includes('你买什么')
+      ) {
+        mergedLessonPlans[existingWeek3Index] = defaultWeek3Plan;
+      }
+    } else {
+      const w2Idx = mergedLessonPlans.findIndex(
+        (lp) => lp.id === 'lp-week2-shopping' || lp.linkedCurriculumId === 'cur-2'
+      );
+      if (w2Idx >= 0) {
+        mergedLessonPlans.splice(w2Idx + 1, 0, defaultWeek3Plan);
+      } else {
+        mergedLessonPlans.push(defaultWeek3Plan);
+      }
+    }
+  }
+
+  // Ensure the Week 4 Shopping Dialogues lesson plan (lp-week4-shopping-dialogues) is included and up-to-date
+  const defaultWeek4Plan = defaults.lessonPlans.find(
+    (lp) => lp.id === 'lp-week4-shopping-dialogues' || lp.linkedCurriculumId === 'cur-4'
+  );
+  if (defaultWeek4Plan) {
+    const existingWeek4Index = mergedLessonPlans.findIndex(
+      (lp) => lp.id === 'lp-week4-shopping-dialogues' || lp.linkedCurriculumId === 'cur-4'
+    );
+    if (existingWeek4Index >= 0) {
+      if (
+        !mergedLessonPlans[existingWeek4Index].lessonTitle.includes('对话') ||
+        !mergedLessonPlans[existingWeek4Index].lessonTitle.includes('你买什么')
+      ) {
+        mergedLessonPlans[existingWeek4Index] = defaultWeek4Plan;
+      }
+    } else {
+      const w3Idx = mergedLessonPlans.findIndex(
+        (lp) => lp.id === 'lp-week3-shopping-sentences' || lp.linkedCurriculumId === 'cur-3'
+      );
+      if (w3Idx >= 0) {
+        mergedLessonPlans.splice(w3Idx + 1, 0, defaultWeek4Plan);
+      } else {
+        mergedLessonPlans.push(defaultWeek4Plan);
+      }
+    }
+  }
+
+  // Ensure the Week 5 Shopping Exercises lesson plan (lp-week5-shopping-exercises) is included and up-to-date
+  const defaultWeek5Plan = defaults.lessonPlans.find(
+    (lp) => lp.id === 'lp-week5-shopping-exercises' || lp.linkedCurriculumId === 'cur-5'
+  );
+  if (defaultWeek5Plan) {
+    const existingWeek5Index = mergedLessonPlans.findIndex(
+      (lp) => lp.id === 'lp-week5-shopping-exercises' || lp.linkedCurriculumId === 'cur-5'
+    );
+    if (existingWeek5Index >= 0) {
+      if (
+        !mergedLessonPlans[existingWeek5Index].lessonTitle.includes('练习') ||
+        !mergedLessonPlans[existingWeek5Index].lessonTitle.includes('你买什么')
+      ) {
+        mergedLessonPlans[existingWeek5Index] = defaultWeek5Plan;
+      }
+    } else {
+      const w4Idx = mergedLessonPlans.findIndex(
+        (lp) => lp.id === 'lp-week4-shopping-dialogues' || lp.linkedCurriculumId === 'cur-4'
+      );
+      if (w4Idx >= 0) {
+        mergedLessonPlans.splice(w4Idx + 1, 0, defaultWeek5Plan);
+      } else {
+        mergedLessonPlans.push(defaultWeek5Plan);
+      }
+    }
+  }
+
+  // Ensure curriculumPlan has Weeks 2, 3, 4, 5 updated to Unit 3 Lesson 7 你买什么？
   let mergedCurriculum = loaded.curriculumPlan && loaded.curriculumPlan.length > 0
     ? [...loaded.curriculumPlan]
     : [...defaults.curriculumPlan];
@@ -324,6 +405,271 @@ function mergeWithValidDefaultScores(
       }
     } else {
       mergedCurriculum.splice(1, 0, defaultCur2);
+    }
+  }
+
+  const cur3Index = mergedCurriculum.findIndex((c) => c.id === 'cur-3');
+  const defaultCur3 = defaults.curriculumPlan.find((c) => c.id === 'cur-3');
+  if (defaultCur3) {
+    if (cur3Index >= 0) {
+      if (
+        !mergedCurriculum[cur3Index].lessonContent.includes('你买什么') ||
+        !mergedCurriculum[cur3Index].lessonContent.includes('只上句型')
+      ) {
+        mergedCurriculum[cur3Index] = defaultCur3;
+      }
+    } else {
+      const c2Idx = mergedCurriculum.findIndex((c) => c.id === 'cur-2');
+      mergedCurriculum.splice(c2Idx >= 0 ? c2Idx + 1 : 2, 0, defaultCur3);
+    }
+  }
+
+  const cur4Index = mergedCurriculum.findIndex((c) => c.id === 'cur-4');
+  const defaultCur4 = defaults.curriculumPlan.find((c) => c.id === 'cur-4');
+  if (defaultCur4) {
+    if (cur4Index >= 0) {
+      if (
+        !mergedCurriculum[cur4Index].lessonContent.includes('你买什么') ||
+        !mergedCurriculum[cur4Index].lessonContent.includes('只上对话')
+      ) {
+        mergedCurriculum[cur4Index] = defaultCur4;
+      }
+    } else {
+      const c3Idx = mergedCurriculum.findIndex((c) => c.id === 'cur-3');
+      mergedCurriculum.splice(c3Idx >= 0 ? c3Idx + 1 : 3, 0, defaultCur4);
+    }
+  }
+
+  const cur5Index = mergedCurriculum.findIndex((c) => c.id === 'cur-5');
+  const defaultCur5 = defaults.curriculumPlan.find((c) => c.id === 'cur-5');
+  if (defaultCur5) {
+    if (cur5Index >= 0) {
+      if (
+        !mergedCurriculum[cur5Index].lessonContent.includes('你买什么') ||
+        !mergedCurriculum[cur5Index].lessonContent.includes('44') ||
+        !mergedCurriculum[cur5Index].lessonContent.includes('全完成课本')
+      ) {
+        mergedCurriculum[cur5Index] = defaultCur5;
+      }
+    } else {
+      const c4Idx = mergedCurriculum.findIndex((c) => c.id === 'cur-4');
+      mergedCurriculum.splice(c4Idx >= 0 ? c4Idx + 1 : 4, 0, defaultCur5);
+    }
+  }
+
+  // Ensure Lesson 8 lesson plans for December (Weeks 6, 7, 8, 9) are included and up-to-date
+  const decPlanKeys = [
+    { id: 'lp-week6-apple-vocab', curId: 'cur-6', kw: '生词' },
+    { id: 'lp-week7-apple-sentences', curId: 'cur-7', kw: '句型' },
+    { id: 'lp-week8-apple-dialogues', curId: 'cur-8', kw: '对话' },
+    { id: 'lp-week9-apple-exercises', curId: 'cur-9', kw: '练习' },
+  ];
+
+  for (const dp of decPlanKeys) {
+    const defaultPlan = defaults.lessonPlans.find(
+      (lp) => lp.id === dp.id || lp.linkedCurriculumId === dp.curId
+    );
+    if (defaultPlan) {
+      const existingIdx = mergedLessonPlans.findIndex(
+        (lp) => lp.id === dp.id || lp.linkedCurriculumId === dp.curId
+      );
+      if (existingIdx >= 0) {
+        if (
+          !mergedLessonPlans[existingIdx].lessonTitle.includes('苹果多少钱一斤') ||
+          !mergedLessonPlans[existingIdx].lessonTitle.includes(dp.kw)
+        ) {
+          mergedLessonPlans[existingIdx] = defaultPlan;
+        }
+      } else {
+        mergedLessonPlans.push(defaultPlan);
+      }
+    }
+  }
+
+  // Ensure curriculumPlan has Weeks 6, 7, 8, 9 for Lesson 8 in December
+  const decCurKeys = [
+    { id: 'cur-6', kw: '生词' },
+    { id: 'cur-7', kw: '句型' },
+    { id: 'cur-8', kw: '对话' },
+    { id: 'cur-9', kw: '练习' },
+  ];
+
+  for (const dc of decCurKeys) {
+    const defaultCur = defaults.curriculumPlan.find((c) => c.id === dc.id);
+    if (defaultCur) {
+      const curIdx = mergedCurriculum.findIndex((c) => c.id === dc.id);
+      if (curIdx >= 0) {
+        if (
+          !mergedCurriculum[curIdx].lessonContent.includes('苹果多少钱一斤') ||
+          !mergedCurriculum[curIdx].lessonContent.includes(dc.kw)
+        ) {
+          mergedCurriculum[curIdx] = defaultCur;
+        }
+      } else {
+        mergedCurriculum.push(defaultCur);
+      }
+    }
+  }
+
+  // Ensure Lesson 9 lesson plans for January 2027 (Weeks 10, 11, 12, 13) are included and up-to-date
+  const janPlanKeys = [
+    { id: 'lp-week10-clothes-vocab', curId: 'cur-10', kw: '生词' },
+    { id: 'lp-week11-clothes-sentences', curId: 'cur-11', kw: '句型' },
+    { id: 'lp-week12-clothes-dialogues', curId: 'cur-12', kw: '对话' },
+    { id: 'lp-week13-clothes-exercises', curId: 'cur-13', kw: '练习' },
+  ];
+
+  for (const jp of janPlanKeys) {
+    const defaultPlan = defaults.lessonPlans.find(
+      (lp) => lp.id === jp.id || lp.linkedCurriculumId === jp.curId
+    );
+    if (defaultPlan) {
+      const existingIdx = mergedLessonPlans.findIndex(
+        (lp) => lp.id === jp.id || lp.linkedCurriculumId === jp.curId
+      );
+      if (existingIdx >= 0) {
+        if (
+          !mergedLessonPlans[existingIdx].lessonTitle.includes('这件衣服比那件贵一点儿') ||
+          !mergedLessonPlans[existingIdx].lessonTitle.includes(jp.kw)
+        ) {
+          mergedLessonPlans[existingIdx] = defaultPlan;
+        }
+      } else {
+        mergedLessonPlans.push(defaultPlan);
+      }
+    }
+  }
+
+  // Ensure curriculumPlan has Weeks 10, 11, 12, 13 for Lesson 9 in January 2027
+  const janCurKeys = [
+    { id: 'cur-10', kw: '生词' },
+    { id: 'cur-11', kw: '句型' },
+    { id: 'cur-12', kw: '对话' },
+    { id: 'cur-13', kw: '练习' },
+  ];
+
+  for (const jc of janCurKeys) {
+    const defaultCur = defaults.curriculumPlan.find((c) => c.id === jc.id);
+    if (defaultCur) {
+      const curIdx = mergedCurriculum.findIndex((c) => c.id === jc.id);
+      if (curIdx >= 0) {
+        if (
+          !mergedCurriculum[curIdx].lessonContent.includes('这件衣服比那件贵一点儿') ||
+          !mergedCurriculum[curIdx].lessonContent.includes(jc.kw)
+        ) {
+          mergedCurriculum[curIdx] = defaultCur;
+        }
+      } else {
+        mergedCurriculum.push(defaultCur);
+      }
+    }
+  }
+
+  // Ensure Lesson 10 lesson plans for February 2027 (Weeks 14, 15, 16, 17) are included and up-to-date
+  const febPlanKeys = [
+    { id: 'lp-week14-schedule-vocab', curId: 'cur-14', kw: '生词' },
+    { id: 'lp-week15-schedule-sentences', curId: 'cur-15', kw: '句型' },
+    { id: 'lp-week16-schedule-dialogues', curId: 'cur-16', kw: '对话' },
+    { id: 'lp-week17-schedule-exercises', curId: 'cur-17', kw: '练习' },
+  ];
+
+  for (const fp of febPlanKeys) {
+    const defaultPlan = defaults.lessonPlans.find(
+      (lp) => lp.id === fp.id || lp.linkedCurriculumId === fp.curId
+    );
+    if (defaultPlan) {
+      const existingIdx = mergedLessonPlans.findIndex(
+        (lp) => lp.id === fp.id || lp.linkedCurriculumId === fp.curId
+      );
+      if (existingIdx >= 0) {
+        if (
+          !mergedLessonPlans[existingIdx].lessonTitle.includes('你今天上了什么课') ||
+          !mergedLessonPlans[existingIdx].lessonTitle.includes(fp.kw)
+        ) {
+          mergedLessonPlans[existingIdx] = defaultPlan;
+        }
+      } else {
+        mergedLessonPlans.push(defaultPlan);
+      }
+    }
+  }
+
+  // Ensure curriculumPlan has Weeks 14, 15, 16, 17 for Lesson 10 in February 2027
+  const febCurKeys = [
+    { id: 'cur-14', kw: '生词' },
+    { id: 'cur-15', kw: '句型' },
+    { id: 'cur-16', kw: '对话' },
+    { id: 'cur-17', kw: '练习' },
+  ];
+
+  for (const fc of febCurKeys) {
+    const defaultCur = defaults.curriculumPlan.find((c) => c.id === fc.id);
+    if (defaultCur) {
+      const curIdx = mergedCurriculum.findIndex((c) => c.id === fc.id);
+      if (curIdx >= 0) {
+        if (
+          !mergedCurriculum[curIdx].lessonContent.includes('你今天上了什么课') ||
+          !mergedCurriculum[curIdx].lessonContent.includes(fc.kw)
+        ) {
+          mergedCurriculum[curIdx] = defaultCur;
+        }
+      } else {
+        mergedCurriculum.push(defaultCur);
+      }
+    }
+  }
+
+  // Ensure Lesson 11 lesson plans for March 2027 (Weeks 18, 19, 20, 21) are included and up-to-date
+  const marPlanKeys = [
+    { id: 'lp-week18-hard-vocab', curId: 'cur-18', kw: '生词' },
+    { id: 'lp-week19-hard-sentences', curId: 'cur-19', kw: '句型' },
+    { id: 'lp-week20-hard-dialogues', curId: 'cur-20', kw: '对话' },
+    { id: 'lp-week21-hard-exercises', curId: 'cur-21', kw: '练习' },
+  ];
+
+  for (const mp of marPlanKeys) {
+    const defaultPlan = defaults.lessonPlans.find(
+      (lp) => lp.id === mp.id || lp.linkedCurriculumId === mp.curId
+    );
+    if (defaultPlan) {
+      const existingIdx = mergedLessonPlans.findIndex(
+        (lp) => lp.id === mp.id || lp.linkedCurriculumId === mp.curId
+      );
+      if (existingIdx >= 0) {
+        if (
+          !mergedLessonPlans[existingIdx].lessonTitle.includes('汉语难不难') ||
+          !mergedLessonPlans[existingIdx].lessonTitle.includes(mp.kw)
+        ) {
+          mergedLessonPlans[existingIdx] = defaultPlan;
+        }
+      } else {
+        mergedLessonPlans.push(defaultPlan);
+      }
+    }
+  }
+
+  // Ensure curriculumPlan has Weeks 18, 19, 20, 21 for Lesson 11 in March 2027
+  const marCurKeys = [
+    { id: 'cur-18', kw: '生词' },
+    { id: 'cur-19', kw: '句型' },
+    { id: 'cur-20', kw: '对话' },
+    { id: 'cur-21', kw: '练习' },
+  ];
+
+  for (const mc of marCurKeys) {
+    const defaultCur = defaults.curriculumPlan.find((c) => c.id === mc.id);
+    if (defaultCur) {
+      const curIdx = mergedCurriculum.findIndex((c) => c.id === mc.id);
+      if (curIdx >= 0) {
+        if (
+          !mergedCurriculum[curIdx].lessonContent.includes('汉语难不难') ||
+          !mergedCurriculum[curIdx].lessonContent.includes(mc.kw)
+        ) {
+          mergedCurriculum[curIdx] = defaultCur;
+        }
+      } else {
+        mergedCurriculum.push(defaultCur);
+      }
     }
   }
 
