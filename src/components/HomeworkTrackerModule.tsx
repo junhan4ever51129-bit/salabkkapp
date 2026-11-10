@@ -14,18 +14,26 @@ import {
   ClipboardPaste,
   Share2,
   Sparkles,
+  Table,
+  Printer,
+  Layers,
+  Award,
+  CheckSquare,
 } from 'lucide-react';
 import {
   AppDatabaseState,
   DailyHomeworkRecord,
   HomeworkSubmissionStatus,
   Language,
+  MonthlyHomeworkSheetConfig,
+  MonthlyHomeworkStudentEntry,
 } from '../types';
 import {
   addDaysToDdMmYyyy,
   cleanClassDisplayCode,
   ddMmYyyyToIso,
   formatNumeral as formatNum,
+  getResolvedMonthlyHomeworkConfig,
   sortStudentsByKhmerName,
   syncWeeklyLogsFromDailyHomework,
 } from '../utils/calculations';
@@ -67,6 +75,963 @@ function isoToDdMmYyyy(iso: string): string {
   }
   return iso;
 }
+
+interface MonthlyHomeworkTableViewProps {
+  state: AppDatabaseState;
+  currentClass: import('../types').ClassGroup;
+  selectedMonthId: string;
+  onSelectMonth: (monthId: string) => void;
+  onSelectClass: (classId: string) => void;
+  onUpdateState: (updater: (prev: AppDatabaseState) => AppDatabaseState) => void;
+  syncMessage: string | null;
+  setSyncMessage: (msg: string | null) => void;
+}
+
+const MonthlyHomeworkTableView: React.FC<MonthlyHomeworkTableViewProps> = ({
+  state,
+  currentClass,
+  selectedMonthId,
+  onSelectMonth,
+  onSelectClass,
+  onUpdateState,
+  syncMessage,
+  setSyncMessage,
+}) => {
+  const isGrade10 = Boolean(
+    currentClass?.gradeLevel === 10 ||
+      currentClass?.name?.includes('10') ||
+      currentClass?.id?.includes('10')
+  );
+
+  const displayMonths = useMemo(
+    () =>
+      state.months.filter(
+        (m) => m.id !== 'sem1' && m.id !== 'sem2' && m.id !== 'year'
+      ),
+    [state.months]
+  );
+
+  const selectedMonth =
+    state.months.find((m) => m.id === selectedMonthId) || displayMonths[0];
+
+  const monthlyConfig = useMemo(
+    () =>
+      getResolvedMonthlyHomeworkConfig(
+        state,
+        currentClass?.id || '8A',
+        selectedMonthId
+      ),
+    [state, currentClass?.id, selectedMonthId]
+  );
+
+  const maxScore = monthlyConfig.maxScore ?? (isGrade10 ? 20 : 10);
+
+  const activeAcademicYear =
+    state.academicTerms?.find((t) => t.id === state.currentTermId)?.nameKh ||
+    state.schoolInfo.academicYear ||
+    '២០២៦ ~ ២០២៧';
+
+  const classStudents = useMemo(
+    () =>
+      sortStudentsByKhmerName(
+        state.students.filter(
+          (s) => s.classId === currentClass?.id && s.status === 'active'
+        )
+      ),
+    [state.students, currentClass?.id]
+  );
+
+  const resolvedDefaultStudentEntries = useMemo(() => {
+    const map: Record<string, MonthlyHomeworkStudentEntry> = {};
+    const count = monthlyConfig.sessionCount;
+    classStudents.forEach((stu, idx) => {
+      const isDropped =
+        stu.status === 'dropped' || (stu.note || '').includes('មិនដែលមករៀន');
+      const subs: Record<number, boolean> = {};
+      for (let s = 1; s <= count; s++) {
+        if (isDropped) {
+          subs[s] = false;
+        } else if (idx % 11 === 4 && s === 3) {
+          subs[s] = false;
+        } else if (idx % 13 === 7 && s === 4) {
+          subs[s] = false;
+        } else {
+          subs[s] = true;
+        }
+      }
+      map[stu.id] = {
+        submissions: subs,
+        scoreOverride: null,
+        note: isDropped ? 'បោះបង់ការសិក្សា' : '',
+      };
+    });
+    return map;
+  }, [classStudents, monthlyConfig.sessionCount]);
+
+  const updateMonthlyConfig = (
+    updater: (prev: MonthlyHomeworkSheetConfig) => MonthlyHomeworkSheetConfig
+  ) => {
+    if (!currentClass) return;
+    onUpdateState((prev) => {
+      const currentResolved = getResolvedMonthlyHomeworkConfig(
+        prev,
+        currentClass.id,
+        selectedMonthId
+      );
+      const updated = updater(currentResolved);
+      return {
+        ...prev,
+        monthlyHomeworkConfigs: {
+          ...(prev.monthlyHomeworkConfigs || {}),
+          [currentClass.id]: {
+            ...(prev.monthlyHomeworkConfigs?.[currentClass.id] || {}),
+            [selectedMonthId]: updated,
+          },
+        },
+      };
+    });
+  };
+
+  const computeHwScore = (
+    subs: Record<number, boolean>,
+    override: number | null | undefined,
+    isDropped: boolean
+  ) => {
+    if (isDropped) return 0;
+    if (override !== null && override !== undefined) return override;
+    let count = 0;
+    for (let s = 1; s <= monthlyConfig.sessionCount; s++) {
+      if (subs[s]) count++;
+    }
+    return Number(((count / monthlyConfig.sessionCount) * maxScore).toFixed(1));
+  };
+
+  const handleBatchSetSession = (sessionIdx: number, isSubmitted: boolean) => {
+    if (!currentClass) return;
+    onUpdateState((prev) => {
+      const trackers = { ...(prev.monthlyHomeworkTrackers || {}) };
+      const classTrackers = { ...(trackers[currentClass.id] || {}) };
+      const monthTrackers = { ...(classTrackers[selectedMonthId] || {}) };
+
+      const currentBreakdowns = prev.monthlyScoreBreakdowns || {};
+      const classBreakdowns = { ...(currentBreakdowns[currentClass.id] || {}) };
+      const monthBreakdowns = { ...(classBreakdowns[selectedMonthId] || {}) };
+
+      classStudents.forEach((stu) => {
+        const isDropped = Boolean(
+          stu.status === 'dropped' || (stu.note || '').includes('មិនដែលមករៀន')
+        );
+        const existing =
+          monthTrackers[stu.id] ||
+          resolvedDefaultStudentEntries[stu.id] || {
+            submissions: {},
+            scoreOverride: null,
+            note: '',
+          };
+        const nextSubs = {
+          ...existing.submissions,
+          [sessionIdx]: isSubmitted,
+        };
+        monthTrackers[stu.id] = {
+          ...existing,
+          submissions: nextSubs,
+        };
+
+        const newScore = computeHwScore(nextSubs, existing.scoreOverride, isDropped);
+        const prevBreakdown = monthBreakdowns[stu.id] || {
+          performanceMarks: {},
+          examScore: null,
+        };
+        monthBreakdowns[stu.id] = {
+          ...prevBreakdown,
+          homeworkScoreOverride: newScore,
+        };
+      });
+
+      classTrackers[selectedMonthId] = monthTrackers;
+      trackers[currentClass.id] = classTrackers;
+      classBreakdowns[selectedMonthId] = monthBreakdowns;
+
+      return {
+        ...prev,
+        monthlyHomeworkTrackers: trackers,
+        monthlyScoreBreakdowns: {
+          ...currentBreakdowns,
+          [currentClass.id]: classBreakdowns,
+        },
+      };
+    });
+  };
+
+  const handleBatchSetAllSessions = (isSubmitted: boolean) => {
+    if (!currentClass) return;
+    onUpdateState((prev) => {
+      const trackers = { ...(prev.monthlyHomeworkTrackers || {}) };
+      const classTrackers = { ...(trackers[currentClass.id] || {}) };
+      const monthTrackers = { ...(classTrackers[selectedMonthId] || {}) };
+
+      const currentBreakdowns = prev.monthlyScoreBreakdowns || {};
+      const classBreakdowns = { ...(currentBreakdowns[currentClass.id] || {}) };
+      const monthBreakdowns = { ...(classBreakdowns[selectedMonthId] || {}) };
+
+      classStudents.forEach((stu) => {
+        const isDropped = Boolean(
+          stu.status === 'dropped' || (stu.note || '').includes('មិនដែលមករៀន')
+        );
+        const existing =
+          monthTrackers[stu.id] ||
+          resolvedDefaultStudentEntries[stu.id] || {
+            submissions: {},
+            scoreOverride: null,
+            note: '',
+          };
+        const nextSubs: Record<number, boolean> = { ...existing.submissions };
+        for (let s = 1; s <= monthlyConfig.sessionCount; s++) {
+          nextSubs[s] = isSubmitted;
+        }
+        monthTrackers[stu.id] = {
+          ...existing,
+          submissions: nextSubs,
+        };
+
+        const newScore = computeHwScore(nextSubs, existing.scoreOverride, isDropped);
+        const prevBreakdown = monthBreakdowns[stu.id] || {
+          performanceMarks: {},
+          examScore: null,
+        };
+        monthBreakdowns[stu.id] = {
+          ...prevBreakdown,
+          homeworkScoreOverride: newScore,
+        };
+      });
+
+      classTrackers[selectedMonthId] = monthTrackers;
+      trackers[currentClass.id] = classTrackers;
+      classBreakdowns[selectedMonthId] = monthBreakdowns;
+
+      return {
+        ...prev,
+        monthlyHomeworkTrackers: trackers,
+        monthlyScoreBreakdowns: {
+          ...currentBreakdowns,
+          [currentClass.id]: classBreakdowns,
+        },
+      };
+    });
+  };
+
+  const handleToggleStudent = (studentId: string, sessionIdx: number) => {
+    if (!currentClass) return;
+    onUpdateState((prev) => {
+      const trackers = { ...(prev.monthlyHomeworkTrackers || {}) };
+      const classTrackers = { ...(trackers[currentClass.id] || {}) };
+      const monthTrackers = { ...(classTrackers[selectedMonthId] || {}) };
+      const existing =
+        monthTrackers[studentId] ||
+        resolvedDefaultStudentEntries[studentId] || {
+          submissions: {},
+          scoreOverride: null,
+          note: '',
+        };
+      const currentVal = Boolean(existing.submissions?.[sessionIdx]);
+      const nextSubs = {
+        ...existing.submissions,
+        [sessionIdx]: !currentVal,
+      };
+
+      monthTrackers[studentId] = {
+        ...existing,
+        submissions: nextSubs,
+      };
+
+      classTrackers[selectedMonthId] = monthTrackers;
+      trackers[currentClass.id] = classTrackers;
+
+      // Direct live sync into monthlyScoreBreakdowns so MonthlyScoreModule immediately displays it!
+      const currentBreakdowns = prev.monthlyScoreBreakdowns || {};
+      const classBreakdowns = { ...(currentBreakdowns[currentClass.id] || {}) };
+      const monthBreakdowns = { ...(classBreakdowns[selectedMonthId] || {}) };
+      const stu = classStudents.find((s) => s.id === studentId);
+      const isDropped = Boolean(
+        stu?.status === 'dropped' || (stu?.note || '').includes('មិនដែលមករៀន')
+      );
+      const newHwScore = computeHwScore(nextSubs, existing.scoreOverride, isDropped);
+
+      const prevBreakdown = monthBreakdowns[studentId] || {
+        performanceMarks: {},
+        examScore: null,
+      };
+      monthBreakdowns[studentId] = {
+        ...prevBreakdown,
+        homeworkScoreOverride: newHwScore,
+      };
+      classBreakdowns[selectedMonthId] = monthBreakdowns;
+
+      return {
+        ...prev,
+        monthlyHomeworkTrackers: trackers,
+        monthlyScoreBreakdowns: {
+          ...currentBreakdowns,
+          [currentClass.id]: classBreakdowns,
+        },
+      };
+    });
+  };
+
+  const handleStudentNoteChange = (studentId: string, note: string) => {
+    if (!currentClass) return;
+    onUpdateState((prev) => {
+      const trackers = { ...(prev.monthlyHomeworkTrackers || {}) };
+      const classTrackers = { ...(trackers[currentClass.id] || {}) };
+      const monthTrackers = { ...(classTrackers[selectedMonthId] || {}) };
+      const existing =
+        monthTrackers[studentId] ||
+        resolvedDefaultStudentEntries[studentId] || {
+          submissions: {},
+          scoreOverride: null,
+          note: '',
+        };
+
+      monthTrackers[studentId] = {
+        ...existing,
+        note,
+      };
+
+      classTrackers[selectedMonthId] = monthTrackers;
+      trackers[currentClass.id] = classTrackers;
+
+      return {
+        ...prev,
+        monthlyHomeworkTrackers: trackers,
+      };
+    });
+  };
+
+  const handleStudentScoreOverride = (studentId: string, rawVal: string) => {
+    if (!currentClass) return;
+    onUpdateState((prev) => {
+      const trackers = { ...(prev.monthlyHomeworkTrackers || {}) };
+      const classTrackers = { ...(trackers[currentClass.id] || {}) };
+      const monthTrackers = { ...(classTrackers[selectedMonthId] || {}) };
+      const existing =
+        monthTrackers[studentId] ||
+        resolvedDefaultStudentEntries[studentId] || {
+          submissions: {},
+          scoreOverride: null,
+          note: '',
+        };
+
+      const trimmed = rawVal.trim();
+      const parsed =
+        trimmed === ''
+          ? null
+          : Math.max(0, Math.min(maxScore, parseFloat(trimmed)));
+
+      monthTrackers[studentId] = {
+        ...existing,
+        scoreOverride: Number.isNaN(parsed) ? null : parsed,
+      };
+
+      classTrackers[selectedMonthId] = monthTrackers;
+      trackers[currentClass.id] = classTrackers;
+
+      // Direct live sync into monthlyScoreBreakdowns
+      const currentBreakdowns = prev.monthlyScoreBreakdowns || {};
+      const classBreakdowns = { ...(currentBreakdowns[currentClass.id] || {}) };
+      const monthBreakdowns = { ...(classBreakdowns[selectedMonthId] || {}) };
+      const stu = classStudents.find((s) => s.id === studentId);
+      const isDropped = Boolean(
+        stu?.status === 'dropped' || (stu?.note || '').includes('មិនដែលមករៀន')
+      );
+      const newHwScore = computeHwScore(existing.submissions, parsed, isDropped);
+
+      const prevBreakdown = monthBreakdowns[studentId] || {
+        performanceMarks: {},
+        examScore: null,
+      };
+      monthBreakdowns[studentId] = {
+        ...prevBreakdown,
+        homeworkScoreOverride: newHwScore,
+      };
+      classBreakdowns[selectedMonthId] = monthBreakdowns;
+
+      return {
+        ...prev,
+        monthlyHomeworkTrackers: trackers,
+        monthlyScoreBreakdowns: {
+          ...currentBreakdowns,
+          [currentClass.id]: classBreakdowns,
+        },
+      };
+    });
+  };
+
+  const handleSyncToMonthlyScoreSheet = () => {
+    if (!currentClass) return;
+    onUpdateState((prev) => {
+      const currentBreakdowns = prev.monthlyScoreBreakdowns || {};
+      const classBreakdowns = { ...(currentBreakdowns[currentClass.id] || {}) };
+      const monthBreakdowns = { ...(classBreakdowns[selectedMonthId] || {}) };
+      const sessCount = monthlyConfig.sessionCount;
+
+      classStudents.forEach((stu) => {
+        const entry =
+          prev.monthlyHomeworkTrackers?.[currentClass.id]?.[selectedMonthId]?.[
+            stu.id
+          ] || resolvedDefaultStudentEntries[stu.id];
+        const isDropped =
+          stu.status === 'dropped' || (stu.note || '').includes('មិនដែលមករៀន');
+        let subCount = 0;
+        for (let s = 1; s <= sessCount; s++) {
+          if (entry?.submissions?.[s]) subCount++;
+        }
+        const autoScore = Number(
+          ((subCount / sessCount) * maxScore).toFixed(1)
+        );
+        const score = isDropped ? 0 : entry?.scoreOverride ?? autoScore;
+
+        const existingEntry = monthBreakdowns[stu.id] || {
+          performanceMarks: {},
+          examScore: null,
+        };
+
+        monthBreakdowns[stu.id] = {
+          ...existingEntry,
+          homeworkScoreOverride: score,
+        };
+      });
+
+      classBreakdowns[selectedMonthId] = monthBreakdowns;
+
+      return {
+        ...prev,
+        monthlyScoreBreakdowns: {
+          ...currentBreakdowns,
+          [currentClass.id]: classBreakdowns,
+        },
+      };
+    });
+    setSyncMessage(
+      `បានធ្វើសមកាលកម្មពិន្ទុកិច្ចការផ្ទះថ្នាក់ ${currentClass.name} ខែ ${
+        selectedMonth?.nameKh || selectedMonthId
+      } ទៅកាន់តារាងពិន្ទុប្រចាំខែរួចរាល់! (已同步至月度成绩册)`
+    );
+    window.setTimeout(() => setSyncMessage(null), 5000);
+  };
+
+  const femaleCount = classStudents.filter((s) => s.gender === 'F').length;
+
+  let totalAllSubmissions = 0;
+  const totalPossibleSubmissions =
+    classStudents.length * monthlyConfig.sessionCount;
+  let sumScores = 0;
+
+  classStudents.forEach((stu) => {
+    const e =
+      state.monthlyHomeworkTrackers?.[currentClass?.id || '8A']?.[
+        selectedMonthId
+      ]?.[stu.id] || resolvedDefaultStudentEntries[stu.id];
+    let subCount = 0;
+    for (let s = 1; s <= monthlyConfig.sessionCount; s++) {
+      if (e?.submissions?.[s]) subCount++;
+    }
+    totalAllSubmissions += subCount;
+    const isDropped =
+      stu.status === 'dropped' || (stu.note || '').includes('មិនដែលមករៀន');
+    const autoScore = isDropped
+      ? 0
+      : Number(((subCount / monthlyConfig.sessionCount) * maxScore).toFixed(1));
+    const score =
+      e?.scoreOverride !== undefined && e?.scoreOverride !== null
+        ? e.scoreOverride
+        : autoScore;
+    sumScores += score;
+  });
+
+  const avgRatePct =
+    totalPossibleSubmissions > 0
+      ? Math.round((totalAllSubmissions / totalPossibleSubmissions) * 100)
+      : 0;
+
+  const avgScore =
+    classStudents.length > 0
+      ? Number((sumScores / classStudents.length).toFixed(1))
+      : 0;
+
+  return (
+    <div className="space-y-4">
+      {/* Class Selector Bar */}
+      <div className="flex flex-wrap items-center gap-1.5 bg-white p-2.5 rounded-xl border border-slate-200 no-print">
+        <span className="text-xs font-bold text-slate-500 mr-1 flex items-center gap-1">
+          <Layers className="w-3.5 h-3.5 text-indigo-600" />
+          <span>ជ្រើសរើសថ្នាក់ (班级):</span>
+        </span>
+        {state.classes.map((cls) => {
+          const isSelected = cls.id === currentClass.id;
+          return (
+            <button
+              key={cls.id}
+              type="button"
+              onClick={() => onSelectClass(cls.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                isSelected
+                  ? 'bg-indigo-600 text-white shadow-2xs ring-2 ring-indigo-200'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              {cls.name}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Month Selector Bar */}
+      <div className="flex flex-wrap items-center gap-1.5 bg-white p-2.5 rounded-xl border border-slate-200 no-print">
+        <span className="text-xs font-bold text-slate-500 mr-1 flex items-center gap-1">
+          <Calendar className="w-3.5 h-3.5 text-amber-600" />
+          <span>ខែសិក្សា (月份):</span>
+        </span>
+        {displayMonths.map((m) => {
+          const isSel = m.id === selectedMonthId;
+          return (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => onSelectMonth(m.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                isSel
+                  ? 'bg-amber-600 text-white shadow-2xs ring-2 ring-amber-300'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              <span>{m.nameKh}</span>
+              <span className="ml-1 opacity-80 text-[10px]">
+                ({m.monthIndex}月)
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Configuration & Action Bar */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3 no-print">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Session Count: 4 or 5 */}
+            <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+              <span className="text-xs font-bold text-slate-700">
+                ចំនួនលើកកិច្ចការក្នុងខែ (月作业次数):
+              </span>
+              <div className="inline-flex rounded-lg border border-slate-300 p-0.5 bg-white">
+                <button
+                  type="button"
+                  onClick={() => updateMonthlyConfig((c) => ({ ...c, sessionCount: 4 }))}
+                  className={`px-2.5 py-1 rounded text-xs font-bold cursor-pointer transition-colors ${
+                    monthlyConfig.sessionCount === 4
+                      ? 'bg-indigo-600 text-white shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  ៤ លើក (4次)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateMonthlyConfig((c) => ({ ...c, sessionCount: 5 }))}
+                  className={`px-2.5 py-1 rounded text-xs font-bold cursor-pointer transition-colors ${
+                    monthlyConfig.sessionCount === 5
+                      ? 'bg-indigo-600 text-white shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  ៥ លើក (5次)
+                </button>
+              </div>
+            </div>
+
+            {/* Max Score: 10 (G8/9) or 20 (G10) */}
+            <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+              <span className="text-xs font-bold text-slate-700">
+                ពិន្ទុពេញ (满分):
+              </span>
+              <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-100 text-indigo-900 border border-indigo-200">
+                {maxScore} ពិន្ទុ ({isGrade10 ? '10年级满分20分' : '9年级/8年级满分10分'})
+              </span>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={maxScore}
+                onChange={(e) =>
+                  updateMonthlyConfig((c) => ({
+                    ...c,
+                    maxScore: Math.max(1, Number(e.target.value) || (isGrade10 ? 20 : 10)),
+                  }))
+                }
+                title="កែសម្រួលពិន្ទុពេញ (修改满分)"
+                className="w-14 px-1.5 py-0.5 text-xs text-center border border-slate-300 rounded bg-white font-bold"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleBatchSetAllSessions(true)}
+              className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold cursor-pointer flex items-center gap-1.5 shadow-2xs"
+            >
+              <CheckSquare className="w-3.5 h-3.5 text-emerald-600" />
+              <span>ដាក់ ✓ គ្រប់កិច្ចការ (一键全部已交)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSyncToMonthlyScoreSheet}
+              className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer flex items-center gap-1.5 shadow-2xs"
+              title="បញ្ចូលពិន្ទុកិច្ចការផ្ទះទៅកាន់តារាងពិន្ទុប្រចាំខែស្វ័យប្រវត្តិ"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>ធ្វើសមកាលកម្មពិន្ទុទៅតារាងប្រចាំខែ (同步至月考册)</span>
+            </button>
+          </div>
+        </div>
+
+        {syncMessage && (
+          <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-900">
+            ✓ {syncMessage}
+          </div>
+        )}
+
+        <MarkdownCopyBar
+          state={state}
+          section="homework_lesson"
+          selectedClassId={currentClass.id}
+          selectedMonthId={selectedMonthId}
+          label="ចម្លង Markdown តារាងកិច្ចការផ្ទះប្រចាំខែ"
+        />
+      </div>
+
+      {/* Statistical Summary Badges */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 no-print">
+        <div className="bg-white p-3 rounded-xl border border-slate-200">
+          <div className="text-xs text-slate-500 font-medium">សិស្សសរុប (总人数)</div>
+          <div className="text-lg font-bold text-slate-900">
+            {formatNum(classStudents.length, state.useKhmerNumerals)}{' '}
+            <span className="text-xs font-normal text-slate-500">
+              (ស្រី {formatNum(femaleCount, state.useKhmerNumerals)})
+            </span>
+          </div>
+        </div>
+        <div className="bg-white p-3 rounded-xl border border-slate-200">
+          <div className="text-xs text-slate-500 font-medium">កិច្ចការបានប្រគល់សរុប (已交总次数)</div>
+          <div className="text-lg font-bold text-emerald-700">
+            {formatNum(totalAllSubmissions, state.useKhmerNumerals)} /{' '}
+            {formatNum(totalPossibleSubmissions, state.useKhmerNumerals)}
+          </div>
+        </div>
+        <div className="bg-white p-3 rounded-xl border border-slate-200">
+          <div className="text-xs text-slate-500 font-medium">អត្រាប្រគល់កិច្ចការ (提交率)</div>
+          <div className="text-lg font-bold text-sky-700">
+            {formatNum(avgRatePct, state.useKhmerNumerals)}%
+          </div>
+        </div>
+        <div className="bg-white p-3 rounded-xl border border-slate-200">
+          <div className="text-xs text-slate-500 font-medium">មធ្យមភាគពិន្ទុកិច្ចការ (平均分)</div>
+          <div className="text-lg font-bold text-indigo-700">
+            {formatNum(avgScore, state.useKhmerNumerals)}{' '}
+            <span className="text-xs font-normal text-slate-500">
+              / {formatNum(maxScore, state.useKhmerNumerals)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* A4 MoEYS Official Table */}
+      <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-xs print:border-none print:shadow-none print:p-0">
+        <div className="text-center space-y-1 mb-4 print:mb-2">
+          <div className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-800">
+            ព្រះរាជាណាចក្រកម្ពុជា
+          </div>
+          <div className="text-xs sm:text-sm font-bold text-slate-800">
+            ជាតិ សាសនា ព្រះមហាក្សត្រ
+          </div>
+          <div className="w-24 h-0.5 bg-slate-800 mx-auto my-1"></div>
+          <div className="text-xs font-semibold text-slate-700">
+            {state.schoolInfo.schoolNameKh || 'វិទ្យាល័យ ហ៊ុន សែន មិត្តភាព'}
+          </div>
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 pt-1">
+            តារាងតាមដាន និងវាយតម្លៃកិច្ចការផ្ទះប្រចាំខែ (月度课后作业跟踪与评分表)
+          </h2>
+          <p className="text-xs text-slate-600 font-medium">
+            មុខវិជ្ជា ៖ {state.schoolInfo.subjectNameKh} ({state.schoolInfo.subjectNameZh || '汉语'}) · ថ្នាក់ទី ៖ {currentClass.name} · {selectedMonth?.nameKh || 'ខែវិច្ឆិកា'} · ឆ្នាំសិក្សា ៖ {activeAcademicYear} · គ្រូបង្រៀន ៖ {state.schoolInfo.teacherName}
+          </p>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs border-collapse border border-black a4-singleline-table whitespace-nowrap">
+            <thead>
+              <tr className="bg-slate-50 text-black font-bold">
+                <th rowSpan={2} className="py-2 px-1.5 text-center border border-black w-10 whitespace-nowrap">
+                  ល.រ
+                </th>
+                <th rowSpan={2} className="py-2 px-2 text-center border border-black w-20 whitespace-nowrap">
+                  អត្តលេខ
+                </th>
+                <th rowSpan={2} className="py-2 px-3 text-left border border-black whitespace-nowrap">
+                  គោត្តនាម-នាម
+                </th>
+                <th rowSpan={2} className="py-2 px-3 text-left border border-black whitespace-nowrap">
+                  ឈ្មោះចិន (姓名)
+                </th>
+                <th rowSpan={2} className="py-2 px-1.5 text-center border border-black w-12 whitespace-nowrap">
+                  ភេទ
+                </th>
+                <th
+                  colSpan={monthlyConfig.sessionCount}
+                  className="py-1.5 px-2 text-center border border-black bg-amber-50/60 whitespace-nowrap"
+                >
+                  កិច្ចការផ្ទះប្រចាំខែ (月度课后作业 · {monthlyConfig.sessionCount} លើក)
+                </th>
+                <th rowSpan={2} className="py-2 px-2 text-center border border-black bg-emerald-50/50 w-24 whitespace-nowrap">
+                  បានប្រគល់ ({monthlyConfig.sessionCount})
+                </th>
+                <th rowSpan={2} className="py-2 px-2 text-center border border-black bg-sky-50/50 w-20 whitespace-nowrap">
+                  អត្រា %
+                </th>
+                <th rowSpan={2} className="py-2 px-2 text-center border border-black bg-indigo-50/60 w-24 whitespace-nowrap">
+                  ពិន្ទុ ({maxScore})
+                </th>
+                <th rowSpan={2} className="py-2 px-2 text-left border border-black whitespace-nowrap">
+                  ផ្សេងៗ / កំណត់សម្គាល់
+                </th>
+              </tr>
+              <tr className="bg-slate-50 text-black font-bold">
+                {Array.from({ length: monthlyConfig.sessionCount }, (_, i) => i + 1).map((sIdx) => {
+                  const sIso = monthlyConfig.sessionDates[sIdx] || '';
+                  const shortDateLabel = sIso
+                    ? isoToDdMmYyyy(sIso).slice(0, 5)
+                    : `${String((sIdx - 1) * 7 + 2).padStart(2, '0')}/11`;
+                  return (
+                    <th key={sIdx} className="py-1 px-1.5 text-center border border-black whitespace-nowrap bg-amber-50/20">
+                      <div className="flex items-center justify-center gap-1">
+                        <span className="font-mono text-[11px] font-bold text-slate-900">
+                          {shortDateLabel}
+                        </span>
+                        <input
+                          type="date"
+                          value={sIso}
+                          onChange={(e) =>
+                            updateMonthlyConfig((c) => ({
+                              ...c,
+                              sessionDates: {
+                                ...c.sessionDates,
+                                [sIdx]: e.target.value,
+                              },
+                            }))
+                          }
+                          title="ចុចជ្រើសរើសកាលបរិច្ឆេទ (点击选择日期)"
+                          className="w-5 h-5 p-0 text-[10px] border border-slate-300 rounded bg-white cursor-pointer no-print opacity-75 hover:opacity-100"
+                        />
+                      </div>
+                      <div className="flex items-center justify-center gap-1 mt-1 no-print">
+                        <button
+                          type="button"
+                          onClick={() => handleBatchSetSession(sIdx, true)}
+                          title="ដាក់ ✓ បានប្រគល់ទាំងអស់ក្នុងជួរឈរនេះ (全部已交)"
+                          className="px-1.5 py-0.5 rounded bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] font-bold cursor-pointer transition-colors shadow-2xs"
+                        >
+                          全✓
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleBatchSetSession(sIdx, false)}
+                          title="ដាក់ ✗ មិនទាន់ប្រគល់ទាំងអស់ក្នុងជួរឈរនេះ (全部未交)"
+                          className="px-1.5 py-0.5 rounded bg-rose-100 hover:bg-rose-200 text-rose-800 text-[10px] font-bold cursor-pointer transition-colors shadow-2xs"
+                        >
+                          全✗
+                        </button>
+                      </div>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {classStudents.map((stu, idx) => {
+                const entry =
+                  state.monthlyHomeworkTrackers?.[currentClass.id]?.[selectedMonthId]?.[stu.id] ||
+                  resolvedDefaultStudentEntries[stu.id];
+                const subs = entry?.submissions || {};
+                let subCount = 0;
+                for (let s = 1; s <= monthlyConfig.sessionCount; s++) {
+                  if (subs[s]) subCount++;
+                }
+                const isDropped = stu.status === 'dropped' || (stu.note || '').includes('មិនដែលមករៀន');
+                const ratePct = isDropped ? 0 : Math.round((subCount / monthlyConfig.sessionCount) * 100);
+                const autoScore = isDropped
+                  ? 0
+                  : Number(((subCount / monthlyConfig.sessionCount) * maxScore).toFixed(1));
+                const displayScore =
+                  entry?.scoreOverride !== undefined && entry?.scoreOverride !== null
+                    ? entry.scoreOverride
+                    : autoScore;
+
+                return (
+                  <tr key={stu.id} className="hover:bg-slate-50/80 whitespace-nowrap">
+                    <td className="py-1 px-1.5 text-center border border-black font-mono">
+                      {formatNum(idx + 1, state.useKhmerNumerals)}
+                    </td>
+                    <td className="py-1 px-2 text-center border border-black font-mono text-[11px]">
+                      {stu.studentCode}
+                    </td>
+                    <td className="py-1 px-3 border border-black font-medium">
+                      {stu.name}
+                    </td>
+                    <td className="py-1 px-3 border border-black font-medium">
+                      {stu.chineseName}
+                    </td>
+                    <td className="py-1 px-1.5 text-center border border-black">
+                      {stu.gender === 'F' ? 'ស' : 'ប'}
+                    </td>
+
+                    {/* Assignment Sessions 1..sessionCount */}
+                    {Array.from({ length: monthlyConfig.sessionCount }, (_, i) => i + 1).map((sIdx) => {
+                      const isSubmitted = Boolean(subs[sIdx]);
+                      return (
+                        <td key={sIdx} className="py-1 px-1 text-center border border-black align-middle">
+                          <div className="flex items-center justify-center no-print">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleStudent(stu.id, sIdx)}
+                              title={
+                                isSubmitted
+                                  ? 'បានប្រគល់កិច្ចការ (已交 · ចុចដើម្បីប្តូរ)'
+                                  : 'មិនទាន់ប្រគល់ (未交 · ចុចដើម្បីប្តូរ)'
+                              }
+                              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md flex items-center justify-center font-bold text-base transition-all cursor-pointer ${
+                                isSubmitted
+                                  ? 'bg-emerald-600 text-white shadow-2xs hover:bg-emerald-700 border border-emerald-700'
+                                  : 'bg-rose-100 text-rose-700 hover:bg-rose-200 border border-rose-300'
+                              }`}
+                            >
+                              {isSubmitted ? '✓' : '✗'}
+                            </button>
+                          </div>
+                          <span className="hidden print:inline-block font-bold text-sm">
+                            {isSubmitted ? '✓' : '✗'}
+                          </span>
+                        </td>
+                      );
+                    })}
+
+                    {/* Submitted Count */}
+                    <td className="py-1 px-2 text-center border border-black font-mono font-bold align-middle bg-emerald-50/20">
+                      <span
+                        className={`px-1.5 py-0.5 rounded text-[11px] ${
+                          subCount === monthlyConfig.sessionCount
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : subCount > 0
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-rose-100 text-rose-800'
+                        }`}
+                      >
+                        {formatNum(subCount, state.useKhmerNumerals)}/{formatNum(monthlyConfig.sessionCount, state.useKhmerNumerals)}
+                      </span>
+                    </td>
+
+                    {/* Rate % */}
+                    <td className="py-1 px-2 text-center border border-black font-mono align-middle bg-sky-50/20">
+                      {formatNum(ratePct, state.useKhmerNumerals)}%
+                    </td>
+
+                    {/* Homework Score */}
+                    <td className="py-1 px-1.5 text-center border border-black font-mono font-bold align-middle bg-indigo-50/20">
+                      <div className="flex items-center justify-center gap-1">
+                        <span
+                          className={`text-xs font-bold ${
+                            displayScore === maxScore
+                              ? 'text-emerald-700'
+                              : displayScore > 0
+                              ? 'text-indigo-700'
+                              : 'text-rose-600'
+                          }`}
+                        >
+                          {formatNum(displayScore, state.useKhmerNumerals)}
+                        </span>
+                        {entry?.scoreOverride !== undefined && entry?.scoreOverride !== null && (
+                          <span
+                            className="text-[9px] px-1 rounded bg-amber-100 text-amber-800 no-print font-sans cursor-pointer"
+                            title="ពិន្ទុកែសម្រួលដោយដៃ (点击重置为自动)"
+                            onClick={() => handleStudentScoreOverride(stu.id, '')}
+                          >
+                            កែ
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Notes */}
+                    <td className="py-1 px-2 border border-black">
+                      <input
+                        type="text"
+                        value={entry?.note || ''}
+                        onChange={(e) => handleStudentNoteChange(stu.id, e.target.value)}
+                        placeholder="..."
+                        className="w-full bg-transparent text-xs focus:outline-none px-1 py-0.5"
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr className="bg-slate-100 font-bold border-t-2 border-black text-xs">
+                <td colSpan={5} className="py-2 px-3 border border-black text-right">
+                  សរុបសិស្ស៖ {formatNum(classStudents.length, state.useKhmerNumerals)} នាក់ (ស្រី {formatNum(femaleCount, state.useKhmerNumerals)} នាក់)
+                </td>
+                {Array.from({ length: monthlyConfig.sessionCount }, (_, i) => i + 1).map((sIdx) => {
+                  const colSubmitted = classStudents.filter((stu) => {
+                    const e =
+                      state.monthlyHomeworkTrackers?.[currentClass.id]?.[selectedMonthId]?.[stu.id] ||
+                      resolvedDefaultStudentEntries[stu.id];
+                    return Boolean(e?.submissions?.[sIdx]);
+                  }).length;
+                  return (
+                    <td
+                      key={sIdx}
+                      className="py-1.5 px-1 text-center border border-black font-mono text-[11px] text-emerald-800 bg-emerald-50/30"
+                    >
+                      {formatNum(colSubmitted, state.useKhmerNumerals)}/{formatNum(classStudents.length, state.useKhmerNumerals)}
+                    </td>
+                  );
+                })}
+                <td className="py-2 px-1 text-center border border-black font-mono text-emerald-800 bg-emerald-50/40">
+                  {formatNum(totalAllSubmissions, state.useKhmerNumerals)}
+                </td>
+                <td className="py-2 px-1 text-center border border-black font-mono text-sky-800 bg-sky-50/40">
+                  {formatNum(avgRatePct, state.useKhmerNumerals)}%
+                </td>
+                <td className="py-2 px-1 text-center border border-black font-mono font-bold text-indigo-900 bg-indigo-50/40">
+                  {formatNum(avgScore, state.useKhmerNumerals)}
+                </td>
+                <td className="py-2 px-2 border border-black text-slate-600 text-[11px]">
+                  ពិន្ទុពេញ {formatNum(maxScore, state.useKhmerNumerals)} ពិន្ទុ
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        {/* Editable & AI Signature Date Footer */}
+        <SignatureDateEditor
+          state={state}
+          onUpdateState={onUpdateState}
+          showPrincipalLeft={true}
+          sheetKey={`homework_monthly_${currentClass.id}_${selectedMonthId}`}
+        />
+      </div>
+    </div>
+  );
+};
 
 export const HomeworkTrackerModule: React.FC<Props> = ({
   state,
@@ -129,6 +1094,288 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
       ),
     [state.students, currentClass?.id]
   );
+
+  const [trackerMode, setTrackerMode] = useState<'monthly' | 'daily'>('monthly');
+  const [selectedMonthId, setSelectedMonthId] = useState<string>('nov');
+
+  const isGrade10 = Boolean(
+    currentClass?.gradeLevel === 10 ||
+      currentClass?.name?.includes('10') ||
+      currentClass?.id?.includes('10')
+  );
+
+  const displayMonths = useMemo(
+    () =>
+      state.months.filter(
+        (m) => m.id !== 'sem1' && m.id !== 'sem2' && m.id !== 'year'
+      ),
+    [state.months]
+  );
+
+  const selectedMonth =
+    state.months.find((m) => m.id === selectedMonthId) || displayMonths[0];
+
+  const monthlyHomeworkConfig = useMemo(
+    () =>
+      getResolvedMonthlyHomeworkConfig(
+        state,
+        currentClass?.id || '8A',
+        selectedMonthId
+      ),
+    [state, currentClass?.id, selectedMonthId]
+  );
+
+  const maxHomeworkScore =
+    monthlyHomeworkConfig.maxScore ?? (isGrade10 ? 20 : 10);
+
+  const activeAcademicYear =
+    state.academicTerms?.find((t) => t.id === state.currentTermId)?.nameKh ||
+    state.schoolInfo.academicYear ||
+    '២០២៦ ~ ២០២៧';
+
+  const resolvedDefaultStudentEntries = useMemo(() => {
+    const map: Record<string, MonthlyHomeworkStudentEntry> = {};
+    const count = monthlyHomeworkConfig.sessionCount;
+    classStudents.forEach((stu, idx) => {
+      const isDropped =
+        stu.status === 'dropped' || (stu.note || '').includes('មិនដែលមករៀន');
+      const subs: Record<number, boolean> = {};
+      for (let s = 1; s <= count; s++) {
+        if (isDropped) {
+          subs[s] = false;
+        } else if (idx % 11 === 4 && s === 3) {
+          subs[s] = false;
+        } else if (idx % 13 === 7 && s === 4) {
+          subs[s] = false;
+        } else {
+          subs[s] = true;
+        }
+      }
+      map[stu.id] = {
+        submissions: subs,
+        scoreOverride: null,
+        note: isDropped ? 'បោះបង់ការសិក្សា' : '',
+      };
+    });
+    return map;
+  }, [classStudents, monthlyHomeworkConfig.sessionCount]);
+
+  const updateMonthlyHomeworkConfig = (
+    updater: (prev: MonthlyHomeworkSheetConfig) => MonthlyHomeworkSheetConfig
+  ) => {
+    if (!currentClass) return;
+    onUpdateState((prev) => {
+      const currentResolved = getResolvedMonthlyHomeworkConfig(
+        prev,
+        currentClass.id,
+        selectedMonthId
+      );
+      const updated = updater(currentResolved);
+      return {
+        ...prev,
+        monthlyHomeworkConfigs: {
+          ...(prev.monthlyHomeworkConfigs || {}),
+          [currentClass.id]: {
+            ...(prev.monthlyHomeworkConfigs?.[currentClass.id] || {}),
+            [selectedMonthId]: updated,
+          },
+        },
+      };
+    });
+  };
+
+  const handleBatchSetMonthlySubmission = (
+    sessionIdx: number,
+    isSubmitted: boolean
+  ) => {
+    if (!currentClass) return;
+    onUpdateState((prev) => {
+      const trackers = { ...(prev.monthlyHomeworkTrackers || {}) };
+      const classTrackers = { ...(trackers[currentClass.id] || {}) };
+      const monthTrackers = { ...(classTrackers[selectedMonthId] || {}) };
+
+      classStudents.forEach((stu) => {
+        const existing =
+          monthTrackers[stu.id] ||
+          resolvedDefaultStudentEntries[stu.id] || {
+            submissions: {},
+            scoreOverride: null,
+            note: '',
+          };
+        monthTrackers[stu.id] = {
+          ...existing,
+          submissions: {
+            ...existing.submissions,
+            [sessionIdx]: isSubmitted,
+          },
+        };
+      });
+
+      classTrackers[selectedMonthId] = monthTrackers;
+      trackers[currentClass.id] = classTrackers;
+
+      return {
+        ...prev,
+        monthlyHomeworkTrackers: trackers,
+      };
+    });
+  };
+
+  const handleToggleMonthlyStudentSubmission = (
+    studentId: string,
+    sessionIdx: number
+  ) => {
+    if (!currentClass) return;
+    onUpdateState((prev) => {
+      const trackers = { ...(prev.monthlyHomeworkTrackers || {}) };
+      const classTrackers = { ...(trackers[currentClass.id] || {}) };
+      const monthTrackers = { ...(classTrackers[selectedMonthId] || {}) };
+      const existing =
+        monthTrackers[studentId] ||
+        resolvedDefaultStudentEntries[studentId] || {
+          submissions: {},
+          scoreOverride: null,
+          note: '',
+        };
+      const currentVal = Boolean(existing.submissions?.[sessionIdx]);
+
+      monthTrackers[studentId] = {
+        ...existing,
+        submissions: {
+          ...existing.submissions,
+          [sessionIdx]: !currentVal,
+        },
+      };
+
+      classTrackers[selectedMonthId] = monthTrackers;
+      trackers[currentClass.id] = classTrackers;
+
+      return {
+        ...prev,
+        monthlyHomeworkTrackers: trackers,
+      };
+    });
+  };
+
+  const handleMonthlyStudentNoteChange = (studentId: string, note: string) => {
+    if (!currentClass) return;
+    onUpdateState((prev) => {
+      const trackers = { ...(prev.monthlyHomeworkTrackers || {}) };
+      const classTrackers = { ...(trackers[currentClass.id] || {}) };
+      const monthTrackers = { ...(classTrackers[selectedMonthId] || {}) };
+      const existing =
+        monthTrackers[studentId] ||
+        resolvedDefaultStudentEntries[studentId] || {
+          submissions: {},
+          scoreOverride: null,
+          note: '',
+        };
+
+      monthTrackers[studentId] = {
+        ...existing,
+        note,
+      };
+
+      classTrackers[selectedMonthId] = monthTrackers;
+      trackers[currentClass.id] = classTrackers;
+
+      return {
+        ...prev,
+        monthlyHomeworkTrackers: trackers,
+      };
+    });
+  };
+
+  const handleMonthlyStudentScoreOverride = (
+    studentId: string,
+    rawVal: string
+  ) => {
+    if (!currentClass) return;
+    onUpdateState((prev) => {
+      const trackers = { ...(prev.monthlyHomeworkTrackers || {}) };
+      const classTrackers = { ...(trackers[currentClass.id] || {}) };
+      const monthTrackers = { ...(classTrackers[selectedMonthId] || {}) };
+      const existing =
+        monthTrackers[studentId] ||
+        resolvedDefaultStudentEntries[studentId] || {
+          submissions: {},
+          scoreOverride: null,
+          note: '',
+        };
+
+      const trimmed = rawVal.trim();
+      const parsed =
+        trimmed === ''
+          ? null
+          : Math.max(0, Math.min(maxHomeworkScore, parseFloat(trimmed)));
+
+      monthTrackers[studentId] = {
+        ...existing,
+        scoreOverride: Number.isNaN(parsed) ? null : parsed,
+      };
+
+      classTrackers[selectedMonthId] = monthTrackers;
+      trackers[currentClass.id] = classTrackers;
+
+      return {
+        ...prev,
+        monthlyHomeworkTrackers: trackers,
+      };
+    });
+  };
+
+  const handleSyncMonthlyHomeworkToScoreModule = () => {
+    if (!currentClass) return;
+    onUpdateState((prev) => {
+      const currentBreakdowns = prev.monthlyScoreBreakdowns || {};
+      const classBreakdowns = { ...(currentBreakdowns[currentClass.id] || {}) };
+      const monthBreakdowns = { ...(classBreakdowns[selectedMonthId] || {}) };
+      const sessCount = monthlyHomeworkConfig.sessionCount;
+
+      classStudents.forEach((stu) => {
+        const entry =
+          prev.monthlyHomeworkTrackers?.[currentClass.id]?.[selectedMonthId]?.[
+            stu.id
+          ] || resolvedDefaultStudentEntries[stu.id];
+        const isDropped =
+          stu.status === 'dropped' || (stu.note || '').includes('មិនដែលមករៀន');
+        let subCount = 0;
+        for (let s = 1; s <= sessCount; s++) {
+          if (entry?.submissions?.[s]) subCount++;
+        }
+        const autoScore = Number(
+          ((subCount / sessCount) * maxHomeworkScore).toFixed(1)
+        );
+        const score = isDropped ? 0 : entry?.scoreOverride ?? autoScore;
+
+        const existingEntry = monthBreakdowns[stu.id] || {
+          performanceMarks: {},
+          examScore: null,
+        };
+
+        monthBreakdowns[stu.id] = {
+          ...existingEntry,
+          homeworkScoreOverride: score,
+        };
+      });
+
+      classBreakdowns[selectedMonthId] = monthBreakdowns;
+
+      return {
+        ...prev,
+        monthlyScoreBreakdowns: {
+          ...currentBreakdowns,
+          [currentClass.id]: classBreakdowns,
+        },
+      };
+    });
+    setSyncMessage(
+      `បានធ្វើសមកាលកម្មពិន្ទុកិច្ចការផ្ទះថ្នាក់ ${currentClass.name} ខែ ${
+        selectedMonth?.nameKh || selectedMonthId
+      } ទៅកាន់តារាងពិន្ទុប្រចាំខែរួចរាល់! (已同步至月度成绩册)`
+    );
+    window.setTimeout(() => setSyncMessage(null), 5000);
+  };
 
   const submittedStudents = useMemo(
     () =>
@@ -720,9 +1967,68 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
 
   return (
     <div className="space-y-6">
-      {/* Top Action & Date Bar */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      {/* Top View Mode Switcher */}
+      <div className="bg-white rounded-xl border border-slate-200 p-3.5 sm:p-4 shadow-2xs no-print">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setTrackerMode('monthly')}
+              className={`px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                trackerMode === 'monthly'
+                  ? 'bg-indigo-600 text-white shadow-xs ring-2 ring-indigo-200'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              <Table className="w-4 h-4" />
+              <span>តារាងកិច្ចការផ្ទះប្រចាំខែ (月度作业跟踪表 · ៤-៥លើក)</span>
+              <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] bg-indigo-900/60 text-white font-mono font-semibold">
+                {isGrade10 ? '满分 20 分 (10年级)' : '满分 10 分 (9年级/8年级)'}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTrackerMode('daily')}
+              className={`px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                trackerMode === 'daily'
+                  ? 'bg-indigo-600 text-white shadow-xs ring-2 ring-indigo-200'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              <BookOpen className="w-4 h-4" />
+              <span>កំណត់ត្រាកិច្ចការផ្ទះប្រចាំថ្ងៃ (每日作业记录 · 与周志联动)</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>បោះពុម្ព (打印 A4)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {trackerMode === 'monthly' ? (
+        <MonthlyHomeworkTableView
+          state={state}
+          currentClass={currentClass}
+          selectedMonthId={selectedMonthId}
+          onSelectMonth={setSelectedMonthId}
+          onSelectClass={onSelectClass}
+          onUpdateState={onUpdateState}
+          syncMessage={syncMessage}
+          setSyncMessage={setSyncMessage}
+        />
+      ) : (
+        <div className="space-y-6">
+          {/* Top Action & Date Bar */}
+          <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
               <ClipboardCheck className="w-5 h-5" />
@@ -1531,5 +2837,8 @@ export const HomeworkTrackerModule: React.FC<Props> = ({
         />
       </div>
     </div>
+      )}
+    </div>
   );
 };
+

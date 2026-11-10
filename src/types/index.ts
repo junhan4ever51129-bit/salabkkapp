@@ -339,6 +339,30 @@ export type AllMonthlyScoreBreakdowns = Record<
   Record<string, Record<string, StudentMonthlyBreakdownEntry>>
 >;
 
+// Monthly Homework Sheet Config (កិច្ចការផ្ទះប្រចាំខែ · ៤ ឬ ៥លើក)
+export interface MonthlyHomeworkSheetConfig {
+  sessionCount: number; // 4 or 5
+  sessionDates: Record<number, string>; // session 1..5 -> YYYY-MM-DD
+  maxScore: number; // 10 for Grade 8/9, 20 for Grade 10
+  titles?: Record<number, string>; // e.g. "第七课 生词抄写5遍"
+}
+
+// Monthly Homework Student Entry (√ 已交 | × 未交)
+export interface MonthlyHomeworkStudentEntry {
+  submissions: Record<number, boolean>; // session 1..5 -> true (√ 已交) | false (× 未交)
+  scoreOverride?: number | null;
+  note?: string;
+}
+
+// classId -> monthId -> MonthlyHomeworkSheetConfig
+export type AllMonthlyHomeworkConfigs = Record<string, Record<string, MonthlyHomeworkSheetConfig>>;
+
+// classId -> monthId -> studentId -> MonthlyHomeworkStudentEntry
+export type AllMonthlyHomeworkTrackers = Record<
+  string,
+  Record<string, Record<string, MonthlyHomeworkStudentEntry>>
+>;
+
 export interface AppDatabaseState {
   version: string;
   updatedAt: string;
@@ -351,6 +375,8 @@ export interface AppDatabaseState {
   annualClassroomPlans?: Record<string, AnnualClassroomPlanSheet>;
   monthlyScoreConfigs?: AllMonthlyScoreConfigs;
   monthlyScoreBreakdowns?: AllMonthlyScoreBreakdowns;
+  monthlyHomeworkConfigs?: AllMonthlyHomeworkConfigs;
+  monthlyHomeworkTrackers?: AllMonthlyHomeworkTrackers;
   schoolInfo: SchoolInfo;
   classes: ClassGroup[];
   students: Student[];

@@ -801,6 +801,8 @@ function mergeWithValidDefaultScores(
     signatureDate: healedSignatureDate,
     sheetSignatureDates: loaded.sheetSignatureDates || defaults.sheetSignatureDates || {},
     annualClassroomPlans: healedPlans,
+    monthlyHomeworkConfigs: loaded.monthlyHomeworkConfigs || defaults.monthlyHomeworkConfigs || {},
+    monthlyHomeworkTrackers: loaded.monthlyHomeworkTrackers || defaults.monthlyHomeworkTrackers || {},
     performanceAgreementMeta:
       loaded.performanceAgreementMeta || defaults.performanceAgreementMeta,
     schoolInfo: {

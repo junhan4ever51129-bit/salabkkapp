@@ -1,6 +1,8 @@
 import {
   AcademicTerm,
   AllAttendanceSheetConfigs,
+  AllMonthlyHomeworkConfigs,
+  AllMonthlyHomeworkTrackers,
   AllStandardEvaluations,
   AllTeacherTaskReports,
   AnnualClassroomPlanSheet,
@@ -4479,6 +4481,162 @@ export const DEFAULT_PERFORMANCE_AGREEMENT_META: PerformanceAgreementMeta = {
     'វត្ថុបំណងទី១៖ លទ្ធផលសិក្សារៀនសូត្ររបស់សិស្សមុខវិជ្ជា ( ភាសាចិន ) ថ្នាក់ទី ៨ ទី៩ និងទី១០',
 };
 
+export function generateDefaultMonthlyHomeworkConfigs(
+  classes: ClassGroup[]
+): AllMonthlyHomeworkConfigs {
+  const configs: AllMonthlyHomeworkConfigs = {};
+
+  const defaultMonthConfigs: Record<string, { sessionCount: number; dates: Record<number, string>; titles: Record<number, string> }> = {
+    nov: {
+      sessionCount: 5,
+      dates: {
+        1: '2026-11-03',
+        2: '2026-11-10',
+        3: '2026-11-17',
+        4: '2026-11-24',
+        5: '2026-11-30',
+      },
+      titles: {
+        1: 'រំលឹកភីនអ៊ីន (声母/韵母 各5遍)',
+        2: 'មេរៀនទី៧ 生词 (抄写5遍)',
+        3: 'មេរៀនទី៧ 句型 (你买什么)',
+        4: 'មេរៀនទី៧ 对话 (买点心/牛奶)',
+        5: 'មេរៀនទី៧ 练习 (课本44-47/练习册52-58)',
+      },
+    },
+    dec: {
+      sessionCount: 4,
+      dates: {
+        1: '2026-12-07',
+        2: '2026-12-14',
+        3: '2026-12-21',
+        4: '2026-12-28',
+      },
+      titles: {
+        1: 'មេរៀនទី៨ 生词 苹果多少钱一斤 (抄写5遍)',
+        2: 'មេរៀនទី៨ 句型 (苹果四块两毛九一斤)',
+        3: 'មេរៀនទី៨ 对话 (一共二十三块零六分)',
+        4: 'មេរៀនទី៨ 练习 (课本50-53/练习册59-64)',
+      },
+    },
+    jan: {
+      sessionCount: 4,
+      dates: {
+        1: '2027-01-04',
+        2: '2027-01-11',
+        3: '2027-01-18',
+        4: '2027-01-25',
+      },
+      titles: {
+        1: 'មេរៀនទី៩ 生词 这件衣服比那件贵一点儿',
+        2: 'មេរៀនទី៩ 句型 (他的自行车跟我的自行车一样)',
+        3: 'មេរៀនទី៩ 对话 (我有两件衣服)',
+        4: 'មេរៀនទី៩ 练习 (课本56-60/练习册65-73)',
+      },
+    },
+    feb: {
+      sessionCount: 4,
+      dates: {
+        1: '2027-02-01',
+        2: '2027-02-08',
+        3: '2027-02-15',
+        4: '2027-02-22',
+      },
+      titles: {
+        1: 'មេរៀនទី១០ 生词 你今天上了什么课',
+        2: 'មេរៀនទី១០ 句型 (我今天上了体育课)',
+        3: 'មេរៀនទី១០ 对话 (Jim是英国人会说汉语)',
+        4: 'មេរៀនទី១០ 练习 (课本66-69/练习册74-84)',
+      },
+    },
+    mar: {
+      sessionCount: 4,
+      dates: {
+        1: '2027-03-01',
+        2: '2027-03-08',
+        3: '2027-03-15',
+        4: '2027-03-22',
+      },
+      titles: {
+        1: 'មេរៀនទី១១ 生词 汉语难不难',
+        2: 'មេរៀនទី១១ 句型 (汉语不难很有意思)',
+        3: 'មេរៀនទី១១ 对话 (汉语作业容易数学不容易)',
+        4: 'មេរៀនទី១១ 练习 (课本72-75/练习册80-84)',
+      },
+    },
+  };
+
+  classes.forEach((cls) => {
+    configs[cls.id] = {};
+    const isGrade10 = cls.gradeLevel === 10 || cls.name.includes('10') || cls.id.includes('10');
+    const maxScore = isGrade10 ? 20 : 10;
+
+    DEFAULT_MONTHS.forEach((m) => {
+      const def = defaultMonthConfigs[m.id] || {
+        sessionCount: 4,
+        dates: {
+          1: '2027-04-05',
+          2: '2027-04-12',
+          3: '2027-04-19',
+          4: '2027-04-26',
+        },
+        titles: {},
+      };
+      configs[cls.id][m.id] = {
+        sessionCount: def.sessionCount,
+        sessionDates: { ...def.dates },
+        maxScore,
+        titles: { ...def.titles },
+      };
+    });
+  });
+
+  return configs;
+}
+
+export function generateDefaultMonthlyHomeworkTrackers(
+  classes: ClassGroup[],
+  students: Student[]
+): AllMonthlyHomeworkTrackers {
+  const trackers: AllMonthlyHomeworkTrackers = {};
+
+  classes.forEach((cls) => {
+    trackers[cls.id] = {};
+    const classStus = students.filter((s) => s.classId === cls.id);
+
+    DEFAULT_MONTHS.forEach((m) => {
+      trackers[cls.id][m.id] = {};
+      const sessionCount = m.id === 'nov' ? 5 : 4;
+
+      classStus.forEach((stu, idx) => {
+        const isDropped = stu.status === 'dropped' || (stu.note || '').includes('មិនដែលមករៀន');
+        const submissions: Record<number, boolean> = {};
+
+        for (let s = 1; s <= sessionCount; s++) {
+          if (isDropped) {
+            submissions[s] = false;
+          } else if (idx % 11 === 4 && s === 3) {
+            // A realistic missing submission for 1 or 2 students
+            submissions[s] = false;
+          } else if (idx % 13 === 7 && s === 4) {
+            submissions[s] = false;
+          } else {
+            submissions[s] = true;
+          }
+        }
+
+        trackers[cls.id][m.id][stu.id] = {
+          submissions,
+          scoreOverride: null,
+          note: isDropped ? 'បោះបង់ការសិក្សា' : '',
+        };
+      });
+    });
+  });
+
+  return trackers;
+}
+
 export function createInitialAppDatabaseState(): AppDatabaseState {
   const classesWithTerm = [
     ...DEFAULT_CLASSES.map((c) => ({
@@ -4523,5 +4681,7 @@ export function createInitialAppDatabaseState(): AppDatabaseState {
     lessonPlans: DEFAULT_LESSON_PLANS,
     performanceTargets: enrichPerformanceTargetsWithReflections(DEFAULT_PERFORMANCE_TARGETS),
     dailyHomeworkRecords: generateDefaultDailyHomeworkRecords(classesWithTerm, DEFAULT_STUDENTS),
+    monthlyHomeworkConfigs: generateDefaultMonthlyHomeworkConfigs(classesWithTerm),
+    monthlyHomeworkTrackers: generateDefaultMonthlyHomeworkTrackers(classesWithTerm, DEFAULT_STUDENTS),
   };
 }

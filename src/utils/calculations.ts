@@ -12,6 +12,8 @@ import {
   GradeLetter,
   GradeThresholds,
   MonthConfig,
+  MonthlyHomeworkSheetConfig,
+  MonthlyHomeworkStudentEntry,
   MonthlyScoreSheetConfig,
   ScoreValue,
   SignatureDateConfig,
@@ -1868,6 +1870,54 @@ export function getResolvedMonthlyScoreConfig(
   };
 }
 
+/**
+ * Resolve the MonthlyHomeworkSheetConfig for a given class and month.
+ * Defaults to 10-point scale for Grade 8 & Grade 9, and 20-point scale for Grade 10.
+ * Default session count is 4 (can be set to 4 or 5 by teacher).
+ */
+export function getResolvedMonthlyHomeworkConfig(
+  state: AppDatabaseState,
+  classId: string,
+  monthId: string
+): MonthlyHomeworkSheetConfig {
+  const cls = state.classes.find((c) => c.id === classId);
+  const monthCfg = state.months.find((m) => m.id === monthId);
+  const existing = state.monthlyHomeworkConfigs?.[classId]?.[monthId];
+  const maxScore = getClassMaxScore(cls);
+  const isGrade10 = maxScore === 100 || cls?.gradeLevel === 10;
+  const defaultHomeworkMax = isGrade10 ? 20 : 10;
+
+  const activeAcademicYear =
+    state.academicTerms?.find((t) => t.id === state.currentTermId)?.nameKh ||
+    state.schoolInfo.academicYear ||
+    '២០២៦ ~ ២០២៧';
+
+  const sessionCount = existing?.sessionCount ?? 4;
+  const autoDates = generateAutoSessionDatesForMonth(
+    cls,
+    monthCfg,
+    sessionCount,
+    activeAcademicYear
+  );
+
+  const mergedDates: Record<number, string> = { ...autoDates.sessionDates };
+  if (existing?.sessionDates) {
+    for (let i = 1; i <= sessionCount; i++) {
+      const savedIso = existing.sessionDates[i];
+      if (savedIso) {
+        mergedDates[i] = savedIso;
+      }
+    }
+  }
+
+  return {
+    sessionCount,
+    sessionDates: mergedDates,
+    maxScore: existing?.maxScore ?? defaultHomeworkMax,
+    titles: existing?.titles || {},
+  };
+}
+
 export interface ResolvedStudentMonthlyBreakdown {
   studentId: string;
   studentCode: string;
@@ -2008,34 +2058,56 @@ export function resolveStudentMonthlyBreakdown(
       ? savedEntry.attendanceScoreOverride
       : computedAttendanceScore;
 
-  // 3. Calculate Homework Score out of cfg.homeworkMax (e.g. 10)
+  // 3. Calculate Homework Score out of cfg.homeworkMax (e.g. 10 for Grade 8/9, 20 for Grade 10)
   const monthCfg = state.months.find((m) => m.id === monthId);
-  const hwRecords = (state.dailyHomeworkRecords || []).filter((r) => {
-    if (r.classId !== classId || !r.assigned) return false;
-    if (cfg.scoringEndDate && r.date > cfg.scoringEndDate) return false;
-    if (!monthCfg) return true;
-    const dt = new Date(r.date + 'T12:00:00');
-    return !Number.isNaN(dt.getTime()) && dt.getMonth() === monthCfg.monthIndex;
-  });
+  const hwSheetCfg = getResolvedMonthlyHomeworkConfig(state, classId, monthId);
+  const hwTrackerEntry = state.monthlyHomeworkTrackers?.[classId]?.[monthId]?.[student.id];
 
   let computedHomeworkScore = cfg.homeworkMax;
+  let hasHwTracker = false;
   if (isDroppedOrNeverPresent) {
     computedHomeworkScore = 0;
-  } else if (hwRecords.length > 0) {
-    let earnedHw = 0;
-    for (const r of hwRecords) {
-      const sub = r.submissions?.[student.id];
-      if (sub === 'submitted') earnedHw += 1;
-      else if (sub === 'late') earnedHw += 0.5;
+    hasHwTracker = true;
+  } else if (hwTrackerEntry && hwSheetCfg && hwSheetCfg.sessionCount > 0) {
+    hasHwTracker = true;
+    if (hwTrackerEntry.scoreOverride !== undefined && hwTrackerEntry.scoreOverride !== null) {
+      computedHomeworkScore = hwTrackerEntry.scoreOverride;
+    } else {
+      let subCount = 0;
+      for (let s = 1; s <= hwSheetCfg.sessionCount; s++) {
+        if (hwTrackerEntry.submissions?.[s]) subCount++;
+      }
+      const effectiveHwMax = hwSheetCfg.maxScore ?? cfg.homeworkMax;
+      computedHomeworkScore =
+        Math.round(((subCount / hwSheetCfg.sessionCount) * effectiveHwMax) * 10) / 10;
     }
-    computedHomeworkScore =
-      Math.round(((earnedHw / hwRecords.length) * cfg.homeworkMax) * 10) / 10;
   } else {
-    computedHomeworkScore = resolvedEval.completedTasks ? cfg.homeworkMax : 0;
+    const hwRecords = (state.dailyHomeworkRecords || []).filter((r) => {
+      if (r.classId !== classId || !r.assigned) return false;
+      if (cfg.scoringEndDate && r.date > cfg.scoringEndDate) return false;
+      if (!monthCfg) return true;
+      const dt = new Date(r.date + 'T12:00:00');
+      return !Number.isNaN(dt.getTime()) && dt.getMonth() === monthCfg.monthIndex;
+    });
+
+    if (hwRecords.length > 0) {
+      let earnedHw = 0;
+      for (const r of hwRecords) {
+        const sub = r.submissions?.[student.id];
+        if (sub === 'submitted') earnedHw += 1;
+        else if (sub === 'late') earnedHw += 0.5;
+      }
+      computedHomeworkScore =
+        Math.round(((earnedHw / hwRecords.length) * cfg.homeworkMax) * 10) / 10;
+    } else {
+      computedHomeworkScore = resolvedEval.completedTasks ? cfg.homeworkMax : 0;
+    }
   }
   const homeworkScore =
-    savedEntry.homeworkScoreOverride !== undefined &&
-    savedEntry.homeworkScoreOverride !== null
+    hasHwTracker
+      ? computedHomeworkScore
+      : savedEntry.homeworkScoreOverride !== undefined &&
+        savedEntry.homeworkScoreOverride !== null
       ? savedEntry.homeworkScoreOverride
       : computedHomeworkScore;
 
